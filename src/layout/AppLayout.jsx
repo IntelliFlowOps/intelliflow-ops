@@ -33,7 +33,7 @@ export default function AppLayout() {
       : null;
 
   return (
-    <div className="app-shell flex h-screen overflow-hidden bg-transparent">
+    <div className="flex h-screen overflow-hidden relative">
       {sidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/70 backdrop-blur-sm lg:hidden"
@@ -44,35 +44,36 @@ export default function AppLayout() {
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-40 w-72
-          glass-panel border-r border-white/10
+          border-r border-white/10 backdrop-blur-2xl
+          bg-[linear-gradient(180deg,rgba(10,17,35,0.92),rgba(7,11,20,0.92))]
           flex flex-col
           transform transition-transform duration-200
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
-        <div className="h-20 flex items-center gap-4 px-5 border-b border-white/10">
-          <div className="w-12 h-12 rounded-2xl overflow-hidden bg-black/30 border border-white/10 glow-ring float-slow flex items-center justify-center">
+        <div className="h-24 flex items-center gap-4 px-5 border-b border-white/10">
+          <div className="w-14 h-14 rounded-[20px] overflow-hidden bg-black/30 border border-white/10 shadow-2xl shadow-cyan-500/10 float-slow flex items-center justify-center">
             <img src="/logo.png" alt="IntelliFlow logo" className="w-full h-full object-cover" />
           </div>
           <div>
-            <div className="text-base font-semibold text-zinc-100 tracking-tight">IntelliFlow</div>
-            <div className="text-[11px] font-medium text-zinc-500 uppercase tracking-[0.22em]">
+            <div className="text-[24px] leading-none font-semibold text-zinc-100 tracking-tight">IntelliFlow</div>
+            <div className="text-[11px] mt-1 font-medium text-zinc-500 uppercase tracking-[0.24em]">
               Operations
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5">
+        <nav className="flex-1 overflow-y-auto py-5 px-3 space-y-2">
           {NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) => `
-                flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200
+                flex items-center gap-3 px-4 py-3 rounded-[20px] text-sm font-medium transition-all duration-200
                 ${
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 text-white border border-indigo-400/20 shadow-lg shadow-indigo-500/10'
+                    ? 'text-white border border-cyan-300/20 bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-indigo-500/15 shadow-lg shadow-cyan-500/10'
                     : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/[0.04] border border-transparent'
                 }
               `}
@@ -91,11 +92,11 @@ export default function AppLayout() {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden relative z-[1]">
-        <header className="h-20 flex items-center justify-between px-4 lg:px-8 border-b border-white/10 glass-panel flex-shrink-0">
+        <header className="h-24 flex items-center justify-between px-4 lg:px-8 border-b border-white/10 bg-[linear-gradient(180deg,rgba(9,17,34,0.78),rgba(5,9,18,0.55))] backdrop-blur-2xl">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl hover:bg-white/5 text-zinc-300"
+              className="lg:hidden p-2 rounded-2xl hover:bg-white/5 text-zinc-300"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
