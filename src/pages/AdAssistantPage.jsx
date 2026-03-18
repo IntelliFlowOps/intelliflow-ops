@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSheetData } from '../hooks/useSheetData.jsx';
 
-const STORAGE_KEY = 'intelliflow-assistant-conversations-v2';
+const STORAGE_KEY = 'intelliflow-assistant-conversations-v3';
 
 const STARTER_PROMPTS = [
   'Which campaign should get more budget this week to help us reach 25 paying clients fastest?',
@@ -28,7 +28,9 @@ export default function AdAssistantPage() {
   const [activeId, setActiveId] = useState(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef(null);
+  const historyRef = useRef(null);
 
   const slimRows = (rows, limit = 6) => Array.isArray(rows) ? rows.slice(0, limit) : [];
 
@@ -79,6 +81,22 @@ export default function AdAssistantPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [conversations, activeId, loading]);
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (historyRef.current && !historyRef.current.contains(e.target)) {
+        setHistoryOpen(false);
+      }
+    }
+
+    if (historyOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [historyOpen]);
+
   const activeConversation =
     conversations.find((c) => c.id === activeId) || conversations[0] || null;
 
@@ -97,6 +115,7 @@ export default function AdAssistantPage() {
     setConversations((prev) => [newChat, ...prev]);
     setActiveId(id);
     setInput('');
+    setHistoryOpen(false);
   }
 
   function deleteChat(id) {
@@ -113,6 +132,7 @@ export default function AdAssistantPage() {
       };
       setConversations([freshChat]);
       setActiveId(newId);
+      setHistoryOpen(false);
       return;
     }
 
@@ -216,195 +236,202 @@ export default function AdAssistantPage() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom,rgba(255,255,255,0.18),transparent_35%)] opacity-30 pointer-events-none"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_55%)] opacity-20 pointer-events-none"></div>
 
-      <div className="relative z-[1] h-full grid grid-cols-[220px_minmax(0,1fr)]">
-        <aside className="border-r border-white/10 bg-[#0a1220]/70 backdrop-blur-2xl flex flex-col">
-          <div className="p-3 border-b border-white/10">
-            <div className="text-xs uppercase tracking-[0.28em] text-cyan-200/70 mb-3 px-1">
+      <div className="relative z-[1] h-full flex flex-col">
+        <div className="px-6 lg:px-10 pt-5 pb-3 flex items-center justify-between border-b border-white/10 bg-[#0b1324]/40">
+          <div>
+            <div className="text-sm uppercase tracking-[0.35em] text-cyan-200/70 mb-1">
+              IntelliFlow Assistant
+            </div>
+            <div className="text-2xl font-semibold text-white">
               Watchu Need?
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 relative" ref={historyRef}>
             <button
               onClick={createNewChat}
-              className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-medium px-4 py-3 shadow-lg shadow-cyan-500/20"
+              className="px-4 py-2 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white text-sm font-medium shadow-lg shadow-cyan-500/20"
             >
               + New Chat
             </button>
-          </div>
 
-          <div className="flex-1 overflow-y-auto px-2 py-3 space-y-2">
-            {conversations.map((chat) => (
-              <div
-                key={chat.id}
-                className={`rounded-2xl border transition ${
-                  chat.id === activeId
-                    ? 'border-cyan-300/20 bg-white/10'
-                    : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06]'
-                }`}
-              >
-                <button
-                  onClick={() => setActiveId(chat.id)}
-                  className="w-full text-left px-3 py-3"
-                >
-                  <div className="text-sm text-white truncate">{chat.title}</div>
-                  <div className="text-[10px] text-zinc-500 mt-1">
-                    {new Date(chat.updatedAt).toLocaleDateString([], {
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </div>
-                </button>
+            <button
+              onClick={() => setHistoryOpen((prev) => !prev)}
+              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-sm text-white transition border border-white/10"
+            >
+              History
+            </button>
 
-                <div className="px-3 pb-3">
-                  <button
-                    onClick={() => deleteChat(chat.id)}
-                    className="text-[11px] text-zinc-400 hover:text-red-300 transition"
+            <div
+              className={`absolute right-0 top-14 w-80 rounded-3xl border border-white/10 bg-[#0d1627]/95 backdrop-blur-2xl shadow-2xl shadow-black/40 overflow-hidden transition-all duration-300 origin-top ${
+                historyOpen
+                  ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
+                  : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
+              }`}
+            >
+              <div className="px-4 py-3 border-b border-white/10 text-xs uppercase tracking-[0.25em] text-cyan-200/70">
+                Past Chats
+              </div>
+
+              <div className="max-h-96 overflow-y-auto p-3 space-y-2">
+                {conversations.map((chat) => (
+                  <div
+                    key={chat.id}
+                    className={`rounded-2xl border ${
+                      chat.id === activeId
+                        ? 'border-cyan-300/20 bg-white/10'
+                        : 'border-white/5 bg-white/[0.03] hover:bg-white/[0.06]'
+                    }`}
                   >
-                    Delete
+                    <button
+                      onClick={() => {
+                        setActiveId(chat.id);
+                        setHistoryOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-3"
+                    >
+                      <div className="text-sm text-white truncate">{chat.title}</div>
+                      <div className="text-[10px] text-zinc-500 mt-1">
+                        {new Date(chat.updatedAt).toLocaleString([], {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </button>
+
+                    <div className="px-4 pb-3">
+                      <button
+                        onClick={() => deleteChat(chat.id)}
+                        className="text-[11px] text-zinc-400 hover:text-red-300 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {isEmpty ? (
+          <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <div className="w-full max-w-5xl flex flex-col items-center">
+              <div className="w-16 h-16 rounded-[20px] overflow-hidden border border-white/15 bg-black/25 mb-6 shadow-2xl shadow-cyan-500/10">
+                <img src="/logo.png" alt="IntelliFlow logo" className="w-full h-full object-cover" />
+              </div>
+
+              <div className="mt-3 text-center text-sm text-zinc-300">
+                Locked on one goal: 25 paying clients.
+              </div>
+
+              <div className="mt-10 w-full max-w-3xl rounded-[30px] border border-white/10 bg-[#111a2c]/85 backdrop-blur-2xl shadow-2xl shadow-black/40 p-5">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask anything"
+                  className="w-full bg-transparent text-white text-lg placeholder:text-zinc-400 resize-none min-h-[48px] max-h-40 focus:outline-none"
+                />
+
+                <div className="mt-4 flex items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/8 border border-white/10 px-3 py-2 text-sm text-zinc-200">
+                    <span className="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-[10px] text-white">IF</span>
+                    Data-based answers
+                  </div>
+
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={loading}
+                    className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white text-lg shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+                  >
+                    ↑
                   </button>
                 </div>
               </div>
-            ))}
+
+              <div className="flex flex-wrap items-center justify-center gap-3 mt-5 max-w-5xl">
+                {STARTER_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => sendMessage(prompt)}
+                    className="px-4 py-2 rounded-full bg-[#26354f]/85 hover:bg-[#314361] text-sm text-zinc-200 transition"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </aside>
-
-        <div className="h-full flex flex-col">
-          {isEmpty ? (
-            <div className="flex-1 flex flex-col items-center justify-center px-6">
-              <div className="w-full max-w-5xl flex flex-col items-center">
-                <div className="w-16 h-16 rounded-[20px] overflow-hidden border border-white/15 bg-black/25 mb-6 shadow-2xl shadow-cyan-500/10">
-                  <img src="/logo.png" alt="IntelliFlow logo" className="w-full h-full object-cover" />
-                </div>
-
-                <div className="text-center mb-2">
-                  <div className="text-sm uppercase tracking-[0.35em] text-cyan-200/70 mb-4">
-                    IntelliFlow Assistant
+        ) : (
+          <>
+            <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8">
+              <div className="max-w-4xl mx-auto space-y-6">
+                {messages.map((msg, i) => (
+                  <div
+                    key={i}
+                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-3xl rounded-[28px] px-5 py-4 shadow-xl ${
+                        msg.role === 'user'
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                          : 'bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 text-zinc-100'
+                      }`}
+                    >
+                      <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
+                        {msg.role === 'user' ? 'You' : 'Assistant'}
+                      </div>
+                      <div className="whitespace-pre-wrap text-[15px] leading-7">
+                        {msg.content}
+                      </div>
+                    </div>
                   </div>
-                  <h1 className="text-white text-center font-semibold tracking-tight text-4xl lg:text-6xl leading-tight">
-                    Watchu Need?
-                  </h1>
-                </div>
+                ))}
 
-                <div className="mt-3 text-center text-sm text-zinc-300">
-                  Locked on one goal: 25 paying clients.
-                </div>
+                {loading && (
+                  <div className="flex justify-start">
+                    <div className="max-w-3xl rounded-[28px] px-5 py-4 bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 text-zinc-100">
+                      <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
+                        Assistant
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                <div className="mt-10 w-full max-w-3xl rounded-[30px] border border-white/10 bg-[#111a2c]/85 backdrop-blur-2xl shadow-2xl shadow-black/40 p-5">
+                <div ref={bottomRef} />
+              </div>
+            </div>
+
+            <div className="px-6 lg:px-10 py-5 border-t border-white/10 bg-[#0b1324]/80 backdrop-blur-2xl">
+              <div className="max-w-4xl mx-auto">
+                <div className="rounded-[30px] border border-white/10 bg-[#10172a]/85 px-5 py-4 flex items-end gap-3">
                   <textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="Ask anything"
-                    className="w-full bg-transparent text-white text-lg placeholder:text-zinc-400 resize-none min-h-[48px] max-h-40 focus:outline-none"
+                    className="flex-1 bg-transparent text-white text-base placeholder:text-zinc-400 resize-none min-h-[40px] max-h-40 focus:outline-none"
                   />
-
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-white/8 border border-white/10 px-3 py-2 text-sm text-zinc-200">
-                      <span className="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-[10px] text-white">IF</span>
-                      Data-based answers
-                    </div>
-
-                    <button
-                      onClick={() => sendMessage()}
-                      disabled={loading}
-                      className="w-12 h-12 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white text-lg shadow-lg shadow-cyan-500/20 disabled:opacity-50"
-                    >
-                      ↑
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-3 mt-5 max-w-5xl">
-                  {STARTER_PROMPTS.map((prompt) => (
-                    <button
-                      key={prompt}
-                      onClick={() => sendMessage(prompt)}
-                      className="px-4 py-2 rounded-full bg-[#26354f]/85 hover:bg-[#314361] text-sm text-zinc-200 transition"
-                    >
-                      {prompt}
-                    </button>
-                  ))}
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={loading}
+                    className="w-11 h-11 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white text-lg shadow-lg shadow-cyan-500/20 disabled:opacity-50"
+                  >
+                    ↑
+                  </button>
                 </div>
               </div>
             </div>
-          ) : (
-            <>
-              <div className="px-6 lg:px-10 pt-5 pb-2 flex items-center justify-between border-b border-white/10 bg-[#0b1324]/40">
-                <div className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">
-                  Watchu Need?
-                </div>
-                <button
-                  onClick={() => deleteChat(activeConversation.id)}
-                  className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-sm text-white transition"
-                >
-                  Delete Chat
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8">
-                <div className="max-w-4xl mx-auto space-y-6">
-                  {messages.map((msg, i) => (
-                    <div
-                      key={i}
-                      className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-3xl rounded-[28px] px-5 py-4 shadow-xl ${
-                          msg.role === 'user'
-                            ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                            : 'bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 text-zinc-100'
-                        }`}
-                      >
-                        <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
-                          {msg.role === 'user' ? 'You' : 'Assistant'}
-                        </div>
-                        <div className="whitespace-pre-wrap text-[15px] leading-7">
-                          {msg.content}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {loading && (
-                    <div className="flex justify-start">
-                      <div className="max-w-3xl rounded-[28px] px-5 py-4 bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 text-zinc-100">
-                        <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
-                          Assistant
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                          <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div ref={bottomRef} />
-                </div>
-              </div>
-
-              <div className="px-6 lg:px-10 py-5 border-t border-white/10 bg-[#0b1324]/80 backdrop-blur-2xl">
-                <div className="max-w-4xl mx-auto">
-                  <div className="rounded-[30px] border border-white/10 bg-[#10172a]/85 px-5 py-4 flex items-end gap-3">
-                    <textarea
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      placeholder="Ask anything"
-                      className="flex-1 bg-transparent text-white text-base placeholder:text-zinc-400 resize-none min-h-[40px] max-h-40 focus:outline-none"
-                    />
-                    <button
-                      onClick={() => sendMessage()}
-                      disabled={loading}
-                      className="w-11 h-11 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 text-white text-lg shadow-lg shadow-cyan-500/20 disabled:opacity-50"
-                    >
-                      ↑
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+          </>
+        )}
       </div>
     </div>
   );
