@@ -1,40 +1,68 @@
 import { useEffect, useState } from 'react';
 
 export default function CursorTrail() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
+  const [points, setPoints] = useState([]);
 
   useEffect(() => {
+    let timeoutId;
+
     function handleMove(e) {
-      setPos({ x: e.clientX, y: e.clientY });
+      const point = {
+        id: Date.now() + Math.random(),
+        x: e.clientX,
+        y: e.clientY,
+      };
+
+      setPoints((prev) => [...prev.slice(-10), point]);
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setPoints((prev) => prev.slice(-6));
+      }, 80);
     }
 
     window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
+  useEffect(() => {
+    if (points.length === 0) return;
+
+    const interval = setInterval(() => {
+      setPoints((prev) => prev.slice(1));
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, [points]);
+
   return (
-    <>
-      <div
-        className="pointer-events-none fixed z-[9999] w-16 h-16 rounded-full"
-        style={{
-          left: pos.x - 32,
-          top: pos.y - 32,
-          background:
-            'radial-gradient(circle, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.08) 40%, transparent 72%)',
-          filter: 'blur(10px)',
-          transition: 'left 120ms linear, top 120ms linear',
-        }}
-      />
-      <div
-        className="pointer-events-none fixed z-[9999] w-3 h-3 rounded-full"
-        style={{
-          left: pos.x - 6,
-          top: pos.y - 6,
-          background: 'rgba(125,211,252,0.55)',
-          boxShadow: '0 0 18px rgba(56,189,248,0.65)',
-          transition: 'left 40ms linear, top 40ms linear',
-        }}
-      />
-    </>
+    <div className="pointer-events-none fixed inset-0 z-[9999]">
+      {points.map((point, index) => {
+        const strength = (index + 1) / points.length;
+        const size = 10 + strength * 12;
+        const opacity = 0.05 + strength * 0.12;
+
+        return (
+          <div
+            key={point.id}
+            className="absolute rounded-full"
+            style={{
+              left: point.x - size / 2,
+              top: point.y - size / 2,
+              width: size,
+              height: size,
+              opacity,
+              background: 'radial-gradient(circle, rgba(103,232,249,0.9) 0%, rgba(56,189,248,0.35) 35%, transparent 72%)',
+              filter: 'blur(8px)',
+              transition: 'opacity 120ms linear, transform 120ms linear',
+              transform: `scale(${0.85 + strength * 0.25})`,
+            }}
+          />
+        );
+      })}
+    </div>
   );
 }
