@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/marketers', label: 'Marketers', icon: TrendingIcon },
   { to: '/campaigns', label: 'Campaigns', icon: MegaphoneIcon },
   { to: '/creative', label: 'Creative Insights', icon: SparklesIcon },
+{ to: '/assistant', label: 'Ad Assistant', icon: SparklesIcon },
   { to: '/commissions', label: 'Commissions', icon: DollarIcon },
   { to: '/activity', label: 'Activity', icon: ActivityIcon },
   { to: '/analytics', label: 'Analytics', icon: ChartIcon },

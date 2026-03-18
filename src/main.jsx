@@ -13,7 +13,7 @@ import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
 import './index.css';
-
+import AdAssistantPage from './pages/AdAssistantPage.jsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
@@ -29,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="rules" element={<RulesPage />} />
+<Route path="assistant" element={<AdAssistantPage />} />
           </Route>
         </Routes>
       </DataProvider>
