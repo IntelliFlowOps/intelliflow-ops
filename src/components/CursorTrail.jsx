@@ -1,68 +1,88 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function CursorTrail() {
-  const [points, setPoints] = useState([]);
+  const canvasRef = useRef(null);
+  const animationRef = useRef(null);
+  const pointerRef = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const trailRef = useRef([]);
 
   useEffect(() => {
-    let timeoutId;
+    const canvas = document.createElement('canvas');
+    canvasRef.current = canvas;
+    canvas.className = 'pointer-events-none fixed inset-0 z-[9999]';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.pointerEvents = 'none';
+    document.body.appendChild(canvas);
 
-    function handleMove(e) {
-      const point = {
-        id: Date.now() + Math.random(),
-        x: e.clientX,
-        y: e.clientY,
-      };
+    const ctx = canvas.getContext('2d');
 
-      setPoints((prev) => [...prev.slice(-10), point]);
-
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        setPoints((prev) => prev.slice(-6));
-      }, 80);
+    function resize() {
+      canvas.width = window.innerWidth * window.devicePixelRatio;
+      canvas.height = window.innerHeight * window.devicePixelRatio;
+      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     }
 
+    resize();
+
+    function handleMove(e) {
+      pointerRef.current = { x: e.clientX, y: e.clientY };
+      trailRef.current.push({
+        x: e.clientX,
+        y: e.clientY,
+        life: 1,
+      });
+
+      if (trailRef.current.length > 40) {
+        trailRef.current.shift();
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+      const trail = trailRef.current;
+
+      for (let i = 0; i < trail.length; i++) {
+        trail[i].life -= 0.028;
+      }
+
+      trailRef.current = trail.filter((p) => p.life > 0);
+
+      if (trailRef.current.length > 1) {
+        for (let i = 1; i < trailRef.current.length; i++) {
+          const prev = trailRef.current[i - 1];
+          const curr = trailRef.current[i];
+          const strength = i / trailRef.current.length;
+          const alpha = curr.life * strength * 0.18;
+          const width = 1 + strength * 5;
+
+          ctx.beginPath();
+          ctx.moveTo(prev.x, prev.y);
+          ctx.lineTo(curr.x, curr.y);
+          ctx.strokeStyle = `rgba(125, 211, 252, ${alpha})`;
+          ctx.lineWidth = width;
+          ctx.lineCap = 'round';
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.28)';
+          ctx.stroke();
+        }
+      }
+
+      animationRef.current = requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
     window.addEventListener('mousemove', handleMove);
+    animationRef.current = requestAnimationFrame(draw);
+
     return () => {
+      window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', handleMove);
-      clearTimeout(timeoutId);
+      cancelAnimationFrame(animationRef.current);
+      canvas.remove();
     };
   }, []);
 
-  useEffect(() => {
-    if (points.length === 0) return;
-
-    const interval = setInterval(() => {
-      setPoints((prev) => prev.slice(1));
-    }, 45);
-
-    return () => clearInterval(interval);
-  }, [points]);
-
-  return (
-    <div className="pointer-events-none fixed inset-0 z-[9999]">
-      {points.map((point, index) => {
-        const strength = (index + 1) / points.length;
-        const size = 10 + strength * 12;
-        const opacity = 0.05 + strength * 0.12;
-
-        return (
-          <div
-            key={point.id}
-            className="absolute rounded-full"
-            style={{
-              left: point.x - size / 2,
-              top: point.y - size / 2,
-              width: size,
-              height: size,
-              opacity,
-              background: 'radial-gradient(circle, rgba(103,232,249,0.9) 0%, rgba(56,189,248,0.35) 35%, transparent 72%)',
-              filter: 'blur(8px)',
-              transition: 'opacity 120ms linear, transform 120ms linear',
-              transform: `scale(${0.85 + strength * 0.25})`,
-            }}
-          />
-        );
-      })}
-    </div>
-  );
+  return null;
 }
