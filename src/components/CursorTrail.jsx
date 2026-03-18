@@ -13,15 +13,28 @@ export default function CursorTrail() {
   }, []);
 
   return (
-    <div
-      className="pointer-events-none fixed z-[9999] w-10 h-10 rounded-full"
-      style={{
-        left: pos.x - 20,
-        top: pos.y - 20,
-        background: 'radial-gradient(circle, rgba(56,189,248,0.14), rgba(56,189,248,0.03) 55%, transparent 75%)',
-        filter: 'blur(8px)',
-        transition: 'left 90ms linear, top 90ms linear',
-      }}
-    />
+    <>
+      <div
+        className="pointer-events-none fixed z-[9999] w-16 h-16 rounded-full"
+        style={{
+          left: pos.x - 32,
+          top: pos.y - 32,
+          background:
+            'radial-gradient(circle, rgba(56,189,248,0.18) 0%, rgba(56,189,248,0.08) 40%, transparent 72%)',
+          filter: 'blur(10px)',
+          transition: 'left 120ms linear, top 120ms linear',
+        }}
+      />
+      <div
+        className="pointer-events-none fixed z-[9999] w-3 h-3 rounded-full"
+        style={{
+          left: pos.x - 6,
+          top: pos.y - 6,
+          background: 'rgba(125,211,252,0.55)',
+          boxShadow: '0 0 18px rgba(56,189,248,0.65)',
+          transition: 'left 40ms linear, top 40ms linear',
+        }}
+      />
+    </>
   );
 }
