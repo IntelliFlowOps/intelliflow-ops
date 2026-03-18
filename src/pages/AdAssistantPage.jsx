@@ -96,7 +96,7 @@ export default function AdAssistantPage() {
             <div className="h-full flex flex-col items-center justify-center">
               <div className="relative mb-8">
                 <div className="absolute inset-0 blur-3xl bg-indigo-500/20 rounded-full scale-150"></div>
-                <div className="relative w-24 h-24 rounded-3xl bg-black/40 border border-white/10 glow-ring float-slow overflow-hidden flex items-center justify-center">
+                <div className="relative w-24 h-24 rounded-3xl bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center">
                   <img src="/logo.png" alt="IntelliFlow logo" className="w-full h-full object-cover" />
                 </div>
               </div>
@@ -115,7 +115,7 @@ export default function AdAssistantPage() {
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="text-left rounded-3xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/20 transition-all duration-200 px-5 py-4 shadow-lg shadow-black/20"
+                    className="text-left rounded-3xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-200 px-5 py-4"
                   >
                     <div className="text-sm text-zinc-200 leading-6">{prompt}</div>
                   </button>
@@ -127,13 +127,13 @@ export default function AdAssistantPage() {
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`flex message-enter ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-3xl rounded-3xl px-5 py-4 shadow-xl ${
+                    className={`max-w-3xl rounded-3xl px-5 py-4 ${
                       msg.role === 'user'
-                        ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-indigo-500/20'
-                        : 'bg-white/[0.04] backdrop-blur-xl border border-white/10 text-zinc-100 shadow-black/30'
+                        ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white'
+                        : 'bg-white/[0.04] backdrop-blur-xl border border-white/10 text-zinc-100'
                     }`}
                   >
                     <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
@@ -147,16 +147,12 @@ export default function AdAssistantPage() {
               ))}
 
               {loading && (
-                <div className="flex justify-start message-enter">
-                  <div className="max-w-3xl rounded-3xl px-5 py-4 bg-white/[0.04] backdrop-blur-xl border border-white/10 text-zinc-100 shadow-black/30">
+                <div className="flex justify-start">
+                  <div className="max-w-3xl rounded-3xl px-5 py-4 bg-white/[0.04] backdrop-blur-xl border border-white/10 text-zinc-100">
                     <div className="text-[11px] uppercase tracking-[0.2em] opacity-70 mb-2">
                       Ad Assistant
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 typing-dot"></span>
-                    </div>
+                    <div className="text-sm text-zinc-400">Thinking...</div>
                   </div>
                 </div>
               )}
@@ -175,12 +171,12 @@ export default function AdAssistantPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Ask about budget, hooks, ad copy, videos, images, targeting, campaign performance, or what to do next..."
-              className="flex-1 rounded-3xl bg-white/[0.04] border border-white/10 px-5 py-4 text-sm resize-none min-h-[68px] max-h-48 focus:outline-none focus:border-indigo-400/50 focus:ring-2 focus:ring-indigo-400/20 text-zinc-100 placeholder:text-zinc-500"
+              className="flex-1 rounded-3xl bg-white/[0.04] border border-white/10 px-5 py-4 text-sm resize-none min-h-[68px] max-h-48 focus:outline-none text-zinc-100 placeholder:text-zinc-500"
             />
             <button
               onClick={() => sendMessage()}
               disabled={loading}
-              className="rounded-3xl px-6 py-4 bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-medium disabled:opacity-50 shadow-lg shadow-indigo-500/20"
+              className="rounded-3xl px-6 py-4 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-medium disabled:opacity-50"
             >
               Send
             </button>
