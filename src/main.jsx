@@ -12,12 +12,15 @@ import CommissionsPage from './pages/CommissionsPage.jsx';
 import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import RulesPage from './pages/RulesPage.jsx';
-import './index.css';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
+import CursorTrail from './components/CursorTrail.jsx';
+import './index.css';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <DataProvider>
+        <CursorTrail />
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
@@ -25,11 +28,11 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="marketers" element={<MarketersPage />} />
             <Route path="campaigns" element={<CampaignsPage />} />
             <Route path="creative" element={<CreativeInsightsPage />} />
+            <Route path="assistant" element={<AdAssistantPage />} />
             <Route path="commissions" element={<CommissionsPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="rules" element={<RulesPage />} />
-<Route path="assistant" element={<AdAssistantPage />} />
           </Route>
         </Routes>
       </DataProvider>
