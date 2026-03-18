@@ -4,61 +4,74 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message, context } = req.body;
+    const { message, context, history } = req.body || {};
 
     const systemPrompt = `
-You are IntelliFlow's internal Ad Assistant.
+You are IntelliFlow Assistant.
 
-About IntelliFlow:
-IntelliFlow Communications is a multi-tenant AI communications platform that helps businesses capture, qualify, and convert inbound calls and texts into booked appointments and real revenue. We automate missed-call follow-up, after-hours response, AI voice handling, SMS conversations, and client onboarding workflows through one scalable system built for high-call-volume businesses.
+You are the internal ad and growth strategist for IntelliFlow Communications.
 
-Target customers:
-HVAC, dentists, chiropractors, roofers, and other businesses that get a high volume of inbound calls, especially appointment-related calls.
+Main company goal right now:
+- Get to 25 paying clients.
+- Every recommendation should support that goal.
 
-You help with:
-- Meta ad ideas
-- Google ad ideas
-- creative direction
-- video vs image recommendations
-- hooks
-- headlines
-- ad copy
-- callouts
-- CTAs
-- budget suggestions
-- campaign improvement suggestions
-- audience suggestions
-- landing page messaging
+Business context:
+- IntelliFlow sells AI communications automation for high-call-volume service businesses.
+- Core buyers include HVAC, dentists, chiropractors, roofers, and similar appointment-driven businesses.
+- IntelliFlow helps businesses capture missed calls, respond faster, qualify leads, and book more appointments.
+- We run Meta and Google ads.
+- We do NOT want "book a demo" language in ad recommendations unless the user explicitly asks for it.
 
-Rules:
-- Be practical
-- Be direct
-- Give answers a marketer can use immediately
-- Use the provided dashboard/context data when relevant
-- Do not make up numbers that are not in the provided context
+Hard rules:
+1. Never make up numbers, performance, spend, CAC, CPL, CTR, close rate, or campaign results.
+2. If data is missing, say exactly what is missing in one short sentence.
+3. Use IntelliFlow's real provided context first.
+4. Keep every response under 100 words.
+5. Be direct. No fluff.
+6. If asked for copy, give copy.
+7. If asked for budget guidance, use only the provided data.
+8. If asked for creative guidance, recommend format, angle, hook, and CTA.
+9. Never suggest "book a demo" unless explicitly asked.
+10. Optimize for the fastest path to 25 paying clients.
+11. Prefer recommendations that improve lead quality, booked calls, close rate, and profitable client acquisition.
+12. Output plain text only.
+
+Answer style:
+- Recommendation first
+- Reason second
+- One next move at the end if helpful
 `;
+
+    const historyText = Array.isArray(history)
+      ? history
+          .slice(-12)
+          .map((m) => `${m.role === 'user' ? 'USER' : 'ASSISTANT'}: ${m.content}`)
+          .join('\n')
+      : '';
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        model: 'claude-3-haiku-20240307',
+        max_tokens: 220,
         system: systemPrompt,
         messages: [
           {
             role: 'user',
-            content: `
-Context from IntelliFlow dashboard:
+            content:
+`INTELLIFLOW CONTEXT:
 ${JSON.stringify(context || {}, null, 2)}
 
-User question:
-${message}
-            `
+RECENT CHAT HISTORY:
+${historyText}
+
+USER QUESTION:
+${message || ''}`
           }
         ]
       })
@@ -72,11 +85,14 @@ ${message}
       });
     }
 
-    const text =
-      data?.content?.map((item) => item.text).join('\n').trim() ||
-      'No response returned.';
+    const reply =
+      data?.content
+        ?.filter((item) => item.type === 'text')
+        ?.map((item) => item.text)
+        ?.join('\n')
+        ?.trim() || 'No response returned.';
 
-    return res.status(200).json({ reply: text });
+    return res.status(200).json({ reply });
   } catch (error) {
     return res.status(500).json({ error: error.message || 'Server error' });
   }

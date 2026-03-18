@@ -1,13 +1,15 @@
 import { useMemo, useRef, useState, useEffect } from 'react';
 import { useSheetData } from '../hooks/useSheetData.jsx';
 
+const STORAGE_KEY = 'intelliflow-assistant-chat-v1';
+
 const STARTER_PROMPTS = [
-  'Write a first draft',
-  'Get advice',
-  'Learn from our data',
-  'Create an ad idea',
-  'Make a budget plan',
-  'Fix our weakest campaign'
+  'Which campaign should get more budget this week to help us reach 25 paying clients fastest?',
+  'What is the best first hook for an HVAC ad if our only goal is more paying clients?',
+  'Should our next ad be video or image based on what gives us the best shot at 25 clients?',
+  'What should we cut first if spend is leaking and we need profitable growth?',
+  'Write 3 better ad hooks for chiropractors focused on booked calls and paying clients.',
+  'What should we test next based on our current numbers to get to 25 clients faster?'
 ];
 
 export default function AdAssistantPage() {
@@ -17,20 +19,35 @@ export default function AdAssistantPage() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
 
+  const slimRows = (rows, limit = 6) => Array.isArray(rows) ? rows.slice(0, limit) : [];
+
   const context = useMemo(() => {
     return {
+      goal: 'Get to 25 paying clients',
       dashboard: data?.DASHBOARD || {},
-      customers: data?.CUSTOMERS || [],
-      marketers: data?.MARKETERS || [],
-      campaigns: data?.CAMPAIGNS || [],
-      creativeInsights: data?.CREATIVE_INSIGHTS || [],
-      commissionRules: data?.COMMISSION_RULES || {},
-      commissionLedger: data?.COMMISSION_LEDGER || [],
-      foundersKpis: data?.FOUNDERS_KPIS || [],
-      customerActivity: data?.CUSTOMER_ACTIVITY || [],
-      analytics: data?.ALL_ANALYTICS || []
+      marketers: slimRows(data?.MARKETERS, 4),
+      campaigns: slimRows(data?.CAMPAIGNS, 6),
+      creativeInsights: slimRows(data?.CREATIVE_INSIGHTS, 6),
+      foundersKpis: slimRows(data?.FOUNDERS_KPIS, 4),
+      analytics: slimRows(data?.ALL_ANALYTICS, 6)
     };
   }, [data]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setMessages(parsed);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,7 +70,8 @@ export default function AdAssistantPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageToSend,
-          context
+          context,
+          history: nextMessages
         })
       });
 
@@ -86,6 +104,13 @@ export default function AdAssistantPage() {
     }
   }
 
+  function clearChat() {
+    setMessages([]);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+  }
+
   const isEmpty = messages.length === 0;
 
   return (
@@ -109,6 +134,10 @@ export default function AdAssistantPage() {
               </h1>
             </div>
 
+            <div className="mt-3 text-center text-sm text-zinc-300">
+              Locked on one goal: 25 paying clients.
+            </div>
+
             <div className="mt-10 w-full max-w-3xl rounded-[30px] border border-white/10 bg-[#111a2c]/85 backdrop-blur-2xl shadow-2xl shadow-black/40 p-5">
               <textarea
                 value={input}
@@ -121,7 +150,7 @@ export default function AdAssistantPage() {
               <div className="mt-4 flex items-center justify-between gap-3">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/8 border border-white/10 px-3 py-2 text-sm text-zinc-200">
                   <span className="w-5 h-5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 flex items-center justify-center text-[10px] text-white">IF</span>
-                  Quick response
+                  Data-based answers
                 </div>
 
                 <button
@@ -134,7 +163,7 @@ export default function AdAssistantPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-3 mt-5 max-w-4xl">
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-5 max-w-5xl">
               {STARTER_PROMPTS.map((prompt) => (
                 <button
                   key={prompt}
@@ -145,42 +174,22 @@ export default function AdAssistantPage() {
                 </button>
               ))}
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-5xl mt-12">
-              <div className="rounded-[26px] bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 p-5 shadow-xl shadow-black/25 min-h-[180px]">
-                <div className="text-sm text-zinc-400 mb-3">Jump back into your data</div>
-                <div className="space-y-3 text-sm">
-                  <div className="text-zinc-200">Current dashboard snapshot</div>
-                  <div className="text-zinc-500">Live Google Sheets context loaded</div>
-                  <div className="text-zinc-500">Use this for real budget guidance</div>
-                </div>
-              </div>
-
-              <div className="rounded-[26px] bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 p-5 shadow-xl shadow-black/25 min-h-[180px]">
-                <div className="text-sm text-zinc-400 mb-3">Get guided ad help</div>
-                <div className="grid grid-cols-3 gap-3 text-xs text-zinc-300">
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Meta</div>
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Google</div>
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Hooks</div>
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Copy</div>
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Budget</div>
-                  <div className="rounded-2xl bg-white/5 p-4 text-center">Creative</div>
-                </div>
-              </div>
-
-              <div className="rounded-[26px] bg-[#121a2d]/80 backdrop-blur-xl border border-white/10 p-5 shadow-xl shadow-black/25 min-h-[180px]">
-                <div className="text-sm text-zinc-400 mb-3">Keep talking to your data</div>
-                <div className="space-y-3 text-sm">
-                  <div className="text-zinc-200">Ask where spend should move</div>
-                  <div className="text-zinc-500">Ask what campaigns are weak</div>
-                  <div className="text-zinc-500">Ask what ads to make next</div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       ) : (
         <div className="h-full flex flex-col">
+          <div className="px-6 lg:px-10 pt-5 pb-2 flex items-center justify-between border-b border-white/10 bg-[#0b1324]/40">
+            <div className="text-sm uppercase tracking-[0.3em] text-cyan-200/70">
+              IntelliFlow Assistant
+            </div>
+            <button
+              onClick={clearChat}
+              className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/15 text-sm text-white transition"
+            >
+              Clear Chat
+            </button>
+          </div>
+
           <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8">
             <div className="max-w-4xl mx-auto space-y-6">
               {messages.map((msg, i) => (
