@@ -1,3 +1,5 @@
+export const SPREADSHEET_ID = '1TK0c4BxhqSVL09SlC8SnweddOFvP9frEmYIKqdl2jqc';
+
 /**
  * INTELLIFLOW OPS — GOOGLE SHEETS CONFIG
  *
