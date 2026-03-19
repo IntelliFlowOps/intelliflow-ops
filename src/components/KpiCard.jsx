@@ -14,19 +14,22 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
   };
 
   return (
-    <div className="kpi-card fade-in group">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
+    <div className="kpi-card fade-in group relative overflow-visible z-0 hover:z-50 focus-within:z-50">
+      <div className="flex items-start justify-between gap-3 overflow-visible">
+        <div className="flex items-center gap-2 min-w-0 overflow-visible">
           <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider truncate">
             {label}
           </span>
 
           {info && (
-            <div className="relative">
+            <div
+              className="relative shrink-0 overflow-visible"
+              onMouseEnter={() => setOpen(true)}
+              onMouseLeave={() => setOpen(false)}
+            >
               <button
                 type="button"
-                onMouseEnter={() => setOpen(true)}
-                onMouseLeave={() => setOpen(false)}
+                aria-label={`More information about ${label}`}
                 onFocus={() => setOpen(true)}
                 onBlur={() => setOpen(false)}
                 onClick={() => setOpen((prev) => !prev)}
@@ -36,7 +39,7 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
               </button>
 
               <div
-                className={`absolute left-0 top-6 z-20 w-64 rounded-2xl border border-white/10 bg-[#10172a]/95 backdrop-blur-2xl shadow-2xl shadow-black/40 p-3 text-left transition-all duration-200 ${
+                className={`absolute left-1/2 top-full mt-2 -translate-x-1/2 z-[999] w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-[#10172a]/95 backdrop-blur-2xl shadow-2xl shadow-black/40 p-3 text-left transition-all duration-200 ${
                   open
                     ? 'opacity-100 translate-y-0 pointer-events-auto'
                     : 'opacity-0 -translate-y-1 pointer-events-none'
@@ -45,7 +48,7 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
                 <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
                   KPI Info
                 </div>
-                <div className="text-xs leading-5 text-zinc-200 whitespace-pre-wrap">
+                <div className="text-xs leading-5 text-zinc-200 whitespace-pre-wrap break-words">
                   {info}
                 </div>
               </div>
