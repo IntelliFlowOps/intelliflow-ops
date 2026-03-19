@@ -1,5 +1,3 @@
-import { X } from 'lucide-react';
-
 export default function DrawerPanel({ open, onClose, title, children }) {
   if (!open) return null;
 
@@ -12,9 +10,9 @@ export default function DrawerPanel({ open, onClose, title, children }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg border border-white/10 p-2 text-zinc-400 transition hover:bg-white/5 hover:text-white"
+            className="rounded-lg border border-white/10 px-3 py-2 text-zinc-400 transition hover:bg-white/5 hover:text-white"
           >
-            <X size={18} />
+            Close
           </button>
         </div>
         <div className="h-[calc(100%-73px)] overflow-y-auto px-6 py-6">
