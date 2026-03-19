@@ -1,56 +1,123 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import StatusBadge from './StatusBadge.jsx';
-import EmptyState from './EmptyState.jsx';
-import { displayValue } from '../utils/format.js';
 
 const STATUS_COLUMNS = ['Status', 'Health Impact', 'Churn Risk'];
 
-export default function DataTable({ rows = [], columns = [], searchable = true, searchPlaceholder = 'Search...', onRowClick, emptyMessage = 'No data available', maxHeight = 'max-h-[600px]', stickyHeader = true }) {
-  const [search, setSearch] = useState('');
+function normalize(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  return String(value);
+}
+
+export default function DataTable({
+  rows = [],
+  columns = [],
+  onRowClick,
+  searchPlaceholder = 'Search...',
+  emptyMessage = 'No data yet',
+  searchable = true,
+}) {
+  const [query, setQuery] = useState('');
 
   const filteredRows = useMemo(() => {
-    if (!search.trim()) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((row) => Object.values(row).some((val) => String(val).toLowerCase().includes(q)));
-  }, [rows, search]);
+    const q = query.trim().toLowerCase();
+    if (!q) return rows;
 
-  if (!rows || rows.length === 0) return <EmptyState message={emptyMessage} />;
+    return rows.filter((row) =>
+      columns.some((col) =>
+        String(row?.[col.key] ?? '')
+          .toLowerCase()
+          .includes(q)
+      )
+    );
+  }, [rows, columns, query]);
 
-  const cols = columns.length > 0 ? columns : Object.keys(rows[0]).filter((k) => !k.startsWith('_')).map((key) => ({ key, label: key }));
+  const placeholderRows = Array.from({ length: 5 });
 
   return (
-    <div className="table-container fade-in">
+    <div className="space-y-3">
       {searchable && (
-        <div className="p-3 border-b border-surface-500/40">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={searchPlaceholder} className="input-base w-full max-w-xs" />
-          {search && filteredRows.length !== rows.length && <span className="ml-3 text-xs text-zinc-500">{filteredRows.length} of {rows.length} rows</span>}
+        <div className="card p-4">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="w-full rounded-xl border border-white/10 bg-surface/60 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+          />
         </div>
       )}
-      <div className={`overflow-auto ${maxHeight}`}>
-        <table className="w-full text-sm">
-          <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
-            <tr className="bg-surface-600/80 backdrop-blur-sm border-b border-surface-500/40">
-              {cols.map((col) => <th key={col.key} className="text-left px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap">{col.label}</th>)}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-surface-500/20">
-            {filteredRows.length === 0 ? (
-              <tr><td colSpan={cols.length} className="px-4 py-8 text-center text-zinc-500 text-sm">No matching results</td></tr>
-            ) : (
-              filteredRows.map((row, idx) => (
-                <tr key={idx} onClick={() => onRowClick?.(row)} className={`transition-colors ${onRowClick ? 'cursor-pointer hover:bg-surface-600/60' : 'hover:bg-surface-600/30'}`}>
-                  {cols.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-zinc-300 whitespace-nowrap">
-                      {STATUS_COLUMNS.includes(col.label || col.key) ? <StatusBadge status={row[col.key]} /> : col.render ? col.render(row[col.key], row) : displayValue(row[col.key])}
-                    </td>
+
+      <div className="card overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1100px] border-collapse">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-zinc-400"
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredRows.length > 0 ? (
+                filteredRows.map((row, idx) => (
+                  <tr
+                    key={`${row?.[columns[0]?.key] ?? 'row'}-${idx}`}
+                    onClick={() => onRowClick?.(row)}
+                    className={`border-b border-white/5 ${onRowClick ? 'cursor-pointer hover:bg-white/5' : ''}`}
+                  >
+                    {columns.map((col) => {
+                      const value = row?.[col.key];
+                      const showStatus = STATUS_COLUMNS.includes(col.key);
+
+                      return (
+                        <td key={col.key} className="px-4 py-3 text-sm text-zinc-200">
+                          {showStatus ? (
+                            <StatusBadge status={normalize(value)} />
+                          ) : (
+                            <span>{normalize(value)}</span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))
+              ) : (
+                <>
+                  {placeholderRows.map((_, idx) => (
+                    <tr key={`placeholder-${idx}`} className="border-b border-white/5">
+                      {columns.map((col) => (
+                        <td key={col.key} className="px-4 py-3 text-sm text-zinc-600">
+                          —
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                </>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="border-t border-white/5 px-4 py-3">
+          {filteredRows.length > 0 ? (
+            <div className="text-xs text-zinc-500">
+              {filteredRows.length} row{filteredRows.length === 1 ? '' : 's'}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <div className="text-sm font-medium text-zinc-300">{emptyMessage}</div>
+              <div className="text-xs text-zinc-500">
+                This table structure stays visible and will auto-populate from Google Sheets after refresh.
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      {filteredRows.length > 0 && <div className="px-4 py-2 border-t border-surface-500/30 text-xs text-zinc-500">{filteredRows.length} row{filteredRows.length !== 1 ? 's' : ''}</div>}
     </div>
   );
 }
