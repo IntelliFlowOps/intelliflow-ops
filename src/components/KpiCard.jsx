@@ -1,8 +1,12 @@
 import { displayValue } from '../utils/format.js';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function KpiCard({ label, value, subtitle, icon, color = 'accent', info }) {
   const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 320 });
+  const buttonRef = useRef(null);
+  const closeTimerRef = useRef(null);
 
   const colorMap = {
     accent: 'text-accent-glow',
@@ -13,46 +17,124 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
     zinc: 'text-zinc-300',
   };
 
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimer();
+    closeTimerRef.current = setTimeout(() => setOpen(false), 120);
+  };
+
+  const updatePosition = () => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const desiredWidth = Math.min(360, viewportWidth - 24);
+    const margin = 12;
+
+    let left = rect.left + rect.width / 2 - desiredWidth / 2;
+    if (left < margin) left = margin;
+    if (left + desiredWidth > viewportWidth - margin) {
+      left = viewportWidth - desiredWidth - margin;
+    }
+
+    const top = rect.bottom + 10;
+
+    setPosition({
+      top,
+      left,
+      width: desiredWidth,
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    updatePosition();
+
+    const handleWindowChange = () => updatePosition();
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+
+    window.addEventListener('resize', handleWindowChange);
+    window.addEventListener('scroll', handleWindowChange, true);
+    window.addEventListener('keydown', handleEscape);
+
+    return () => {
+      window.removeEventListener('resize', handleWindowChange);
+      window.removeEventListener('scroll', handleWindowChange, true);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    return () => clearCloseTimer();
+  }, []);
+
   return (
-    <div className="kpi-card fade-in group relative overflow-visible z-0 hover:z-50 focus-within:z-50">
-      <div className="flex items-start justify-between gap-3 overflow-visible">
-        <div className="flex items-center gap-2 min-w-0 overflow-visible">
+    <div className="kpi-card fade-in group relative">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 min-w-0">
           <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider truncate">
             {label}
           </span>
 
           {info && (
-            <div
-              className="relative shrink-0 overflow-visible"
-              onMouseEnter={() => setOpen(true)}
-              onMouseLeave={() => setOpen(false)}
-            >
+            <>
               <button
+                ref={buttonRef}
                 type="button"
                 aria-label={`More information about ${label}`}
+                onMouseEnter={() => {
+                  clearCloseTimer();
+                  setOpen(true);
+                }}
+                onMouseLeave={scheduleClose}
                 onFocus={() => setOpen(true)}
-                onBlur={() => setOpen(false)}
-                onClick={() => setOpen((prev) => !prev)}
-                className="w-4 h-4 rounded-full border border-white/15 text-[10px] text-zinc-400 hover:text-white hover:border-cyan-300/30 transition flex items-center justify-center bg-white/[0.04]"
+                onBlur={scheduleClose}
+                onClick={() => {
+                  clearCloseTimer();
+                  setOpen((prev) => !prev);
+                }}
+                className="w-4 h-4 shrink-0 rounded-full border border-white/15 text-[10px] text-zinc-400 hover:text-white hover:border-cyan-300/30 transition flex items-center justify-center bg-white/[0.04]"
               >
                 i
               </button>
 
-              <div
-                className={`absolute left-1/2 top-full mt-2 -translate-x-1/2 z-[999] w-80 max-w-[calc(100vw-2rem)] rounded-2xl border border-white/10 bg-[#10172a]/95 backdrop-blur-2xl shadow-2xl shadow-black/40 p-3 text-left transition-all duration-200 ${
-                  open
-                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 -translate-y-1 pointer-events-none'
-                }`}
-              >
-                <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
-                  KPI Info
-                </div>
-                <div className="text-xs leading-5 text-zinc-200 whitespace-pre-wrap break-words">
-                  {info}
-                </div>
-              </div>
-            </div>
+              {open &&
+                createPortal(
+                  <div
+                    className="fixed inset-0 z-[9999] pointer-events-none"
+                    aria-hidden="true"
+                  >
+                    <div
+                      className="absolute pointer-events-auto rounded-2xl border border-white/10 bg-[#10172a]/95 backdrop-blur-2xl shadow-2xl shadow-black/50 p-3 text-left"
+                      style={{
+                        top: `${position.top}px`,
+                        left: `${position.left}px`,
+                        width: `${position.width}px`,
+                        maxWidth: 'calc(100vw - 24px)',
+                      }}
+                      onMouseEnter={clearCloseTimer}
+                      onMouseLeave={scheduleClose}
+                    >
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
+                        KPI Info
+                      </div>
+                      <div className="text-xs leading-5 text-zinc-200 whitespace-pre-wrap break-words">
+                        {info}
+                      </div>
+                    </div>
+                  </div>,
+                  document.body
+                )}
+            </>
           )}
         </div>
 
