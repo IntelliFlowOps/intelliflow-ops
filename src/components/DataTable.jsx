@@ -1,6 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import StatusBadge from './StatusBadge.jsx';
-import EmptyState from './EmptyState.jsx';
 import { displayValue } from '../utils/format.js';
 
 const STATUS_COLUMNS = ['Status', 'Health Impact', 'Churn Risk'];
@@ -12,29 +11,31 @@ export default function DataTable({
   searchPlaceholder = 'Search...',
   onRowClick,
   onRowDoubleClick,
-  emptyMessage = 'No data available',
+  emptyMessage = 'No data yet',
   maxHeight = 'max-h-[600px]',
   stickyHeader = true
 }) {
-  const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
   const [selectedRowKey, setSelectedRowKey] = useState(null);
-
-  const filteredRows = useMemo(() => {
-    if (!search.trim()) return rows;
-    const q = search.toLowerCase();
-    return rows.filter((row) =>
-      Object.values(row).some((val) => String(val).toLowerCase().includes(q))
-    );
-  }, [rows, search]);
-
-  if (!rows || rows.length === 0) return <EmptyState message={emptyMessage} />;
 
   const cols =
     columns.length > 0
       ? columns
-      : Object.keys(rows[0])
+      : rows.length > 0
+      ? Object.keys(rows[0])
           .filter((k) => !k.startsWith('_'))
-          .map((key) => ({ key, label: key }));
+          .map((key) => ({ key, label: key }))
+      : [];
+
+  const filteredRows = useMemo(() => {
+    if (!query.trim()) return rows;
+    const q = query.toLowerCase();
+    return rows.filter((row) =>
+      Object.values(row).some((val) =>
+        String(val ?? '').toLowerCase().includes(q)
+      )
+    );
+  }, [rows, query]);
 
   const getRowKey = (row, idx) =>
     row?.id ??
@@ -56,32 +57,101 @@ export default function DataTable({
 
   return (
     <div className="table-container fade-in">
+      {searchable && (
+        <div className="p-3 border-b border-surface-500/40">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={searchPlaceholder}
+            className="input-base w-full max-w-xs"
+          />
+          {rows.length > 0 && query && filteredRows.length !== rows.length && (
+            <span className="ml-3 text-xs text-zinc-500">
+              {filteredRows.length} of {rows.length} rows
+            </span>
+          )}
+        </div>
+      )}
+
       <div className={`overflow-auto ${maxHeight}`}>
         <table className="w-full text-sm">
-          <tbody>
-            {filteredRows.map((row, idx) => {
-              const rowKey = getRowKey(row, idx);
-              const isSelected = selectedRowKey === rowKey;
+          {cols.length > 0 && (
+            <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
+              <tr className="bg-surface-600/80 backdrop-blur-sm border-b border-surface-500/40">
+                {cols.map((col) => (
+                  <th
+                    key={col.key}
+                    className="text-left px-4 py-3 text-xs font-semibold text-zinc-400 uppercase tracking-wider whitespace-nowrap"
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+          )}
 
-              return (
-                <tr
-                  key={rowKey}
-                  onClick={() => handleRowClick(row, idx)}
-                  onDoubleClick={() => handleRowDoubleClick(row, idx)}
-                  className={`cursor-pointer ${
-                    isSelected ? 'bg-surface-600/80' : 'hover:bg-surface-600/60'
-                  }`}
+          <tbody className="divide-y divide-surface-500/20">
+            {cols.length === 0 ? (
+              <tr>
+                <td className="px-4 py-8 text-center text-zinc-500 text-sm">
+                  {emptyMessage}
+                </td>
+              </tr>
+            ) : filteredRows.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={cols.length}
+                  className="px-4 py-10 text-center text-zinc-500 text-sm"
                 >
-                  {cols.map((col) => (
-                    <td key={col.key}>
-                      {displayValue(row[col.key])}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
+                  {rows.length === 0 ? emptyMessage : 'No matching results'}
+                </td>
+              </tr>
+            ) : (
+              filteredRows.map((row, idx) => {
+                const rowKey = getRowKey(row, idx);
+                const isSelected = selectedRowKey === rowKey;
+                const isInteractive = !!(onRowClick || onRowDoubleClick);
+
+                return (
+                  <tr
+                    key={rowKey}
+                    onClick={() => handleRowClick(row, idx)}
+                    onDoubleClick={() => handleRowDoubleClick(row, idx)}
+                    className={`transition-colors ${
+                      isInteractive ? 'cursor-pointer' : ''
+                    } ${
+                      isSelected
+                        ? 'bg-surface-600/80'
+                        : isInteractive
+                        ? 'hover:bg-surface-600/60'
+                        : 'hover:bg-surface-600/30'
+                    }`}
+                  >
+                    {cols.map((col) => (
+                      <td
+                        key={col.key}
+                        className="px-4 py-3 text-zinc-300 whitespace-nowrap"
+                      >
+                        {STATUS_COLUMNS.includes(col.label || col.key) ? (
+                          <StatusBadge status={row[col.key]} />
+                        ) : col.render ? (
+                          col.render(row[col.key], row)
+                        ) : (
+                          displayValue(row[col.key])
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
+      </div>
+
+      <div className="px-4 py-2 border-t border-surface-500/30 text-xs text-zinc-500">
+        {filteredRows.length} row{filteredRows.length === 1 ? '' : 's'}
       </div>
     </div>
   );
