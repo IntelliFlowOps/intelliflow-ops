@@ -82,15 +82,25 @@ export default function CampaignsPage() {
   const [selected, setSelected] = useState(null);
   const [platform, setPlatform] = useState('All');
 
+  const cleanRows = useMemo(
+    () => (rows || []).filter((row) => Object.values(row || {}).some((v) => String(v || '').trim() !== '')),
+    [rows]
+  );
+
   const platformOptions = useMemo(() => {
-    const values = [...new Set((rows || []).map((r) => (r['Platform'] || '').trim()).filter(Boolean))];
+    const values = [...new Set(cleanRows.map((r) => (r['Platform'] || '').trim()).filter(Boolean))];
     return ['All', ...values];
-  }, [rows]);
+  }, [cleanRows]);
 
   const filteredRows = useMemo(() => {
-    if (platform === 'All') return rows;
-    return (rows || []).filter((r) => (r['Platform'] || '').trim() === platform);
-  }, [rows, platform]);
+    if (platform === 'All') return cleanRows;
+    return cleanRows.filter((r) => (r['Platform'] || '').trim() === platform);
+  }, [cleanRows, platform]);
+
+  const handleRowClick = (row) => {
+    if (!row) return;
+    setSelected(row);
+  };
 
   return (
     <div className="space-y-6">
@@ -109,7 +119,9 @@ export default function CampaignsPage() {
             ))}
           </select>
         </div>
-        <p className="text-sm text-zinc-500">Campaign rows come from the Campaigns sheet only. Click any row to open the full campaign drawer.</p>
+        <p className="text-sm text-zinc-500">
+          Campaign rows come from the Campaigns sheet only. Click any real campaign row to open the full campaign drawer.
+        </p>
       </div>
 
       {loading && <LoadingSpinner />}
@@ -119,7 +131,7 @@ export default function CampaignsPage() {
         <DataTable
           rows={filteredRows}
           columns={columns}
-          onRowClick={setSelected}
+          onRowClick={handleRowClick}
           searchPlaceholder="Search campaigns..."
           emptyMessage="No campaign rows loaded yet"
         />
