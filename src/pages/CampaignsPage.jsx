@@ -1,55 +1,152 @@
-import { useState, useMemo } from 'react';
-import { useTabData } from '../hooks/useSheetData.jsx';
+import { useMemo, useState } from 'react';
 import DataTable from '../components/DataTable.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ErrorBanner from '../components/ErrorBanner.jsx';
 import DrawerPanel from '../components/DrawerPanel.jsx';
+import ErrorBanner from '../components/ErrorBanner.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { displayValue } from '../utils/format.js';
+import { useTabData } from '../hooks/useSheetData.jsx';
 
-export default function CampaignsPage() {
-  const { rows, loading, error } = useTabData('CAMPAIGNS');
-  const [selected, setSelected] = useState(null);
-  const [platformFilter, setPlatformFilter] = useState('All');
-  const platforms = useMemo(() => { if (!rows?.length) return ['All']; const s = new Set(rows.map((r) => r.Platform).filter(Boolean)); return ['All', ...Array.from(s)]; }, [rows]);
-  const filtered = useMemo(() => { if (!rows) return []; if (platformFilter === 'All') return rows; return rows.filter((r) => r.Platform === platformFilter); }, [rows, platformFilter]);
-  if (loading && (!rows || rows.length === 0)) return <LoadingSpinner />;
-  if (error) return <ErrorBanner message={error} />;
+const columns = [
+  { key: 'Date', label: 'Date' },
+  { key: 'Platform', label: 'Platform' },
+  { key: 'Campaign Name', label: 'Campaign' },
+  { key: 'Spend', label: 'Spend' },
+  { key: 'Leads', label: 'Leads' },
+  { key: 'Qualified Leads', label: 'Qual. Leads' },
+  { key: 'CTR', label: 'CTR' },
+  { key: 'CPC', label: 'CPC' },
+  { key: 'Customers Won', label: 'Cust. Won' },
+  { key: 'Revenue Won', label: 'Rev. Won' },
+  { key: 'CAC', label: 'CAC' },
+  { key: 'Close Rate', label: 'Close Rate' },
+  { key: 'Status', label: 'Status' },
+];
 
-  const columns = [
-    { key: 'Date', label: 'Date' }, { key: 'Platform', label: 'Platform' }, { key: 'Campaign Name', label: 'Campaign' },
-    { key: 'Spend', label: 'Spend' }, { key: 'Leads', label: 'Leads' }, { key: 'Qualified Leads', label: 'Qual. Leads' },
-    { key: 'CTR', label: 'CTR' }, { key: 'CPC', label: 'CPC' }, { key: 'Customers Won', label: 'Cust. Won' },
-    { key: 'Revenue Won', label: 'Rev. Won' }, { key: 'CAC', label: 'CAC' }, { key: 'Close Rate', label: 'Close Rate' }, { key: 'Status', label: 'Status' },
-  ];
+const sections = [
+  {
+    title: 'Overview',
+    fields: [
+      'Date',
+      'Platform',
+      'Campaign Name',
+      'Status',
+      'Managed By',
+      'Campaign ID / Link',
+    ],
+  },
+  {
+    title: 'Performance',
+    fields: [
+      'Spend',
+      'Leads',
+      'Qualified Leads',
+      'Impressions',
+      'Clicks',
+      'CTR',
+      'CPC',
+      'CPL',
+      'CAC',
+      'Close Rate',
+    ],
+  },
+  {
+    title: 'Outcome',
+    fields: ['Customers Won', 'Revenue Won'],
+  },
+  {
+    title: 'Creative & Offer',
+    fields: ['Niche', 'Hook', 'CTA', 'Creative Type', 'Offer'],
+  },
+];
+
+function displayValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  return String(value);
+}
+
+function DetailField({ label, value }) {
+  const showBadge = label === 'Status';
 
   return (
-    <div className="space-y-4 fade-in">
-      <div className="flex items-center gap-3">
-        <label className="text-xs text-zinc-500">Platform:</label>
-        <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)} className="input-base text-sm">
-          {platforms.map((p) => <option key={p} value={p}>{p}</option>)}
-        </select>
+    <div className="grid grid-cols-[180px_1fr] gap-3 border-b border-white/5 py-3 last:border-b-0">
+      <div className="text-sm text-zinc-500">{label}</div>
+      <div className="text-sm text-zinc-200">
+        {showBadge ? <StatusBadge status={displayValue(value)} /> : displayValue(value)}
       </div>
-      <DataTable rows={filtered} columns={columns} onRowClick={setSelected} searchPlaceholder="Search campaigns..." emptyMessage="No campaign data yet" />
-      <DrawerPanel open={!!selected} onClose={() => setSelected(null)} title={selected?.['Campaign Name'] || 'Campaign Detail'}>
-        {selected && <CampaignDetail campaign={selected} />}
-      </DrawerPanel>
     </div>
   );
 }
 
-function CampaignDetail({ campaign }) {
-  const fields = ['Date','Platform','Campaign Name','Spend','Leads','Qualified Leads','Impressions','Clicks','CTR','CPC','Customers Won','Revenue Won','CPL','CAC','Close Rate','Status','Niche','Hook','CTA','Creative Type','Offer','Managed By','Campaign ID / Link'];
+export default function CampaignsPage() {
+  const { rows, loading, error } = useTabData('CAMPAIGNS');
+  const [selected, setSelected] = useState(null);
+  const [platform, setPlatform] = useState('All');
+
+  const platformOptions = useMemo(() => {
+    const values = [...new Set((rows || []).map((r) => (r['Platform'] || '').trim()).filter(Boolean))];
+    return ['All', ...values];
+  }, [rows]);
+
+  const filteredRows = useMemo(() => {
+    if (platform === 'All') return rows;
+    return (rows || []).filter((r) => (r['Platform'] || '').trim() === platform);
+  }, [rows, platform]);
+
   return (
-    <div className="space-y-2">
-      {fields.map((f) => (
-        <div key={f} className="flex justify-between items-start py-1.5 border-b border-surface-500/20">
-          <span className="text-xs text-zinc-500 flex-shrink-0 w-36">{f}</span>
-          <span className="text-sm text-zinc-200 text-right">{f === 'Status' ? <StatusBadge status={campaign[f]} /> : displayValue(campaign[f])}</span>
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-end gap-4">
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Platform</label>
+          <select
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value)}
+            className="rounded-xl border border-white/10 bg-surface/60 px-4 py-3 text-sm text-white outline-none"
+          >
+            {platformOptions.map((option) => (
+              <option key={option} value={option} className="bg-surface text-white">
+                {option}
+              </option>
+            ))}
+          </select>
         </div>
-      ))}
-      <p className="text-[10px] text-zinc-600 pt-4">Campaign data is read-only. Edit in Google Sheets.</p>
+        <p className="text-sm text-zinc-500">Campaign rows come from the Campaigns sheet only. Click any row to open the full campaign drawer.</p>
+      </div>
+
+      {loading && <LoadingSpinner />}
+      {error && <ErrorBanner message={error} />}
+
+      {!loading && !error && (
+        <DataTable
+          rows={filteredRows}
+          columns={columns}
+          onRowClick={setSelected}
+          searchPlaceholder="Search campaigns..."
+          emptyMessage="No campaign rows loaded yet"
+        />
+      )}
+
+      <DrawerPanel
+        open={!!selected}
+        onClose={() => setSelected(null)}
+        title={selected?.['Campaign Name'] || 'Campaign Detail'}
+      >
+        {selected && (
+          <div className="space-y-8">
+            {sections.map((section) => (
+              <section key={section.title} className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                  {section.title}
+                </h3>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  {section.fields.map((field) => (
+                    <DetailField key={field} label={field} value={selected[field]} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+      </DrawerPanel>
     </div>
   );
 }
