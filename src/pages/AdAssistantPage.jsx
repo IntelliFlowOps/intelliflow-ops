@@ -32,6 +32,13 @@ const SOURCE_OF_TRUTH_PREVIEW = {
   ],
 };
 
+const STANDARD_STARTERS = [
+  'How should we allocate budget this month across Meta and Google?',
+  'What should founders focus on first to get to 25 paying clients faster?',
+  'Where are we likely wasting money right now?',
+  'How do we make our marketers more effective without adding complexity?',
+];
+
 const NICHE_OPTIONS = [
   'HVAC',
   'Dentists',
@@ -137,6 +144,21 @@ const TEST_NEXT = [
   },
 ];
 
+const STANDARD_CHAT = [
+  {
+    role: 'assistant',
+    text: 'Ask me anything about budget allocation, scaling to more paying clients, improving marketer efficiency, offer positioning, or how founders should prioritize execution.',
+  },
+  {
+    role: 'user',
+    text: 'What should founders focus on first if we want to grow faster without adding unnecessary complexity?',
+  },
+  {
+    role: 'assistant',
+    text: 'First, tighten the path from lead to booked job before adding more spend. If lead quality, close rate, or landing-page match is weak, more budget only scales waste. Focus on the highest-converting niche, strongest offer, and the simplest follow-up path first.',
+  },
+];
+
 function ModeButton({ active, children, onClick }) {
   return (
     <button
@@ -238,6 +260,23 @@ function TextArea({ value, onChange, placeholder, rows = 4 }) {
   );
 }
 
+function ChatBubble({ role, text }) {
+  const isAssistant = role === 'assistant';
+  return (
+    <div className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 border ${
+          isAssistant
+            ? 'bg-white/[0.04] border-white/10 text-zinc-200'
+            : 'bg-cyan-400/[0.08] border-cyan-300/20 text-cyan-100'
+        }`}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
+
 function buildMetaOutput(form) {
   const nichePainMap = {
     HVAC: 'after-hours service calls and missed urgent jobs',
@@ -272,25 +311,23 @@ function buildMetaOutput(form) {
       ? [
           {
             name: 'Primary Version',
-            hook,
-            angle,
+            summary: `${hook} Lead with lost booked jobs and a calm CTA.`,
           },
         ]
       : [
           {
             name: 'Pain-first',
-            hook,
-            angle,
+            summary: `${hook} Strongest for urgency and lost-revenue framing.`,
           },
           {
             name: 'Booked-jobs-first',
-            hook: `You do not need more traffic first. You need to stop losing the ${form.niche.toLowerCase()} calls you already paid for.`,
-            angle: `Push booked jobs and lead recovery before talking about automation.`,
+            summary:
+              'Lead with more booked jobs without more ad spend for a cleaner founder-friendly angle.',
           },
           {
             name: 'After-hours-first',
-            hook: `When your office stops answering, your ads can keep leaking revenue.`,
-            angle: `Lead with after-hours capture and the cost of slow response time.`,
+            summary:
+              'Focus on calls missed after the office stops answering and the revenue that leaks out.',
           },
         ];
 
@@ -341,17 +378,19 @@ function buildSearchOutput(form) {
 
   const variants =
     form.outputDepth === 'One best ad'
-      ? [{ name: 'Primary Search Angle', theme: 'Missed-call revenue leakage' }]
+      ? [{ name: 'Primary Search Angle', summary: 'Missed-call revenue leakage and booked jobs.' }]
       : [
-          { name: 'Missed-call leakage', theme: 'Revenue loss from unanswered calls' },
-          { name: 'Booked-jobs angle', theme: 'More booked jobs without more ad spend' },
-          { name: 'After-hours coverage', theme: 'Lead capture after the office stops answering' },
+          { name: 'Missed-call leakage', summary: 'Revenue loss from unanswered calls.' },
+          { name: 'Booked-jobs angle', summary: 'More booked jobs without more ad spend.' },
+          { name: 'After-hours coverage', summary: 'Lead capture after the office stops answering.' },
         ];
 
   return {
     platformLabel: 'Google Search Build',
-    angle: `Search copy should match high-intent users already looking for a better answer rate, missed-call coverage, or a way to stop losing booked jobs.`,
-    hook: `The problem is not always lead volume. It is what happens when high-intent calls go unanswered.`,
+    angle:
+      'Search copy should match high-intent users already looking for a better answer rate, missed-call coverage, or a way to stop losing booked jobs.',
+    hook:
+      'The problem is not always lead volume. It is what happens when high-intent calls go unanswered.',
     primaryText:
       'Google Search output should stay tight, high-intent, and directly aligned to the landing page promise.',
     headlines,
@@ -371,6 +410,7 @@ function buildSearchOutput(form) {
 export default function AdAssistantPage() {
   const [mode, setMode] = useState('standard');
   const [selectedBuildId, setSelectedBuildId] = useState(PAST_BUILDS[0].id);
+  const [chatInput, setChatInput] = useState('');
   const [form, setForm] = useState({
     niche: 'HVAC',
     platform: 'Meta',
@@ -406,12 +446,11 @@ export default function AdAssistantPage() {
             <div className="space-y-2 max-w-3xl">
               <div className="section-title">Ad Assistant</div>
               <h1 className="text-2xl font-semibold text-white tracking-tight">
-                Internal ad engine for sharper, cheaper, more consistent creative decisions
+                Founder chat mode + structured generate-ad mode in one page
               </h1>
               <p className="text-sm text-zinc-400 leading-6">
-                Standard mode handles improvement and analysis. Generate Ad From Scratch mode gives
-                marketers a structured build engine with platform toggles, ad inputs, reusable history,
-                and concise production-ready output.
+                Standard mode stays conversational for founders. Generate Ad From Scratch mode uses
+                toggles first, then optional notes, then a structured ad output marketers can work from.
               </p>
             </div>
 
@@ -428,10 +467,19 @@ export default function AdAssistantPage() {
           <div className="grid gap-3 md:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
-                Response Rule
+                Standard Mode
               </div>
               <div className="text-sm text-zinc-300 leading-6">
-                Full answer, no rambling. Structured output first so token cost stays controlled.
+                Founder-focused chat for budget allocation, scaling decisions, execution priorities,
+                and making the business more effective.
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
+                Generate Mode
+              </div>
+              <div className="text-sm text-zinc-300 leading-6">
+                Toggle-driven ad builder for marketers. Notes stay optional and only add extra context.
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -439,17 +487,7 @@ export default function AdAssistantPage() {
                 Memory
               </div>
               <div className="text-sm text-zinc-300 leading-6">
-                Past builds stay visible so marketers can reuse strong concepts without regenerating
-                from scratch every time.
-              </div>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
-                Editable Tomorrow
-              </div>
-              <div className="text-sm text-zinc-300 leading-6">
-                Source-of-truth sections are separated clearly so we can expand bans, niches, scaling
-                rules, and ad policy later without rebuilding the page.
+                Past builds stay visible so your team can review old directions without rerunning the assistant.
               </div>
             </div>
           </div>
@@ -460,29 +498,48 @@ export default function AdAssistantPage() {
         <div className="space-y-6">
           {mode === 'standard' ? (
             <SectionCard
-              title="Standard Assistant View"
-              subtitle="This is the normal assistant experience. It should improve ads, explain what is working, and suggest what to test next without bloated replies."
-              right={<Pill>Standard Mode</Pill>}
+              title="Founder Assistant Chat"
+              subtitle="This should feel like a real chatbot again. Ask about budget allocation, founder priorities, marketer effectiveness, offer direction, or internal execution."
+              right={<Pill>Chat Mode</Pill>}
             >
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
-                  <div className="text-sm font-semibold text-white">What the assistant should do</div>
-                  <ul className="space-y-2 text-sm text-zinc-300 leading-6">
-                    <li>Improve weak ads without rewriting everything blindly</li>
-                    <li>Explain performance in operator language marketers trust</li>
-                    <li>Keep recommendations concise, specific, and niche-aware</li>
-                    <li>Push toward booked jobs, better close rate, and better lead quality</li>
-                  </ul>
+              <div className="space-y-4">
+                <div className="rounded-2xl border border-white/10 bg-[#0d1426]/80 p-4 space-y-3 min-h-[360px]">
+                  {STANDARD_CHAT.map((message, index) => (
+                    <ChatBubble key={`${message.role}-${index}`} role={message.role} text={message.text} />
+                  ))}
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
-                  <div className="text-sm font-semibold text-white">What it should avoid</div>
-                  <ul className="space-y-2 text-sm text-zinc-300 leading-6">
-                    <li>Generic corporate ad language</li>
-                    <li>Overlong, expensive responses that bury the answer</li>
-                    <li>Weak CTA suggestions like “book a demo”</li>
-                    <li>Broad recommendations that ignore niche pain and landing-page match</li>
-                  </ul>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {STANDARD_STARTERS.map((starter) => (
+                    <button
+                      key={starter}
+                      type="button"
+                      onClick={() => setChatInput(starter)}
+                      className="text-left rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-zinc-300 transition hover:bg-white/[0.05]"
+                    >
+                      {starter}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+                  <TextArea
+                    rows={4}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask the assistant anything about budget allocation, where to focus, what to improve, or how founders should operate more effectively."
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs text-zinc-500">
+                      Keep this conversational. The real bot can answer broad founder and operator questions here.
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200"
+                    >
+                      Ask Assistant
+                    </button>
+                  </div>
                 </div>
               </div>
             </SectionCard>
@@ -490,7 +547,7 @@ export default function AdAssistantPage() {
             <>
               <SectionCard
                 title="Generate Ad From Scratch"
-                subtitle="Use these toggles to control the ad build. This is the actual generation panel, not just a policy preview."
+                subtitle="Main input should be toggles first. Notes stay optional and only tell the bot anything extra."
                 right={<Pill tone="strong">Build Mode On</Pill>}
               >
                 <div className="grid gap-4 md:grid-cols-2">
@@ -560,24 +617,31 @@ export default function AdAssistantPage() {
                   </Field>
                 </div>
 
-                <Field label="Additional Notes">
+                <Field label="Notes for the Bot (optional)">
                   <TextArea
                     rows={4}
                     value={form.notes}
                     onChange={(e) => updateForm('notes', e.target.value)}
-                    placeholder="Add extra direction here later. This stays editable for your source-of-truth expansion tomorrow."
+                    placeholder="Anything extra the bot should know for this build."
                   />
                 </Field>
 
-                <div className="rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.03] p-4 text-sm text-zinc-300 leading-6">
-                  This is the front-end control layer. Tomorrow we can wire a deeper source-of-truth and
-                  stronger generation logic behind these exact inputs without redoing the page.
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.03] p-4">
+                  <div className="text-sm text-zinc-300 leading-6">
+                    Tomorrow we can connect these controls to the deeper source-of-truth. The layout is now set up the right way.
+                  </div>
+                  <button
+                    type="button"
+                    className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200"
+                  >
+                    Generate Ad
+                  </button>
                 </div>
               </SectionCard>
 
               <SectionCard
                 title={generatedOutput.platformLabel}
-                subtitle="This is the structured output preview marketers should be able to copy, adapt, and build from."
+                subtitle="Structured output marketers can copy, adapt, and build from."
               >
                 <div className="space-y-4">
                   <div className="grid gap-3 md:grid-cols-2">
@@ -639,9 +703,7 @@ export default function AdAssistantPage() {
                           className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
                         >
                           <div className="text-sm font-semibold text-white mb-2">{variant.name}</div>
-                          <div className="text-xs text-zinc-400 leading-6">
-                            {'hook' in variant ? variant.hook : variant.theme}
-                          </div>
+                          <div className="text-xs text-zinc-400 leading-6">{variant.summary}</div>
                         </div>
                       ))}
                     </div>
@@ -670,7 +732,7 @@ export default function AdAssistantPage() {
 
           <SectionCard
             title="What to Test Next"
-            subtitle="This replaces best hooks and winning CTA KPI clutter with clearer testing priorities."
+            subtitle="This replaces hook and CTA clutter with clearer testing priorities."
           >
             <div className="grid gap-3 md:grid-cols-3">
               {TEST_NEXT.map((item) => (
@@ -785,25 +847,6 @@ export default function AdAssistantPage() {
               <LabeledValue label="Hook" value={selectedBuild.hook} />
               <LabeledValue label="CTA" value={selectedBuild.cta} />
               <LabeledValue label="Format" value={selectedBuild.format} />
-            </div>
-          </SectionCard>
-
-          <SectionCard
-            title="How this assistant should behave"
-            subtitle="Operating summary for the future version."
-          >
-            <div className="space-y-3 text-sm text-zinc-400 leading-6">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                Standard mode should improve, explain, and recommend without bloated replies.
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                Generate mode should produce a full ad package with hook, CTA, creative type,
-                placement, and landing-page match.
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                Saved builds should act as reusable memory without forcing huge prompt history every
-                time.
-              </div>
             </div>
           </SectionCard>
         </div>
