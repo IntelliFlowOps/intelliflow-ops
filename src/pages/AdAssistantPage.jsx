@@ -23,7 +23,7 @@ const SOURCE_OF_TRUTH_PREVIEW = {
     'Instant growth',
     'Game changer',
     'Cutting-edge solution',
-    'Generic “grow your business” wording',
+    'Generic "grow your business" wording',
   ],
   approvedCTAStyle: [
     'Check if you’re losing customers right now',
@@ -269,6 +269,7 @@ export default function AdAssistantPage() {
 
   const [mode, setMode] = useState('standard');
   const [selectedBuildId, setSelectedBuildId] = useState(PAST_BUILDS[0].id);
+
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState([
     {
@@ -290,7 +291,7 @@ export default function AdAssistantPage() {
     campaignName: '',
     notes: '',
   });
-  const [generatedOutput, setGeneratedOutput] = useState(null);
+  const [generatedOutput, setGeneratedOutput] = useState('');
   const [generateLoading, setGenerateLoading] = useState(false);
 
   const selectedBuild = useMemo(
@@ -351,9 +352,11 @@ export default function AdAssistantPage() {
     });
 
     const result = await response.json();
+
     if (!response.ok) {
       throw new Error(result?.error || 'Assistant request failed');
     }
+
     return result.reply;
   }
 
@@ -393,10 +396,7 @@ Important:
     } catch (error) {
       setChatHistory((prev) => [
         ...prev,
-        {
-          role: 'assistant',
-          text: `I hit an error: ${error.message}`,
-        },
+        { role: 'assistant', text: `I hit an error: ${error.message}` },
       ]);
     } finally {
       setChatLoading(false);
@@ -405,6 +405,7 @@ Important:
 
   async function handleGenerateAd() {
     setGenerateLoading(true);
+
     try {
       const prompt = `
 GENERATE AD FROM SCRATCH MODE
@@ -833,20 +834,3 @@ If a campaign name is provided, treat it as an exact-match reference against cam
     </div>
   );
 }
-kylekirkham@Kyles-MacBook-Air-3 intelliflow-ops %
-cd ~/Desktop/intelliflow-ops
-npm run build
-git add .
-git commit -m "Wire assistant page to API-backed founder chat and generate mode"
-git push origin main
-cd ~/Desktop/intelliflow-ops
-npm run build
-git add .
-git commit -m "Wire assistant page to API-backed founder chat and generate mode"
-git push origin maiEOF
-CTRL + C
-CTRL + C
-cd ~/Desktop/intelliflow-ops
-grep "Founder Assistant Chat" src/pages/AdAssistantPage.jsx
-
-
