@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSheetData } from '../hooks/useSheetData.jsx';
 
 const SOURCE_OF_TRUTH_PREVIEW = {
   companyFocus:
@@ -144,21 +145,6 @@ const TEST_NEXT = [
   },
 ];
 
-const STANDARD_CHAT = [
-  {
-    role: 'assistant',
-    text: 'Ask me anything about budget allocation, scaling to more paying clients, improving marketer efficiency, offer positioning, or how founders should prioritize execution.',
-  },
-  {
-    role: 'user',
-    text: 'What should founders focus on first if we want to grow faster without adding unnecessary complexity?',
-  },
-  {
-    role: 'assistant',
-    text: 'First, tighten the path from lead to booked job before adding more spend. If lead quality, close rate, or landing-page match is weak, more budget only scales waste. Focus on the highest-converting niche, strongest offer, and the simplest follow-up path first.',
-  },
-];
-
 function ModeButton({ active, children, onClick }) {
   return (
     <button
@@ -218,16 +204,17 @@ function LabeledValue({ label, value }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
       <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500 mb-2">{label}</div>
-      <div className="text-sm text-zinc-200 leading-6">{value}</div>
+      <div className="text-sm text-zinc-200 leading-6 whitespace-pre-wrap">{value}</div>
     </div>
   );
 }
 
-function Field({ label, children }) {
+function Field({ label, children, note }) {
   return (
     <label className="block space-y-2">
       <div className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">{label}</div>
       {children}
+      {note ? <div className="text-xs text-zinc-500 leading-5">{note}</div> : null}
     </label>
   );
 }
@@ -277,140 +264,20 @@ function ChatBubble({ role, text }) {
   );
 }
 
-function buildMetaOutput(form) {
-  const nichePainMap = {
-    HVAC: 'after-hours service calls and missed urgent jobs',
-    Dentists: 'missed new-patient calls and front-desk overload',
-    Chiropractors: 'lost appointment calls and inconsistent intake follow-up',
-    Roofers: 'storm-driven urgency and quote requests going unanswered',
-    'Med Spas': 'lead response delays and lost consultation bookings',
-    'Lawn Care': 'quote requests slipping through and slow follow-up',
-    Vets: 'missed new-client and appointment calls',
-    'Plumbing / Home Service': 'emergency calls going to the next company that answers',
-    'Auto Repair': 'lost repair inquiries and unfilled bays',
-    Construction: 'missed estimate calls and project inquiries',
-    'Pest Control': 'urgent service calls and unbooked inspections',
-  };
-
-  const nichePain = nichePainMap[form.niche] || 'missed calls turning into lost booked jobs';
-  const approvedCta = form.ctaStyle;
-  const angle = `${form.niche} businesses lose booked jobs when ${nichePain}. The ad should frame missed calls as lost revenue, then position IntelliFlow as the cleaner way to capture demand without adding more payroll pressure.`;
-
-  const hook = `The ${form.niche.toLowerCase()} leads you miss do not wait around. They book with whoever answers first.`;
-
-  const primaryText = `${form.niche} businesses are already paying to make the phone ring. The problem is what happens when nobody answers. IntelliFlow helps you cover calls 24/7, reduce missed opportunities, and turn more existing demand into booked jobs without forcing more ad spend first.`;
-
-  const headlines = [
-    `How many ${form.niche.toLowerCase()} leads are slipping through?`,
-    'Missed calls are costing more than you think',
-    'Get more booked jobs without more ad spend',
-  ];
-
-  const variants =
-    form.outputDepth === 'One best ad'
-      ? [
-          {
-            name: 'Primary Version',
-            summary: `${hook} Lead with lost booked jobs and a calm CTA.`,
-          },
-        ]
-      : [
-          {
-            name: 'Pain-first',
-            summary: `${hook} Strongest for urgency and lost-revenue framing.`,
-          },
-          {
-            name: 'Booked-jobs-first',
-            summary:
-              'Lead with more booked jobs without more ad spend for a cleaner founder-friendly angle.',
-          },
-          {
-            name: 'After-hours-first',
-            summary:
-              'Focus on calls missed after the office stops answering and the revenue that leaks out.',
-          },
-        ];
-
-  return {
-    platformLabel: 'Meta Ad Build',
-    angle,
-    hook,
-    primaryText,
-    headlines,
-    ctas: [approvedCta, CTA_OPTIONS[1], CTA_OPTIONS[2]],
-    creativeType:
-      form.creativeType === 'Static + animated recommendation'
-        ? 'Start with a static Canva version, then test a light animated version using the same hook and landing-page promise.'
-        : form.creativeType,
-    animated:
-      form.creativeType === 'Light animated Canva ad'
-        ? 'Yes — keep motion simple and tied to missed-call / booked-job contrast.'
-        : 'Static first unless motion clearly strengthens the pain point.',
-    placement: 'Facebook Feed, Instagram Feed, Stories/Reels variation',
-    landingPage: `Landing page should match the ${form.goal.toLowerCase()} promise and connect clearly to the ROI calculator.`,
-    whyItWorks:
-      'It stays niche-specific, outcome-led, and calm. It avoids fluffy AI language, ties the pain to lost booked jobs, and gives a measurable next step.',
-    variants,
-  };
-}
-
-function buildSearchOutput(form) {
-  const keywordAngle = `${form.niche} answering service, missed calls, after-hours response, more booked jobs`;
-  const headlines = [
-    `${form.niche} Calls Answered 24/7`,
-    'Stop Losing Booked Jobs',
-    'Capture More Calls After Hours',
-    'Missed Calls Cost You Revenue',
-    'Get More Booked Jobs Today',
-    `Better ${form.niche} Lead Response`,
-    'See What Missed Calls Cost',
-    'Reduce Missed Lead Leakage',
-    'Cover Calls Without More Payroll',
-    'Check Your Revenue Leakage',
-  ];
-
-  const descriptions = [
-    `Stop losing ${form.niche.toLowerCase()} leads when nobody answers. Capture more booked jobs with 24/7 AI receptionist coverage.`,
-    'See how much missed calls could be costing you and send traffic to a tighter ROI calculator landing page.',
-    'Improve response coverage, reduce lead leakage, and protect CAC before scaling spend.',
-    'Built for service businesses that need better lead capture without generic sales fluff.',
-  ];
-
-  const variants =
-    form.outputDepth === 'One best ad'
-      ? [{ name: 'Primary Search Angle', summary: 'Missed-call revenue leakage and booked jobs.' }]
-      : [
-          { name: 'Missed-call leakage', summary: 'Revenue loss from unanswered calls.' },
-          { name: 'Booked-jobs angle', summary: 'More booked jobs without more ad spend.' },
-          { name: 'After-hours coverage', summary: 'Lead capture after the office stops answering.' },
-        ];
-
-  return {
-    platformLabel: 'Google Search Build',
-    angle:
-      'Search copy should match high-intent users already looking for a better answer rate, missed-call coverage, or a way to stop losing booked jobs.',
-    hook:
-      'The problem is not always lead volume. It is what happens when high-intent calls go unanswered.',
-    primaryText:
-      'Google Search output should stay tight, high-intent, and directly aligned to the landing page promise.',
-    headlines,
-    descriptions,
-    ctas: [form.ctaStyle, CTA_OPTIONS[2], CTA_OPTIONS[3]],
-    creativeType: 'Search headlines + descriptions + landing-page match',
-    animated: 'Not applicable for search',
-    placement: 'Google Search',
-    landingPage: `Use a landing page headline that mirrors ${form.goal.toLowerCase()} and reinforces the ROI calculator.`,
-    whyItWorks:
-      'It matches high intent, stays outcome-focused, and avoids wasting clicks on vague automation language.',
-    keywordAngle,
-    variants,
-  };
-}
-
 export default function AdAssistantPage() {
+  const { data, loading } = useSheetData();
+
   const [mode, setMode] = useState('standard');
   const [selectedBuildId, setSelectedBuildId] = useState(PAST_BUILDS[0].id);
   const [chatInput, setChatInput] = useState('');
+  const [chatHistory, setChatHistory] = useState([
+    {
+      role: 'assistant',
+      text: 'Ask me anything about budget allocation, scaling to more paying clients, improving marketer efficiency, offer positioning, or founder priorities.',
+    },
+  ]);
+  const [chatLoading, setChatLoading] = useState(false);
+
   const [form, setForm] = useState({
     niche: 'HVAC',
     platform: 'Meta',
@@ -420,22 +287,171 @@ export default function AdAssistantPage() {
     outputDepth: '3 ad variants',
     ctaStyle: 'Check if you’re losing customers right now',
     landingPageGoal: 'ROI calculator + booked jobs angle',
+    campaignName: '',
     notes: '',
   });
+  const [generatedOutput, setGeneratedOutput] = useState(null);
+  const [generateLoading, setGenerateLoading] = useState(false);
 
   const selectedBuild = useMemo(
     () => PAST_BUILDS.find((build) => build.id === selectedBuildId) || PAST_BUILDS[0],
     [selectedBuildId]
   );
 
-  const generatedOutput = useMemo(() => {
-    if (form.platform === 'Meta') return buildMetaOutput(form);
-    return buildSearchOutput(form);
-  }, [form]);
+  const assistantContext = useMemo(() => {
+    const dashboard = data?.DASHBOARD || null;
+    const campaigns = Array.isArray(data?.CAMPAIGNS) ? data.CAMPAIGNS : [];
+    const customers = Array.isArray(data?.CUSTOMERS) ? data.CUSTOMERS : [];
+    const marketers = Array.isArray(data?.MARKETERS) ? data.MARKETERS : [];
+
+    const trimmedCampaigns = campaigns.slice(0, 50).map((row) => ({
+      'Campaign Name': row['Campaign Name'],
+      Platform: row['Platform'],
+      Spend: row['Spend'],
+      Leads: row['Leads'],
+      'Qualified Leads': row['Qualified Leads'],
+      CTR: row['CTR'],
+      CPC: row['CPC'],
+      'Customers Won': row['Customers Won'],
+      'Revenue Won': row['Revenue Won'],
+      CPL: row['CPL'],
+      CAC: row['CAC'],
+      'Close Rate': row['Close Rate'],
+      Status: row['Status'],
+      Niche: row['Niche'],
+      Offer: row['Offer'],
+      'Managed By': row['Managed By'],
+    }));
+
+    return {
+      sourceOfTruth: SOURCE_OF_TRUTH_PREVIEW,
+      dashboard,
+      campaigns: trimmedCampaigns,
+      customersCount: customers.length,
+      marketersCount: marketers.length,
+    };
+  }, [data]);
 
   const updateForm = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  async function callAssistant(message, extraContext = {}, history = []) {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        context: {
+          ...assistantContext,
+          ...extraContext,
+        },
+        history,
+      }),
+    });
+
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result?.error || 'Assistant request failed');
+    }
+    return result.reply;
+  }
+
+  async function handleFounderAsk() {
+    const trimmed = chatInput.trim();
+    if (!trimmed) return;
+
+    const nextHistory = [...chatHistory, { role: 'user', text: trimmed }];
+    setChatHistory(nextHistory);
+    setChatInput('');
+    setChatLoading(true);
+
+    try {
+      const historyForApi = nextHistory.map((item) => ({
+        role: item.role,
+        content: item.text,
+      }));
+
+      const reply = await callAssistant(
+        `FOUNDER MODE QUESTION:
+${trimmed}
+
+Important:
+- Use sheet-backed budget, campaign, and dashboard data when available.
+- If user asks about a specific campaign or ad, check for an exact campaign/ad name match.
+- If campaign-specific budget guidance is requested, be explicit about where to move money.
+- Keep it conversational but practical.`,
+        {
+          mode: 'founder',
+          note:
+            'For campaign-specific recommendations, the user should enter the ad or campaign name exactly as it appears in campaign data.',
+        },
+        historyForApi
+      );
+
+      setChatHistory((prev) => [...prev, { role: 'assistant', text: reply }]);
+    } catch (error) {
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: `I hit an error: ${error.message}`,
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  async function handleGenerateAd() {
+    setGenerateLoading(true);
+    try {
+      const prompt = `
+GENERATE AD FROM SCRATCH MODE
+
+Use these exact inputs:
+- Niche: ${form.niche}
+- Platform: ${form.platform}
+- Goal: ${form.goal}
+- Tone: ${form.tone}
+- Creative Type: ${form.creativeType}
+- Output Depth: ${form.outputDepth}
+- CTA Style: ${form.ctaStyle}
+- Landing Page Angle: ${form.landingPageGoal}
+- Campaign Name Reference: ${form.campaignName || 'None provided'}
+- Extra Notes: ${form.notes || 'None'}
+
+Requirements:
+- Never use "book a demo".
+- Keep the response concise but complete.
+- Return structured sections for:
+  1. Best Angle
+  2. Winning Hook
+  3. Primary Text
+  4. 3 Headlines
+  5. 3 CTA Options
+  6. Creative Type
+  7. Animated or Static
+  8. Where to Post
+  9. Landing Page Match
+  10. Why This Should Convert
+  11. 3 Variants
+
+If a campaign name is provided, treat it as an exact-match reference against campaign data if possible.
+`;
+
+      const reply = await callAssistant(prompt, {
+        mode: 'generate_ad',
+        requestedInputs: form,
+      });
+
+      setGeneratedOutput(reply);
+    } catch (error) {
+      setGeneratedOutput(`I hit an error: ${error.message}`);
+    } finally {
+      setGenerateLoading(false);
+    }
+  }
 
   return (
     <div className="space-y-6 fade-in">
@@ -449,8 +465,8 @@ export default function AdAssistantPage() {
                 Founder chat mode + structured generate-ad mode in one page
               </h1>
               <p className="text-sm text-zinc-400 leading-6">
-                Standard mode stays conversational for founders. Generate Ad From Scratch mode uses
-                toggles first, then optional notes, then a structured ad output marketers can work from.
+                Founder mode stays conversational. Generate mode uses toggles first, then optional notes,
+                then sends the request through the real assistant API.
               </p>
             </div>
 
@@ -471,7 +487,7 @@ export default function AdAssistantPage() {
               </div>
               <div className="text-sm text-zinc-300 leading-6">
                 Founder-focused chat for budget allocation, scaling decisions, execution priorities,
-                and making the business more effective.
+                and business effectiveness.
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
@@ -479,15 +495,15 @@ export default function AdAssistantPage() {
                 Generate Mode
               </div>
               <div className="text-sm text-zinc-300 leading-6">
-                Toggle-driven ad builder for marketers. Notes stay optional and only add extra context.
+                Toggled inputs first. Optional notes second. Real API call after that.
               </div>
             </div>
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="text-[11px] uppercase tracking-[0.18em] text-cyan-200/70 mb-2">
-                Memory
+                Data Access
               </div>
               <div className="text-sm text-zinc-300 leading-6">
-                Past builds stay visible so your team can review old directions without rerunning the assistant.
+                Uses loaded dashboard and campaign data. Campaign-specific questions should use the exact ad or campaign name.
               </div>
             </div>
           </div>
@@ -499,14 +515,34 @@ export default function AdAssistantPage() {
           {mode === 'standard' ? (
             <SectionCard
               title="Founder Assistant Chat"
-              subtitle="This should feel like a real chatbot again. Ask about budget allocation, founder priorities, marketer effectiveness, offer direction, or internal execution."
-              right={<Pill>Chat Mode</Pill>}
+              subtitle="Textbox first. Helper text and starter questions underneath. This should work like a real founder/operator chatbot."
+              right={<Pill>{loading ? 'Loading data' : 'Chat Mode'}</Pill>}
             >
               <div className="space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-[#0d1426]/80 p-4 space-y-3 min-h-[360px]">
-                  {STANDARD_CHAT.map((message, index) => (
-                    <ChatBubble key={`${message.role}-${index}`} role={message.role} text={message.text} />
-                  ))}
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
+                  <TextArea
+                    rows={4}
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Ask about budget allocation, where to move money, founder priorities, campaign efficiency, or how to operate more effectively."
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-xs text-zinc-500 leading-5">
+                      For campaign-specific budget recommendations, enter the ad or campaign name exactly as it appears in your campaign data.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleFounderAsk}
+                      disabled={chatLoading}
+                      className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200 disabled:opacity-60"
+                    >
+                      {chatLoading ? 'Thinking...' : 'Ask Assistant'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-zinc-500">
+                  This mode should answer broad founder questions and campaign-specific budget questions by reading your loaded sheet data plus your assistant rules.
                 </div>
 
                 <div className="grid gap-2 md:grid-cols-2">
@@ -522,24 +558,10 @@ export default function AdAssistantPage() {
                   ))}
                 </div>
 
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 space-y-3">
-                  <TextArea
-                    rows={4}
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder="Ask the assistant anything about budget allocation, where to focus, what to improve, or how founders should operate more effectively."
-                  />
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-xs text-zinc-500">
-                      Keep this conversational. The real bot can answer broad founder and operator questions here.
-                    </div>
-                    <button
-                      type="button"
-                      className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200"
-                    >
-                      Ask Assistant
-                    </button>
-                  </div>
+                <div className="rounded-2xl border border-white/10 bg-[#0d1426]/80 p-4 space-y-3 min-h-[320px]">
+                  {chatHistory.map((message, index) => (
+                    <ChatBubble key={`${message.role}-${index}`} role={message.role} text={message.text} />
+                  ))}
                 </div>
               </div>
             </SectionCard>
@@ -607,15 +629,27 @@ export default function AdAssistantPage() {
                     />
                   </Field>
 
-                  <Field label="Landing Page Angle">
+                  <Field
+                    label="Campaign / Ad Name Reference"
+                    note="Enter the campaign or ad name exactly as it appears if you want the assistant to use that specific campaign as context."
+                  >
                     <TextArea
                       rows={3}
-                      value={form.landingPageGoal}
-                      onChange={(e) => updateForm('landingPageGoal', e.target.value)}
-                      placeholder="Ex: ROI calculator focused on missed-call revenue leakage and booked jobs recovered"
+                      value={form.campaignName}
+                      onChange={(e) => updateForm('campaignName', e.target.value)}
+                      placeholder="Exact campaign/ad name if relevant"
                     />
                   </Field>
                 </div>
+
+                <Field label="Landing Page Angle">
+                  <TextArea
+                    rows={3}
+                    value={form.landingPageGoal}
+                    onChange={(e) => updateForm('landingPageGoal', e.target.value)}
+                    placeholder="Ex: ROI calculator focused on missed-call revenue leakage and booked jobs recovered"
+                  />
+                </Field>
 
                 <Field label="Notes for the Bot (optional)">
                   <TextArea
@@ -628,87 +662,32 @@ export default function AdAssistantPage() {
 
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.03] p-4">
                   <div className="text-sm text-zinc-300 leading-6">
-                    Tomorrow we can connect these controls to the deeper source-of-truth. The layout is now set up the right way.
+                    This mode should use the assistant API plus loaded sheet context, not random front-end-only generation.
                   </div>
                   <button
                     type="button"
-                    className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200"
+                    onClick={handleGenerateAd}
+                    disabled={generateLoading}
+                    className="rounded-xl border border-cyan-300/30 bg-cyan-400/15 px-4 py-2 text-sm font-medium text-cyan-200 disabled:opacity-60"
                   >
-                    Generate Ad
+                    {generateLoading ? 'Generating...' : 'Generate Ad'}
                   </button>
                 </div>
               </SectionCard>
 
               <SectionCard
-                title={generatedOutput.platformLabel}
-                subtitle="Structured output marketers can copy, adapt, and build from."
+                title="Generated Output"
+                subtitle="This should now be coming from the assistant API, not local placeholder logic."
               >
-                <div className="space-y-4">
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <LabeledValue label="Best Angle" value={generatedOutput.angle} />
-                    <LabeledValue label="Winning Hook" value={generatedOutput.hook} />
+                {generatedOutput ? (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-200 leading-6 whitespace-pre-wrap">
+                    {generatedOutput}
                   </div>
-
-                  <LabeledValue label="Primary Text" value={generatedOutput.primaryText} />
-
-                  <div className="grid gap-3 md:grid-cols-3">
-                    {generatedOutput.headlines.slice(0, 3).map((headline) => (
-                      <LabeledValue key={headline} label="Headline" value={headline} />
-                    ))}
+                ) : (
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-zinc-500 leading-6">
+                    Generate an ad to see the Claude-backed output here.
                   </div>
-
-                  {generatedOutput.descriptions ? (
-                    <div className="grid gap-3 md:grid-cols-2">
-                      {generatedOutput.descriptions.map((description) => (
-                        <LabeledValue
-                          key={description}
-                          label="Description"
-                          value={description}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-
-                  <div className="grid gap-3 md:grid-cols-3">
-                    {generatedOutput.ctas.map((cta) => (
-                      <LabeledValue key={cta} label="CTA" value={cta} />
-                    ))}
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <LabeledValue label="Creative Type" value={generatedOutput.creativeType} />
-                    <LabeledValue label="Animated or Static" value={generatedOutput.animated} />
-                    <LabeledValue label="Where to Post" value={generatedOutput.placement} />
-                    <LabeledValue label="Landing Page Match" value={generatedOutput.landingPage} />
-                  </div>
-
-                  {generatedOutput.keywordAngle ? (
-                    <LabeledValue
-                      label="Keyword / Intent Angle"
-                      value={generatedOutput.keywordAngle}
-                    />
-                  ) : null}
-
-                  <LabeledValue
-                    label="Why This Should Convert"
-                    value={generatedOutput.whyItWorks}
-                  />
-
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-3">
-                    <div className="text-sm font-semibold text-white">Variants</div>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      {generatedOutput.variants.map((variant) => (
-                        <div
-                          key={variant.name}
-                          className="rounded-2xl border border-white/10 bg-white/[0.03] p-3"
-                        >
-                          <div className="text-sm font-semibold text-white mb-2">{variant.name}</div>
-                          <div className="text-xs text-zinc-400 leading-6">{variant.summary}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                )}
               </SectionCard>
             </>
           )}
@@ -854,3 +833,20 @@ export default function AdAssistantPage() {
     </div>
   );
 }
+kylekirkham@Kyles-MacBook-Air-3 intelliflow-ops %
+cd ~/Desktop/intelliflow-ops
+npm run build
+git add .
+git commit -m "Wire assistant page to API-backed founder chat and generate mode"
+git push origin main
+cd ~/Desktop/intelliflow-ops
+npm run build
+git add .
+git commit -m "Wire assistant page to API-backed founder chat and generate mode"
+git push origin maiEOF
+CTRL + C
+CTRL + C
+cd ~/Desktop/intelliflow-ops
+grep "Founder Assistant Chat" src/pages/AdAssistantPage.jsx
+
+
