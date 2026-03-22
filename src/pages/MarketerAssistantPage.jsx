@@ -37,7 +37,7 @@ const NICHES = [
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
 
-function MessageBubble({ role, content, attachments = [], assistantMode }) {
+function MessageBubble({ role, content, attachments = [], badge }) {
   const isUser = role === "user";
 
   return (
@@ -51,7 +51,6 @@ function MessageBubble({ role, content, attachments = [], assistantMode }) {
         ].join(" ")}
       >
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_38%,rgba(34,211,238,0.05))]" />
-
         {!isUser && (
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_45%)]" />
         )}
@@ -59,9 +58,9 @@ function MessageBubble({ role, content, attachments = [], assistantMode }) {
         <div className="relative z-10">
           <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
             <span>{isUser ? "Marketer" : "Marketer Assistant"}</span>
-            {assistantMode && (
+            {badge && (
               <span className="rounded-full border border-cyan-300/15 bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/80">
-                {assistantMode === "build-ad" ? "Build Ad" : "Chat"}
+                {badge}
               </span>
             )}
           </div>
@@ -84,7 +83,6 @@ function MessageBubble({ role, content, attachments = [], assistantMode }) {
                       {attachment.name}
                     </div>
                   )}
-
                   <div className="border-t border-white/8 px-2 py-1 text-[11px] text-slate-300 truncate">
                     {attachment.name}
                   </div>
@@ -116,219 +114,278 @@ function AttachmentChip({ attachment, onRemove }) {
   );
 }
 
-function Pill({ label, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "rounded-full px-3 py-1.5 text-xs transition backdrop-blur-xl",
-        active
-          ? "border border-cyan-300/20 bg-cyan-400/12 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.12)]"
-          : "border border-white/8 bg-white/[0.04] text-slate-300 hover:border-cyan-300/15 hover:bg-cyan-400/[0.08] hover:text-slate-100",
-      ].join(" ")}
-    >
-      {label}
-    </button>
-  );
+function buildAttachmentObjects(fileList, existingAttachments) {
+  const incoming = Array.from(fileList || []);
+  const remainingSlots = MAX_ATTACHMENTS - existingAttachments.length;
+
+  if (remainingSlots <= 0) return [];
+
+  return incoming.slice(0, remainingSlots).reduce((acc, file) => {
+    const tooLarge = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
+    if (tooLarge) return acc;
+
+    acc.push({
+      id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+      name: file.name,
+      type: file.type || "application/octet-stream",
+      file,
+      previewUrl: file.type?.startsWith("image/") ? URL.createObjectURL(file) : "",
+    });
+
+    return acc;
+  }, []);
 }
 
 export default function MarketerAssistantPage() {
   const { data } = useSheetData();
 
-  const [messages, setMessages] = useState([
+  const [chatMessages, setChatMessages] = useState([
     {
       role: "assistant",
-      assistantMode: "chat",
       content:
-        "Ask about ad performance, budget allocation, platforms, hooks, offers, creative direction, or what is underperforming. Switch to Build Ad when you want structured ad output.",
+        "Ask about ad performance, budget allocation, platforms, hooks, offers, creative direction, or what is underperforming.",
       attachments: [],
+      badge: "Chat",
     },
   ]);
-  const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [assistantMode, setAssistantMode] = useState("chat");
+
+  const [builderMessages, setBuilderMessages] = useState([
+    {
+      role: "assistant",
+      content:
+        "Build Ad mode is ready. Pick a platform and niche, then ask for hooks, headlines, primary text, CTA, creative direction, or a testing matrix.",
+      attachments: [],
+      badge: "Build Ad",
+    },
+  ]);
+
+  const [chatInput, setChatInput] = useState("");
+  const [buildInput, setBuildInput] = useState("");
+  const [loadingChat, setLoadingChat] = useState(false);
+  const [loadingBuild, setLoadingBuild] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("Meta");
   const [selectedNiche, setSelectedNiche] = useState("HVAC");
-  const [attachments, setAttachments] = useState([]);
-  const [dragActive, setDragActive] = useState(false);
+  const [buildAdOpen, setBuildAdOpen] = useState(false);
 
-  const scrollRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const [chatAttachments, setChatAttachments] = useState([]);
+  const [buildAttachments, setBuildAttachments] = useState([]);
+
+  const [chatDragActive, setChatDragActive] = useState(false);
+  const [buildDragActive, setBuildDragActive] = useState(false);
+
+  const chatScrollRef = useRef(null);
+  const buildScrollRef = useRef(null);
+  const chatFileInputRef = useRef(null);
+  const buildFileInputRef = useRef(null);
 
   useEffect(() => {
-    if (!scrollRef.current) return;
-    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, loading]);
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatMessages, loadingChat]);
+
+  useEffect(() => {
+    if (buildScrollRef.current) {
+      buildScrollRef.current.scrollTop = buildScrollRef.current.scrollHeight;
+    }
+  }, [builderMessages, loadingBuild]);
 
   useEffect(() => {
     return () => {
-      attachments.forEach((attachment) => {
+      [...chatAttachments, ...buildAttachments].forEach((attachment) => {
         if (attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
       });
     };
-  }, [attachments]);
+  }, [chatAttachments, buildAttachments]);
 
-  const examplePrompts = useMemo(
-    () => (assistantMode === "build-ad" ? BUILD_EXAMPLES : CHAT_EXAMPLES),
-    [assistantMode]
-  );
+  const chatExamples = useMemo(() => CHAT_EXAMPLES, []);
+  const buildExamples = useMemo(() => BUILD_EXAMPLES, []);
 
-  function normalizeFiles(fileList) {
-    const incoming = Array.from(fileList || []);
-    const remainingSlots = MAX_ATTACHMENTS - attachments.length;
-
-    if (remainingSlots <= 0) return;
-
-    const nextFiles = incoming.slice(0, remainingSlots).reduce((acc, file) => {
-      const tooLarge = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
-      if (tooLarge) return acc;
-
-      acc.push({
-        id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        file,
-        previewUrl: file.type?.startsWith("image/") ? URL.createObjectURL(file) : "",
-      });
-
-      return acc;
-    }, []);
-
+  function addChatFiles(fileList) {
+    const nextFiles = buildAttachmentObjects(fileList, chatAttachments);
     if (nextFiles.length) {
-      setAttachments((prev) => [...prev, ...nextFiles]);
+      setChatAttachments((prev) => [...prev, ...nextFiles]);
     }
   }
 
-  function removeAttachment(id) {
-    setAttachments((prev) => {
+  function addBuildFiles(fileList) {
+    const nextFiles = buildAttachmentObjects(fileList, buildAttachments);
+    if (nextFiles.length) {
+      setBuildAttachments((prev) => [...prev, ...nextFiles]);
+    }
+  }
+
+  function removeChatAttachment(id) {
+    setChatAttachments((prev) => {
       const target = prev.find((item) => item.id === id);
       if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((item) => item.id !== id);
     });
   }
 
-  function handleFileChange(event) {
-    normalizeFiles(event.target.files);
-    event.target.value = "";
+  function removeBuildAttachment(id) {
+    setBuildAttachments((prev) => {
+      const target = prev.find((item) => item.id === id);
+      if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((item) => item.id !== id);
+    });
   }
 
-  function openFilePicker() {
-    fileInputRef.current?.click();
+  function openChatFilePicker() {
+    chatFileInputRef.current?.click();
   }
 
-  function handleDragEnter(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragActive(true);
+  function openBuildFilePicker() {
+    buildFileInputRef.current?.click();
   }
 
-  function handleDragLeave(event) {
-    event.preventDefault();
-    event.stopPropagation();
+  async function sendToAssistant({
+    messageText,
+    mode,
+    attachments,
+    nextMessages,
+  }) {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        assistantType: "marketer",
+        marketerMode: mode,
+        platform: selectedPlatform,
+        niche: selectedNiche,
+        message: messageText,
+        context: buildMarketerAssistantContext(data, {
+          marketerMode: mode,
+          platform: selectedPlatform,
+          niche: selectedNiche,
+        }),
+        messages: nextMessages.map((message) => ({
+          role: message.role,
+          content: message.content,
+        })),
+        attachments: attachments.map((attachment) => ({
+          name: attachment.name,
+          type: attachment.type,
+        })),
+      }),
+    });
 
-    const related = event.relatedTarget;
-    if (!event.currentTarget.contains(related)) {
-      setDragActive(false);
+    if (!response.ok) {
+      throw new Error("Failed to get marketer assistant response.");
     }
+
+    const dataResponse = await response.json();
+    return (
+      dataResponse?.reply ||
+      dataResponse?.message ||
+      dataResponse?.content ||
+      "I couldn’t generate a response. Check the chat route and response shape."
+    );
   }
 
-  function handleDragOver(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragActive(true);
-  }
-
-  function handleDrop(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    setDragActive(false);
-
-    if (event.dataTransfer?.files?.length) {
-      normalizeFiles(event.dataTransfer.files);
-    }
-  }
-
-  async function handleSubmit(event) {
+  async function handleChatSubmit(event) {
     event.preventDefault();
 
-    const trimmed = input.trim();
-    if ((!trimmed && attachments.length === 0) || loading) return;
+    const trimmed = chatInput.trim();
+    if ((!trimmed && chatAttachments.length === 0) || loadingChat) return;
 
     const userMessage = {
       role: "user",
-      assistantMode,
       content: trimmed || "Review the attached files/screenshots and help me.",
-      attachments,
+      attachments: chatAttachments,
+      badge: "Chat",
     };
 
-    const nextMessages = [...messages, userMessage];
-    setMessages(nextMessages);
-    setInput("");
-    setLoading(true);
-    setAttachments([]);
+    const nextMessages = [...chatMessages, userMessage];
+    setChatMessages(nextMessages);
+    setChatInput("");
+    setLoadingChat(true);
+    setChatAttachments([]);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          assistantType: "marketer",
-          marketerMode: assistantMode,
-          platform: selectedPlatform,
-          niche: selectedNiche,
-          message: trimmed,
-          context: buildMarketerAssistantContext(data, {
-            marketerMode: assistantMode,
-            platform: selectedPlatform,
-            niche: selectedNiche,
-          }),
-          messages: nextMessages.map((message) => ({
-            role: message.role,
-            content: message.content,
-          })),
-          attachments: attachments.map((attachment) => ({
-            name: attachment.name,
-            type: attachment.type,
-          })),
-        }),
+      const reply = await sendToAssistant({
+        messageText: trimmed,
+        mode: "chat",
+        attachments: chatAttachments,
+        nextMessages,
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to get marketer assistant response.");
-      }
-
-      const dataResponse = await response.json();
-      const reply =
-        dataResponse?.reply ||
-        dataResponse?.message ||
-        dataResponse?.content ||
-        "I couldn’t generate a response. Check the chat route and response shape.";
-
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          assistantMode,
           content: reply,
           attachments: [],
+          badge: "Chat",
         },
       ]);
     } catch (error) {
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          assistantMode,
           content:
             "The marketer assistant request failed. Check the API route wiring and make sure the response returns a reply, message, or content field.",
           attachments: [],
+          badge: "Chat",
         },
       ]);
     } finally {
-      setLoading(false);
+      setLoadingChat(false);
+    }
+  }
+
+  async function handleBuildSubmit(event) {
+    event.preventDefault();
+
+    const trimmed = buildInput.trim();
+    if ((!trimmed && buildAttachments.length === 0) || loadingBuild) return;
+
+    const userMessage = {
+      role: "user",
+      content: trimmed || "Build the ad using the attached files/screenshots.",
+      attachments: buildAttachments,
+      badge: "Build Ad",
+    };
+
+    const nextMessages = [...builderMessages, userMessage];
+    setBuilderMessages(nextMessages);
+    setBuildInput("");
+    setLoadingBuild(true);
+    setBuildAttachments([]);
+
+    try {
+      const reply = await sendToAssistant({
+        messageText: trimmed,
+        mode: "build-ad",
+        attachments: buildAttachments,
+        nextMessages,
+      });
+
+      setBuilderMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: reply,
+          attachments: [],
+          badge: "Build Ad",
+        },
+      ]);
+    } catch (error) {
+      setBuilderMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "The build-ad request failed. Check the API route wiring and make sure the response returns a reply, message, or content field.",
+          attachments: [],
+          badge: "Build Ad",
+        },
+      ]);
+    } finally {
+      setLoadingBuild(false);
     }
   }
 
@@ -355,24 +412,19 @@ export default function MarketerAssistantPage() {
                 </div>
               </div>
 
-              <div className="hidden items-center gap-2 md:flex">
-                <Pill
-                  label="Chat"
-                  active={assistantMode === "chat"}
-                  onClick={() => setAssistantMode("chat")}
-                />
-                <Pill
-                  label="Build Ad"
-                  active={assistantMode === "build-ad"}
-                  onClick={() => setAssistantMode("build-ad")}
-                />
-              </div>
+              <button
+                type="button"
+                onClick={() => setBuildAdOpen((prev) => !prev)}
+                className="rounded-full border border-cyan-300/20 bg-cyan-400/12 px-4 py-2 text-sm text-cyan-100 backdrop-blur-xl transition hover:bg-cyan-400/18"
+              >
+                {buildAdOpen ? "Close Build Ad" : "Build An Ad"}
+              </button>
             </div>
           </div>
 
           <div className="flex min-h-[80vh] flex-col">
             <div
-              ref={scrollRef}
+              ref={chatScrollRef}
               className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 md:px-6"
             >
               <div className="pointer-events-none absolute inset-0 opacity-60">
@@ -382,17 +434,17 @@ export default function MarketerAssistantPage() {
               </div>
 
               <div className="relative z-10 space-y-4">
-                {messages.map((message, index) => (
+                {chatMessages.map((message, index) => (
                   <MessageBubble
-                    key={`${message.role}-${index}`}
+                    key={`chat-${message.role}-${index}`}
                     role={message.role}
                     content={message.content}
                     attachments={message.attachments || []}
-                    assistantMode={message.assistantMode}
+                    badge={message.badge}
                   />
                 ))}
 
-                {loading && (
+                {loadingChat && (
                   <div className="flex justify-start">
                     <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
                       <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
@@ -410,78 +462,49 @@ export default function MarketerAssistantPage() {
             </div>
 
             <div className="border-t border-white/6 px-4 py-4 md:px-6">
-              <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="md:hidden">
+              <form onSubmit={handleChatSubmit} className="space-y-3">
+                {chatAttachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    <Pill
-                      label="Chat"
-                      active={assistantMode === "chat"}
-                      onClick={() => setAssistantMode("chat")}
-                    />
-                    <Pill
-                      label="Build Ad"
-                      active={assistantMode === "build-ad"}
-                      onClick={() => setAssistantMode("build-ad")}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                    <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                      Platform
-                    </div>
-                    <select
-                      value={selectedPlatform}
-                      onChange={(e) => setSelectedPlatform(e.target.value)}
-                      className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
-                    >
-                      {PLATFORMS.map((platform) => (
-                        <option key={platform} value={platform} className="bg-[#081a2c]">
-                          {platform}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                    <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                      Niche
-                    </div>
-                    <select
-                      value={selectedNiche}
-                      onChange={(e) => setSelectedNiche(e.target.value)}
-                      className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
-                    >
-                      {NICHES.map((niche) => (
-                        <option key={niche} value={niche} className="bg-[#081a2c]">
-                          {niche}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {attachments.map((attachment) => (
+                    {chatAttachments.map((attachment) => (
                       <AttachmentChip
                         key={attachment.id}
                         attachment={attachment}
-                        onRemove={removeAttachment}
+                        onRemove={removeChatAttachment}
                       />
                     ))}
                   </div>
                 )}
 
                 <div
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setChatDragActive(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const related = e.relatedTarget;
+                    if (!e.currentTarget.contains(related)) {
+                      setChatDragActive(false);
+                    }
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setChatDragActive(true);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setChatDragActive(false);
+                    if (e.dataTransfer?.files?.length) {
+                      addChatFiles(e.dataTransfer.files);
+                    }
+                  }}
                   className={[
                     "relative overflow-hidden rounded-[26px] border p-3 transition backdrop-blur-2xl",
-                    dragActive
+                    chatDragActive
                       ? "border-cyan-300/20 bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
                       : "border-white/6 bg-white/[0.03]",
                   ].join(" ")}
@@ -491,7 +514,7 @@ export default function MarketerAssistantPage() {
                   <div className="relative z-10 flex items-end gap-3">
                     <button
                       type="button"
-                      onClick={openFilePicker}
+                      onClick={openChatFilePicker}
                       className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
                       aria-label="Add files"
                       title="Add files or screenshots"
@@ -501,39 +524,38 @@ export default function MarketerAssistantPage() {
 
                     <div className="flex-1">
                       <textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
                         rows={3}
-                        placeholder={
-                          assistantMode === "build-ad"
-                            ? `Build a ${selectedPlatform} ad for ${selectedNiche}...`
-                            : `Ask about ${selectedPlatform} performance, budget, hooks, CAC, CPL, close rate, what is underperforming, or drop screenshots for review...`
-                        }
+                        placeholder={`Ask about ${selectedPlatform} performance, budget, hooks, CAC, CPL, close rate, what is underperforming, or drop screenshots for review...`}
                         className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
                       />
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
                       <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                        {assistantMode === "build-ad" ? "Build Ad" : "Chat"}
+                        Chat
                       </div>
 
                       <button
                         type="submit"
-                        disabled={loading || (!input.trim() && attachments.length === 0)}
+                        disabled={loadingChat || (!chatInput.trim() && chatAttachments.length === 0)}
                         className="h-[52px] rounded-[22px] border border-cyan-300/15 bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {loading ? "Thinking..." : "Send"}
+                        {loadingChat ? "Thinking..." : "Send"}
                       </button>
                     </div>
                   </div>
 
                   <input
-                    ref={fileInputRef}
+                    ref={chatFileInputRef}
                     type="file"
                     multiple
                     accept="image/*,.pdf,.txt,.doc,.docx"
-                    onChange={handleFileChange}
+                    onChange={(e) => {
+                      addChatFiles(e.target.files);
+                      e.target.value = "";
+                    }}
                     className="hidden"
                   />
 
@@ -552,11 +574,11 @@ export default function MarketerAssistantPage() {
                   </div>
 
                   <div className="flex flex-wrap gap-2">
-                    {examplePrompts.map((example) => (
+                    {chatExamples.map((example) => (
                       <button
                         key={example}
                         type="button"
-                        onClick={() => setInput(example)}
+                        onClick={() => setChatInput(example)}
                         className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
                       >
                         {example}
@@ -565,6 +587,211 @@ export default function MarketerAssistantPage() {
                   </div>
                 </div>
               </form>
+
+              {buildAdOpen && (
+                <div className="mt-4 rounded-[28px] border border-cyan-300/10 bg-white/[0.03] p-4 backdrop-blur-2xl">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-white">Build Ad</div>
+                      <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/60">
+                        Structured ad output
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
+                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                        Platform
+                      </div>
+                      <select
+                        value={selectedPlatform}
+                        onChange={(e) => setSelectedPlatform(e.target.value)}
+                        className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
+                      >
+                        {PLATFORMS.map((platform) => (
+                          <option key={platform} value={platform} className="bg-[#081a2c]">
+                            {platform}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
+                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                        Niche
+                      </div>
+                      <select
+                        value={selectedNiche}
+                        onChange={(e) => setSelectedNiche(e.target.value)}
+                        className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
+                      >
+                        {NICHES.map((niche) => (
+                          <option key={niche} value={niche} className="bg-[#081a2c]">
+                            {niche}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div
+                    ref={buildScrollRef}
+                    className="mt-4 max-h-[360px] space-y-4 overflow-y-auto"
+                  >
+                    {builderMessages.map((message, index) => (
+                      <MessageBubble
+                        key={`build-${message.role}-${index}`}
+                        role={message.role}
+                        content={message.content}
+                        attachments={message.attachments || []}
+                        badge={message.badge}
+                      />
+                    ))}
+
+                    {loadingBuild && (
+                      <div className="flex justify-start">
+                        <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+                          <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
+                            Marketer Assistant
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
+                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <form onSubmit={handleBuildSubmit} className="mt-4 space-y-3">
+                    {buildAttachments.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {buildAttachments.map((attachment) => (
+                          <AttachmentChip
+                            key={attachment.id}
+                            attachment={attachment}
+                            onRemove={removeBuildAttachment}
+                          />
+                        ))}
+                      </div>
+                    )}
+
+                    <div
+                      onDragEnter={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setBuildDragActive(true);
+                      }}
+                      onDragLeave={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const related = e.relatedTarget;
+                        if (!e.currentTarget.contains(related)) {
+                          setBuildDragActive(false);
+                        }
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setBuildDragActive(true);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setBuildDragActive(false);
+                        if (e.dataTransfer?.files?.length) {
+                          addBuildFiles(e.dataTransfer.files);
+                        }
+                      }}
+                      className={[
+                        "relative overflow-hidden rounded-[26px] border p-3 transition backdrop-blur-2xl",
+                        buildDragActive
+                          ? "border-cyan-300/20 bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
+                          : "border-white/6 bg-white/[0.03]",
+                      ].join(" ")}
+                    >
+                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
+
+                      <div className="relative z-10 flex items-end gap-3">
+                        <button
+                          type="button"
+                          onClick={openBuildFilePicker}
+                          className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
+                          aria-label="Add files"
+                          title="Add files or screenshots"
+                        >
+                          +
+                        </button>
+
+                        <div className="flex-1">
+                          <textarea
+                            value={buildInput}
+                            onChange={(e) => setBuildInput(e.target.value)}
+                            rows={3}
+                            placeholder={`Build a ${selectedPlatform} ad for ${selectedNiche}...`}
+                            className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
+                          />
+                        </div>
+
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
+                            Build Ad
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={loadingBuild || (!buildInput.trim() && buildAttachments.length === 0)}
+                            className="h-[52px] rounded-[22px] border border-cyan-300/15 bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {loadingBuild ? "Thinking..." : "Send"}
+                          </button>
+                        </div>
+                      </div>
+
+                      <input
+                        ref={buildFileInputRef}
+                        type="file"
+                        multiple
+                        accept="image/*,.pdf,.txt,.doc,.docx"
+                        onChange={(e) => {
+                          addBuildFiles(e.target.files);
+                          e.target.value = "";
+                        }}
+                        className="hidden"
+                      />
+
+                      <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                        <span>Drag and drop screenshots or files here</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-500/60" />
+                        <span>Up to 4 files</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-500/60" />
+                        <span>Max 8MB each</span>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[22px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
+                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                        Build Ad prompts
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {buildExamples.map((example) => (
+                          <button
+                            key={example}
+                            type="button"
+                            onClick={() => setBuildInput(example)}
+                            className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
+                          >
+                            {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           </div>
         </div>
