@@ -148,79 +148,75 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-5 fade-in">
       {lastUpdated && (
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}
 
-      <section className="card p-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.10),transparent_28%)] pointer-events-none"></div>
+      <section className="relative overflow-hidden rounded-[24px] bg-white/[0.035] px-4 py-4 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_28%)]" />
 
-        <div className="relative z-[1]">
-          <div className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="min-w-0">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-200/70 mb-2">
-                  Current Goal
-                </div>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <h2 className="text-lg font-semibold text-white tracking-tight">
-                    {goal.title}
-                  </h2>
-                  <span className="rounded-full border border-cyan-300/12 bg-cyan-400/[0.08] px-3 py-1 text-xs text-cyan-100">
-                    {goal.currentLabel} / {goal.targetLabel}
-                  </span>
-                  <span className="text-xs text-zinc-400">{goal.progressText}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="w-full min-w-[180px] lg:w-[220px]">
-                  <div className="h-2 rounded-full bg-white/10 overflow-hidden border border-white/8">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
-                      style={{ width: `${goal.progressPercent}%` }}
-                    />
-                  </div>
-                  <div className="mt-1 text-right text-[11px] text-zinc-400">
-                    {goal.progressPercent}% complete
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowGoalActions((prev) => !prev)}
-                  className="shrink-0 rounded-full border border-cyan-300/14 bg-cyan-400/[0.08] px-3 py-2 text-xs text-cyan-100 transition hover:bg-cyan-400/[0.14]"
-                >
-                  {showGoalActions ? 'Hide Plan' : 'Show Plan'}
-                </button>
-              </div>
+        <div className="relative z-[1] flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <div className="min-w-0">
+            <div className="mb-1 text-[10px] uppercase tracking-[0.22em] text-cyan-200/65">
+              Current Goal
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h2 className="text-base font-semibold text-white tracking-tight">
+                {goal.title}
+              </h2>
+              <span className="rounded-full bg-cyan-400/[0.08] px-3 py-1 text-xs text-cyan-100">
+                {goal.currentLabel} / {goal.targetLabel}
+              </span>
+              <span className="text-xs text-zinc-400">{goal.progressText}</span>
             </div>
           </div>
 
-          {showGoalActions && (
-            <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-              <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70 mb-3">
-                How to get there
+          <div className="flex items-center gap-3">
+            <div className="w-full min-w-[150px] xl:w-[220px]">
+              <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
+                  style={{ width: `${goal.progressPercent}%` }}
+                />
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                {goal.actions.map((action, index) => (
-                  <div
-                    key={index}
-                    className="rounded-[20px] border border-white/10 bg-[#121a2d]/70 p-4"
-                  >
-                    <div className="text-sm font-semibold text-white mb-2">
-                      {action.title}
-                    </div>
-                    <div className="text-sm text-zinc-400 leading-6">
-                      {action.text}
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-1 text-right text-[11px] text-zinc-400">
+                {goal.progressPercent}% complete
               </div>
             </div>
-          )}
+
+            <button
+              type="button"
+              onClick={() => setShowGoalActions((prev) => !prev)}
+              className="shrink-0 rounded-full bg-cyan-400/[0.10] px-3 py-2 text-xs text-cyan-100 transition hover:bg-cyan-400/[0.16]"
+            >
+              {showGoalActions ? 'Hide Plan' : 'Show Plan'}
+            </button>
+          </div>
         </div>
+
+        {showGoalActions && (
+          <div className="relative z-[1] mt-4 rounded-[20px] bg-white/[0.03] p-4 backdrop-blur-2xl">
+            <div className="mb-3 text-xs uppercase tracking-[0.22em] text-cyan-200/65">
+              How to get there
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {goal.actions.map((action, index) => (
+                <div
+                  key={index}
+                  className="rounded-[18px] bg-[#121a2d]/55 p-4 shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
+                >
+                  <div className="mb-2 text-sm font-semibold text-white">
+                    {action.title}
+                  </div>
+                  <div className="text-sm text-zinc-400 leading-6">
+                    {action.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       <section>
@@ -375,7 +371,6 @@ function buildMonthlyGoal({
 
   return {
     title: `Reach ${target} Active Clients`,
-    reason: `Active clients is the clearest operator metric for IntelliFlow right now because the business goal is to reach 25 paying clients. This goal automatically scales up once the current target is hit.`,
     currentLabel: `${activeCustomers}`,
     targetLabel: `${target}`,
     progressPercent,
