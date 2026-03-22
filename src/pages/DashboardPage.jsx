@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import KpiCard from '../components/KpiCard.jsx';
 import DataTable from '../components/DataTable.jsx';
@@ -8,6 +8,7 @@ import EmptyState from '../components/EmptyState.jsx';
 
 export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');
+  const [showGoalActions, setShowGoalActions] = useState(false);
 
   if (loading && !dashboard) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} />;
@@ -152,64 +153,73 @@ export default function DashboardPage() {
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}
 
-      <section className="card p-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.14),transparent_30%)] pointer-events-none"></div>
+      <section className="card p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.10),transparent_28%)] pointer-events-none"></div>
 
-        <div className="relative z-[1] space-y-5">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-            <div>
-              <div className="section-title mb-2">Monthly Goal</div>
-              <h2 className="text-2xl font-semibold text-white tracking-tight">
-                {goal.title}
-              </h2>
-              <p className="text-sm text-zinc-400 mt-2 max-w-3xl leading-6">
-                {goal.reason}
-              </p>
-            </div>
-
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-[0.2em] text-cyan-200/70 mb-1">
-                Current Progress
+        <div className="relative z-[1]">
+          <div className="rounded-[20px] border border-white/10 bg-white/[0.04] px-4 py-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-200/70 mb-2">
+                  Current Goal
+                </div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <h2 className="text-lg font-semibold text-white tracking-tight">
+                    {goal.title}
+                  </h2>
+                  <span className="rounded-full border border-cyan-300/12 bg-cyan-400/[0.08] px-3 py-1 text-xs text-cyan-100">
+                    {goal.currentLabel} / {goal.targetLabel}
+                  </span>
+                  <span className="text-xs text-zinc-400">{goal.progressText}</span>
+                </div>
               </div>
-              <div className="text-2xl font-bold text-white">
-                {goal.currentLabel} / {goal.targetLabel}
-              </div>
-            </div>
-          </div>
 
-          <div>
-            <div className="w-full h-4 rounded-full bg-white/10 overflow-hidden border border-white/10">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
-                style={{ width: `${goal.progressPercent}%` }}
-              />
-            </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
-              <span>{goal.progressPercent}% complete</span>
-              <span>{goal.progressText}</span>
-            </div>
-          </div>
-
-          <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
-            <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70 mb-3">
-              How to get there
-            </div>
-            <div className="grid gap-3 md:grid-cols-3">
-              {goal.actions.map((action, index) => (
-                <div
-                  key={index}
-                  className="rounded-[20px] border border-white/10 bg-[#121a2d]/70 p-4"
-                >
-                  <div className="text-sm font-semibold text-white mb-2">
-                    {action.title}
+              <div className="flex items-center gap-3">
+                <div className="w-full min-w-[180px] lg:w-[220px]">
+                  <div className="h-2 rounded-full bg-white/10 overflow-hidden border border-white/8">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
+                      style={{ width: `${goal.progressPercent}%` }}
+                    />
                   </div>
-                  <div className="text-sm text-zinc-400 leading-6">
-                    {action.text}
+                  <div className="mt-1 text-right text-[11px] text-zinc-400">
+                    {goal.progressPercent}% complete
                   </div>
                 </div>
-              ))}
+
+                <button
+                  type="button"
+                  onClick={() => setShowGoalActions((prev) => !prev)}
+                  className="shrink-0 rounded-full border border-cyan-300/14 bg-cyan-400/[0.08] px-3 py-2 text-xs text-cyan-100 transition hover:bg-cyan-400/[0.14]"
+                >
+                  {showGoalActions ? 'Hide Plan' : 'Show Plan'}
+                </button>
+              </div>
             </div>
           </div>
+
+          {showGoalActions && (
+            <div className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-5">
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-200/70 mb-3">
+                How to get there
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                {goal.actions.map((action, index) => (
+                  <div
+                    key={index}
+                    className="rounded-[20px] border border-white/10 bg-[#121a2d]/70 p-4"
+                  >
+                    <div className="text-sm font-semibold text-white mb-2">
+                      {action.title}
+                    </div>
+                    <div className="text-sm text-zinc-400 leading-6">
+                      {action.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
