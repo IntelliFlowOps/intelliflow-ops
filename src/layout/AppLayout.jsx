@@ -1,29 +1,17 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Users,
-  Megaphone,
-  Brain,
-  ScrollText,
-  Activity,
-  DollarSign,
-  BarChart3,
-  Sparkles,
-  Bot,
-} from 'lucide-react';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/customers', label: 'Customers', icon: Users },
-  { to: '/marketers', label: 'Marketers', icon: Users },
-  { to: '/campaigns', label: 'Campaigns', icon: Megaphone },
-  { to: '/creative', label: 'Creative Insights', icon: Sparkles },
-  { to: '/founder-assistant', label: 'Founder Assistant', icon: Brain },
-  { to: '/marketer-assistant', label: 'Marketer Assistant', icon: Bot },
-  { to: '/commissions', label: 'Commissions', icon: DollarSign },
-  { to: '/activity', label: 'Activity', icon: Activity },
-  { to: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { to: '/rules', label: 'Rules', icon: ScrollText },
+  { to: '/', label: 'Dashboard', short: 'DB' },
+  { to: '/customers', label: 'Customers', short: 'CU' },
+  { to: '/marketers', label: 'Marketers', short: 'MK' },
+  { to: '/campaigns', label: 'Campaigns', short: 'CP' },
+  { to: '/creative', label: 'Creative Insights', short: 'CI' },
+  { to: '/founder-assistant', label: 'Founder Assistant', short: 'FA' },
+  { to: '/marketer-assistant', label: 'Marketer Assistant', short: 'MA' },
+  { to: '/commissions', label: 'Commissions', short: 'CM' },
+  { to: '/activity', label: 'Activity', short: 'AC' },
+  { to: '/analytics', label: 'Analytics', short: 'AN' },
+  { to: '/rules', label: 'Rules', short: 'RU' },
 ];
 
 export default function AppLayout() {
@@ -33,9 +21,9 @@ export default function AppLayout() {
         <aside className="hidden w-72 shrink-0 border-r border-white/6 bg-[#08131f]/80 backdrop-blur-2xl lg:flex lg:flex-col">
           <div className="border-b border-white/6 px-6 py-6">
             <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
+              <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
                 <div className="absolute inset-2 rounded-xl border border-cyan-300/12" />
-                <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
+                <div className="h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
               </div>
 
               <div>
@@ -50,7 +38,7 @@ export default function AppLayout() {
           </div>
 
           <nav className="flex-1 space-y-2 px-4 py-5">
-            {navItems.map(({ to, label, icon: Icon }) => (
+            {navItems.map(({ to, label, short }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -64,7 +52,9 @@ export default function AppLayout() {
                   ].join(' ')
                 }
               >
-                <Icon size={18} className="shrink-0" />
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-cyan-300/10 bg-cyan-400/[0.08] text-[11px] font-semibold text-cyan-100">
+                  {short}
+                </div>
                 <span>{label}</span>
               </NavLink>
             ))}
