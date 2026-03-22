@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSheetData } from "../hooks/useSheetData.jsx";
+import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const CHAT_EXAMPLES = [
   "What is underperforming most right now across our ad data?",
@@ -132,6 +134,8 @@ function Pill({ label, active, onClick }) {
 }
 
 export default function MarketerAssistantPage() {
+  const { data } = useSheetData();
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
@@ -276,14 +280,14 @@ export default function MarketerAssistantPage() {
           platform: selectedPlatform,
           niche: selectedNiche,
           message: trimmed,
+          context: buildMarketerAssistantContext(data, {
+            marketerMode: assistantMode,
+            platform: selectedPlatform,
+            niche: selectedNiche,
+          }),
           messages: nextMessages.map((message) => ({
             role: message.role,
-            assistantMode: message.assistantMode,
             content: message.content,
-            attachments: (message.attachments || []).map((attachment) => ({
-              name: attachment.name,
-              type: attachment.type,
-            })),
           })),
           attachments: attachments.map((attachment) => ({
             name: attachment.name,
@@ -296,11 +300,11 @@ export default function MarketerAssistantPage() {
         throw new Error("Failed to get marketer assistant response.");
       }
 
-      const data = await response.json();
+      const dataResponse = await response.json();
       const reply =
-        data?.reply ||
-        data?.message ||
-        data?.content ||
+        dataResponse?.reply ||
+        dataResponse?.message ||
+        dataResponse?.content ||
         "I couldn’t generate a response. Check the chat route and response shape.";
 
       setMessages((prev) => [
