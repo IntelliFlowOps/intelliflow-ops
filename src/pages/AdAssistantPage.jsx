@@ -3,7 +3,7 @@ import { useSheetData } from "../hooks/useSheetData.jsx";
 import { buildFounderAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const EXAMPLE_QUESTIONS = [
-  "What is the highest-leverage move to get us closer to 25 clients this month?",
+  "What is the highest-leverage move right now?",
   "What breaks at scale if we keep onboarding this way?",
   "What is our weakest conversion bottleneck right now?",
   "Should we broaden ICP or fix close rate first?",
@@ -94,7 +94,7 @@ export default function AdAssistantPage() {
     {
       role: "assistant",
       content:
-        "I’m locked in on the path to 2,000 clients. Bring me the bottleneck, the numbers, or the decision you need pressure-tested.",
+        "Locked on the path to 2,000 clients. Bring the bottleneck, numbers, or decision.",
       attachments: [],
     },
   ]);
@@ -102,6 +102,7 @@ export default function AdAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [dragActive, setDragActive] = useState(false);
+  const [showExamples, setShowExamples] = useState(false);
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -278,30 +279,28 @@ export default function AdAssistantPage() {
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 lg:px-8">
         <div className="overflow-hidden rounded-[30px] border border-cyan-300/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),rgba(7,17,31,0.97)_42%)] shadow-[0_0_60px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
           <div className="border-b border-white/6 px-5 py-4 md:px-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-11 w-11 rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
-                  <div className="absolute inset-2 rounded-xl border border-cyan-300/12" />
-                  <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
-                  <div className="absolute inset-0 animate-pulse rounded-2xl border border-cyan-200/8" />
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="relative h-11 w-11 rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
+                <div className="absolute inset-2 rounded-xl border border-cyan-300/12" />
+                <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
+                <div className="absolute inset-0 animate-pulse rounded-2xl border border-cyan-200/8" />
+              </div>
 
-                <div>
-                  <h1 className="text-lg font-semibold tracking-wide text-white">
-                    Founder Assistant
-                  </h1>
-                  <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/65">
-                    IntelliFlow Communications
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-lg font-semibold tracking-wide text-white">
+                  Founder Assistant
+                </h1>
+                <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/65">
+                  IntelliFlow Communications
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="flex min-h-[80vh] flex-col">
+          <div className="grid min-h-[80vh] grid-rows-[1fr_auto]">
             <div
               ref={scrollRef}
-              className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 md:px-6"
+              className="relative overflow-y-auto px-4 py-4 md:px-6"
             >
               <div className="pointer-events-none absolute inset-0 opacity-60">
                 <div className="absolute left-[8%] top-12 h-32 w-32 rounded-full bg-cyan-400/6 blur-3xl" />
@@ -409,32 +408,41 @@ export default function AdAssistantPage() {
                     className="hidden"
                   />
 
-                  <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                    <span>Drag and drop screenshots or files here</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                    <span>Up to 4 files</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                    <span>Max 8MB each</span>
+                  <div className="relative z-10 mt-2 text-[11px] text-slate-400">
+                    Drag and drop screenshots or files here
                   </div>
                 </div>
 
-                <div className="rounded-[22px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Example prompts
-                  </div>
+                <div className="rounded-[22px] border border-white/6 bg-white/[0.03] backdrop-blur-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setShowExamples((prev) => !prev)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-left"
+                  >
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                      Example prompts
+                    </span>
+                    <span className="text-sm text-cyan-100">
+                      {showExamples ? "Hide" : "Show"}
+                    </span>
+                  </button>
 
-                  <div className="flex flex-wrap gap-2">
-                    {compactExamples.map((example) => (
-                      <button
-                        key={example}
-                        type="button"
-                        onClick={() => handleExampleClick(example)}
-                        className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
+                  {showExamples && (
+                    <div className="border-t border-white/6 px-4 pb-4 pt-2">
+                      <div className="flex flex-wrap gap-2">
+                        {compactExamples.map((example) => (
+                          <button
+                            key={example}
+                            type="button"
+                            onClick={() => handleExampleClick(example)}
+                            className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
+                          >
+                            {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </form>
             </div>
