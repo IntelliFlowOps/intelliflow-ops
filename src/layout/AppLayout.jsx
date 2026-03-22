@@ -17,8 +17,8 @@ const navItems = [
 export default function AppLayout() {
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
-      <div className="mx-auto flex min-h-screen max-w-[1600px]">
-        <aside className="hidden w-72 shrink-0 border-r border-white/6 bg-[#08131f]/80 backdrop-blur-2xl lg:flex lg:flex-col">
+      <div className="flex min-h-screen w-full">
+        <aside className="hidden md:flex md:w-72 md:shrink-0 md:flex-col border-r border-white/6 bg-[#08131f]/85 backdrop-blur-2xl">
           <div className="border-b border-white/6 px-6 py-6">
             <div className="flex items-center gap-3">
               <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
@@ -37,7 +37,7 @@ export default function AppLayout() {
             </div>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-5">
+          <nav className="flex-1 space-y-2 px-4 py-5 overflow-y-auto">
             {navItems.map(({ to, label, short }) => (
               <NavLink
                 key={to}
@@ -62,7 +62,7 @@ export default function AppLayout() {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="border-b border-white/6 bg-[#08131f]/45 px-4 py-3 backdrop-blur-2xl lg:hidden">
+          <div className="border-b border-white/6 bg-[#08131f]/45 px-4 py-3 backdrop-blur-2xl md:hidden">
             <div className="flex gap-2 overflow-x-auto pb-1">
               {navItems.map(({ to, label }) => (
                 <NavLink
