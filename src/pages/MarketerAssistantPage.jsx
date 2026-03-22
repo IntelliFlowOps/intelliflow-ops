@@ -1,22 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
 import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.js";
-
-const CHAT_EXAMPLES = [
-  "How are our ads performing right now across our data?",
-  "What should I post on LinkedIn this week for IntelliFlow Communications?",
-  "How should I allocate budget between Meta and Google Search this week?",
-  "Which target niche looks strongest based on customers won, CAC, and close rate?",
-  "What angle should we use to target HVAC owners?",
-  "Why did this campaign likely work better than the others?",
-];
-
-const BUILD_EXAMPLES = [
-  "Build 3 hook options for an IntelliFlow Communications Meta ad targeted at HVAC owners.",
-  "Build headlines and primary text for an IntelliFlow Communications Google Search ad targeted at dentists.",
-  "Give me CTA options and creative direction for an IntelliFlow Communications ad targeted at chiropractors.",
-  "Build an ad test matrix for IntelliFlow Communications targeted at plumbing companies.",
-];
 
 const PLATFORMS = ["Meta", "Google Ads", "Google Search"];
 
@@ -44,22 +28,19 @@ function MessageBubble({ role, content, attachments = [], badge }) {
     <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={[
-          "relative max-w-[90%] overflow-hidden rounded-[24px] px-4 py-3 whitespace-pre-wrap text-sm leading-6 backdrop-blur-xl",
+          "relative max-w-[88%] overflow-hidden rounded-[28px] px-5 py-4 whitespace-pre-wrap text-sm leading-7 backdrop-blur-2xl",
           isUser
-            ? "bg-white/[0.06] text-white shadow-[0_10px_35px_rgba(0,0,0,0.22)]"
-            : "bg-cyan-400/[0.08] text-slate-100 shadow-[0_0_30px_rgba(34,211,238,0.08)]",
+            ? "bg-white/[0.07] text-white shadow-[0_12px_36px_rgba(0,0,0,0.24)]"
+            : "bg-cyan-400/[0.10] text-slate-100 shadow-[0_0_30px_rgba(34,211,238,0.08)]",
         ].join(" ")}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_38%,rgba(34,211,238,0.05))]" />
-        {!isUser && (
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_45%)]" />
-        )}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_42%,rgba(34,211,238,0.04))]" />
 
         <div className="relative z-10">
-          <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
-            <span>{isUser ? "Marketer" : "Marketer Assistant"}</span>
+          <div className="mb-2 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-65">
+            <span>{isUser ? "You" : "Marketer Assistant"}</span>
             {badge && (
-              <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/80">
+              <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/85">
                 {badge}
               </span>
             )}
@@ -70,7 +51,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
               {attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="overflow-hidden rounded-2xl bg-white/[0.05] backdrop-blur-xl"
+                  className="overflow-hidden rounded-2xl bg-white/[0.05]"
                 >
                   {attachment.previewUrl && attachment.type?.startsWith("image/") ? (
                     <img
@@ -198,9 +179,6 @@ export default function MarketerAssistantPage() {
       });
     };
   }, [chatAttachments, buildAttachments]);
-
-  const chatExamples = useMemo(() => CHAT_EXAMPLES, []);
-  const buildExamples = useMemo(() => BUILD_EXAMPLES, []);
 
   function addChatFiles(fileList) {
     const nextFiles = buildAttachmentObjects(fileList, chatAttachments);
@@ -363,50 +341,29 @@ export default function MarketerAssistantPage() {
 
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),rgba(7,17,31,0.97)_42%)] shadow-[0_0_60px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
-          <div className="px-5 py-4 md:px-6">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="relative h-11 w-11 rounded-2xl bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
-                  <div className="absolute inset-2 rounded-xl bg-white/[0.03]" />
-                  <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
-                  <div className="absolute inset-0 animate-pulse rounded-2xl bg-cyan-200/5" />
-                </div>
-
-                <div>
-                  <h1 className="text-lg font-semibold tracking-wide text-white">
-                    Marketer Assistant
-                  </h1>
-                  <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/65">
-                    IntelliFlow Communications
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setBuildAdOpen((prev) => !prev)}
-                className="rounded-full bg-cyan-400/12 px-4 py-2 text-sm text-cyan-100 backdrop-blur-xl transition hover:bg-cyan-400/18"
-              >
-                {buildAdOpen ? "Close Build Ad" : "Build An Ad"}
-              </button>
-            </div>
-          </div>
-
+      <div className="mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
+        <div className="space-y-4">
           {buildAdOpen && (
-            <div className="mx-4 mb-4 rounded-[26px] bg-white/[0.035] p-4 backdrop-blur-2xl md:mx-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="rounded-[30px] bg-white/[0.035] p-4 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
+              <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-sm font-semibold text-white">Build Ad</div>
+                  <div className="text-base font-semibold text-white">Build Ad</div>
                   <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/60">
                     IntelliFlow ad targeted at {selectedNiche}
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setBuildAdOpen(false)}
+                  className="rounded-full bg-cyan-400/[0.10] px-4 py-2 text-sm text-cyan-100 transition hover:bg-cyan-400/[0.16]"
+                >
+                  Close
+                </button>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-[20px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+              <div className="mb-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-xl">
                   <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
                     Platform
                   </div>
@@ -423,7 +380,7 @@ export default function MarketerAssistantPage() {
                   </select>
                 </div>
 
-                <div className="rounded-[20px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+                <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-xl">
                   <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
                     Target Niche
                   </div>
@@ -443,7 +400,7 @@ export default function MarketerAssistantPage() {
 
               <div
                 ref={buildScrollRef}
-                className="mt-4 max-h-[320px] space-y-4 overflow-y-auto"
+                className="mb-4 max-h-[300px] space-y-4 overflow-y-auto rounded-[26px] bg-[#081726]/65 p-4"
               >
                 {builderMessages.map((message, index) => (
                   <MessageBubble
@@ -471,7 +428,7 @@ export default function MarketerAssistantPage() {
                 )}
               </div>
 
-              <form onSubmit={handleBuildSubmit} className="mt-4 space-y-3">
+              <form onSubmit={handleBuildSubmit} className="space-y-3">
                 {buildAttachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {buildAttachments.map((attachment) => (
@@ -508,19 +465,17 @@ export default function MarketerAssistantPage() {
                     if (e.dataTransfer?.files?.length) addBuildFiles(e.dataTransfer.files);
                   }}
                   className={[
-                    "relative overflow-hidden rounded-[26px] p-3 transition backdrop-blur-2xl",
+                    "relative overflow-hidden rounded-[28px] p-4 transition backdrop-blur-2xl",
                     buildDragActive
                       ? "bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
                       : "bg-white/[0.03]",
                   ].join(" ")}
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
-
                   <div className="relative z-10 flex items-end gap-3">
                     <button
                       type="button"
                       onClick={() => buildFileInputRef.current?.click()}
-                      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
+                      className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl bg-cyan-400/[0.08] text-2xl text-cyan-100 transition hover:bg-cyan-400/[0.14]"
                     >
                       +
                     </button>
@@ -531,224 +486,180 @@ export default function MarketerAssistantPage() {
                         onChange={(e) => setBuildInput(e.target.value)}
                         rows={3}
                         placeholder={`Build an IntelliFlow Communications ${selectedPlatform} ad targeted at ${selectedNiche}...`}
-                        className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
-                      />
-                    </div>
+                        className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#081a2c]/70 px-4 py-3 text-sm text
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="rounded-full bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                        Build Ad
-                      </div>
+const MODES = [
+  { id: 'founder', label: 'Founder Assistant' },
+  { id: 'marketer', label: 'Marketer Assistant' },
+];
 
-                      <button
-                        type="submit"
-                        disabled={loadingBuild || (!buildInput.trim() && buildAttachments.length === 0)}
-                        className="h-[52px] rounded-[22px] bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {loadingBuild ? "Thinking..." : "Send"}
-                      </button>
-                    </div>
-                  </div>
+function BubbleMessage({ role, content }) {
+  const isUser = role === 'user';
 
-                  <input
-                    ref={buildFileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf,.txt,.doc,.docx"
-                    onChange={(e) => {
-                      addBuildFiles(e.target.files);
-                      e.target.value = "";
-                    }}
-                    className="hidden"
-                  />
+  return (
+    <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={[
+          'max-w-[85%] md:max-w-[75%]',
+          'rounded-[28px] px-5 py-4',
+          'shadow-sm border',
+          'text-sm md:text-[15px] leading-7 whitespace-pre-wrap',
+          isUser
+            ? 'bg-white/10 border-white/15 text-white rounded-br-md'
+            : 'bg-white/[0.06] border-white/10 text-white/95 rounded-bl-md',
+        ].join(' ')}
+      >
+        {content}
+      </div>
+    </div>
+  );
+}
 
-                  <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                    <span>Drag and drop screenshots or files here</span>
-                    <span>•</span>
-                    <span>Up to 4 files</span>
-                    <span>•</span>
-                    <span>Max 8MB each</span>
-                  </div>
+export default function AdAssistantPage() {
+  const [mode, setMode] = useState('founder');
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Keep your existing message logic/state shape if you already have one.
+  // This fallback preserves a working UI shell.
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      content:
+        'How can I help?',
+    },
+  ]);
+
+  const messagesEndRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  const placeholder = useMemo(() => {
+    return mode === 'founder'
+      ? 'Ask your founder assistant anything...'
+      : 'Ask your marketer assistant anything...';
+  }, [mode]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const trimmed = input.trim();
+    if (!trimmed || loading) return;
+
+    const nextUserMessage = { role: 'user', content: trimmed };
+    setMessages((prev) => [...prev, nextUserMessage]);
+    setInput('');
+    setLoading(true);
+
+    try {
+      // IMPORTANT:
+      // Keep your existing API / assistant logic here.
+      // Replace ONLY the inside of this try block with your current request code if needed.
+      // The UI shell is the main change.
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            mode === 'founder'
+              ? 'Founder assistant response placeholder. Keep your current logic here exactly as-is.'
+              : 'Marketer assistant response placeholder. Keep your current logic here exactly as-is.',
+        },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Something went wrong. Please try again.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+      textareaRef.current?.focus();
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0b0b0f] text-white px-4 md:px-6 py-6">
+      <div className="mx-auto max-w-5xl">
+        {/* Top mode switch only */}
+        <div className="mb-4 flex justify-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] p-1 backdrop-blur-md">
+            {MODES.map((item) => {
+              const active = mode === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setMode(item.id)}
+                  className={[
+                    'rounded-full px-4 py-2 text-sm font-medium transition-all',
+                    active
+                      ? 'bg-white text-black shadow-sm'
+                      : 'text-white/75 hover:text-white hover:bg-white/5',
+                  ].join(' ')}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* One big bubbly assistant shell */}
+        <div className="rounded-[34px] border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)] overflow-hidden">
+          {/* Chat area */}
+          <div className="h-[68vh] md:h-[72vh] overflow-y-auto px-4 md:px-6 py-5 space-y-4">
+            {messages.map((message, index) => (
+              <BubbleMessage
+                key={`${message.role}-${index}`}
+                role={message.role}
+                content={message.content}
+              />
+            ))}
+
+            {loading && (
+              <div className="w-full flex justify-start">
+                <div className="max-w-[140px] rounded-[28px] rounded-bl-md px-5 py-4 border border-white/10 bg-white/[0.06] text-white/75 text-sm">
+                  Thinking...
                 </div>
-
-                <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-2xl">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Build Ad prompts
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {buildExamples.map((example) => (
-                      <button
-                        key={example}
-                        type="button"
-                        onClick={() => setBuildInput(example)}
-                        className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:bg-cyan-400/[0.08]"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </form>
-            </div>
-          )}
-
-          <div className="px-4 pb-4 md:px-6">
-            <div
-              ref={chatScrollRef}
-              className="relative max-h-[360px] overflow-y-auto rounded-[26px] bg-white/[0.03] px-4 py-4 backdrop-blur-2xl"
-            >
-              <div className="pointer-events-none absolute inset-0 opacity-60">
-                <div className="absolute left-[8%] top-12 h-32 w-32 rounded-full bg-cyan-400/6 blur-3xl" />
-                <div className="absolute right-[12%] top-24 h-36 w-36 rounded-full bg-cyan-300/6 blur-3xl" />
               </div>
+            )}
 
-              <div className="relative z-10 space-y-4">
-                {chatMessages.map((message, index) => (
-                  <MessageBubble
-                    key={`chat-${message.role}-${index}`}
-                    role={message.role}
-                    content={message.content}
-                    attachments={message.attachments || []}
-                    badge={message.badge}
-                  />
-                ))}
+            <div ref={messagesEndRef} />
+          </div>
 
-                {loadingChat && (
-                  <div className="flex justify-start">
-                    <div className="rounded-[24px] bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
-                      <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
-                        Marketer Assistant
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <form onSubmit={handleChatSubmit} className="mt-4 space-y-3">
-              {chatAttachments.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {chatAttachments.map((attachment) => (
-                    <AttachmentChip
-                      key={attachment.id}
-                      attachment={attachment}
-                      onRemove={removeChatAttachment}
-                    />
-                  ))}
-                </div>
-              )}
-
-              <div
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setChatDragActive(true);
-                }}
-                onDragLeave={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  const related = e.relatedTarget;
-                  if (!e.currentTarget.contains(related)) setChatDragActive(false);
-                }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setChatDragActive(true);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setChatDragActive(false);
-                  if (e.dataTransfer?.files?.length) addChatFiles(e.dataTransfer.files);
-                }}
-                className={[
-                  "relative overflow-hidden rounded-[26px] p-3 transition backdrop-blur-2xl",
-                  chatDragActive
-                    ? "bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
-                    : "bg-white/[0.03]",
-                ].join(" ")}
-              >
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
-
-                <div className="relative z-10 flex items-end gap-3">
-                  <button
-                    type="button"
-                    onClick={() => chatFileInputRef.current?.click()}
-                    className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
-                  >
-                    +
-                  </button>
-
-                  <div className="flex-1">
-                    <textarea
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      rows={3}
-                      placeholder={`Ask about IntelliFlow Communications marketing performance, content, positioning, hooks, budget, or niche targeting for ${selectedNiche}...`}
-                      className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
-                    />
-                  </div>
-
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="rounded-full bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                      Chat
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={loadingChat || (!chatInput.trim() && chatAttachments.length === 0)}
-                      className="h-[52px] rounded-[22px] bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {loadingChat ? "Thinking..." : "Send"}
-                    </button>
-                  </div>
-                </div>
-
-                <input
-                  ref={chatFileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf,.txt,.doc,.docx"
-                  onChange={(e) => {
-                    addChatFiles(e.target.files);
-                    e.target.value = "";
+          {/* Input area */}
+          <div className="border-t border-white/10 px-4 md:px-6 py-4 bg-black/10">
+            <form onSubmit={handleSubmit} className="flex items-end gap-3">
+              <div className="flex-1 rounded-[28px] border border-white/10 bg-white/[0.05] px-4 py-3 shadow-inner">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  rows={1}
+                  placeholder={placeholder}
+                  className="w-full resize-none bg-transparent text-white placeholder:text-white/40 outline-none text-sm md:text-[15px] leading-6 max-h-40"
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
                   }}
-                  className="hidden"
                 />
-
-                <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                  <span>Drag and drop screenshots or files here</span>
-                  <span>•</span>
-                  <span>Up to 4 files</span>
-                  <span>•</span>
-                  <span>Max 8MB each</span>
-                </div>
               </div>
 
-              <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-2xl">
-                <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                  Example prompts
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {chatExamples.map((example) => (
-                    <button
-                      key={example}
-                      type="button"
-                      onClick={() => setChatInput(example)}
-                      className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:bg-cyan-400/[0.08]"
-                    >
-                      {example}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <button
+                type="submit"
+                disabled={!input.trim() || loading}
+                className="h-[52px] min-w-[52px] rounded-full border border-white/10 bg-white text-black font-medium px-5 disabled:opacity-40 disabled:cursor-not-allowed transition hover:scale-[1.02]"
+              >
+                Send
+              </button>
             </form>
           </div>
         </div>
