@@ -10,13 +10,24 @@ export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');
   const [showGoalActions, setShowGoalActions] = useState(false);
 
-  if (loading && !dashboard) return <LoadingSpinner />;
-  if (error) return <ErrorBanner message={error} />;
-  if (!dashboard || (!dashboard.kpis && !dashboard.marketing)) {
-    return <EmptyState message="Dashboard data not available yet" />;
-  }
+  const safeDashboard =
+    dashboard && typeof dashboard === 'object' ? dashboard : {};
 
-  const { kpis = {}, marketing = {}, watchlist = [], lastUpdated } = dashboard;
+  const kpis =
+    safeDashboard.kpis && typeof safeDashboard.kpis === 'object'
+      ? safeDashboard.kpis
+      : {};
+
+  const marketing =
+    safeDashboard.marketing && typeof safeDashboard.marketing === 'object'
+      ? safeDashboard.marketing
+      : {};
+
+  const watchlist = Array.isArray(safeDashboard.watchlist)
+    ? safeDashboard.watchlist
+    : [];
+
+  const lastUpdated = safeDashboard.lastUpdated || null;
 
   const activeCustomers = safeNumber(kpis['Active Customers']);
   const revenue = safeCurrency(kpis['Total Revenue']);
@@ -147,6 +158,12 @@ export default function DashboardPage() {
     },
   ];
 
+  if (loading && !dashboard) return <LoadingSpinner />;
+  if (error) return <ErrorBanner message={error} />;
+  if (!dashboard || (!safeDashboard.kpis && !safeDashboard.marketing)) {
+    return <EmptyState message="Dashboard data not available yet" />;
+  }
+
   return (
     <div className="space-y-5 fade-in">
       {lastUpdated && (
@@ -174,7 +191,7 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <div className="w-full min-w-[150px] xl:w-[220px]">
-              <div className="h-2 rounded-full bg-white/8 overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-white/8">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
                   style={{ width: `${goal.progressPercent}%` }}
@@ -209,7 +226,7 @@ export default function DashboardPage() {
                   <div className="mb-2 text-sm font-semibold text-white">
                     {action.title}
                   </div>
-                  <div className="text-sm text-zinc-400 leading-6">
+                  <div className="text-sm leading-6 text-zinc-400">
                     {action.text}
                   </div>
                 </div>
@@ -221,7 +238,7 @@ export default function DashboardPage() {
 
       <section>
         <h2 className="section-title mb-3">Founder / Executive KPIs</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {founderKpis.map((kpi) => (
             <KpiCard
               key={kpi.label}
@@ -236,7 +253,7 @@ export default function DashboardPage() {
 
       <section>
         <h2 className="section-title mb-3">Marketing Snapshot</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
           {marketingKpis.map((kpi) => (
             <KpiCard
               key={kpi.label}
