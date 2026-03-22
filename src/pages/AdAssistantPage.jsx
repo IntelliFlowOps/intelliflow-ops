@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSheetData } from "../hooks/useSheetData.jsx";
+import { buildFounderAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const EXAMPLE_QUESTIONS = [
   "What is the highest-leverage move to get us closer to 25 clients this month?",
@@ -9,23 +11,10 @@ const EXAMPLE_QUESTIONS = [
   "Where are we leaking revenue operationally?",
 ];
 
-const MODES = [
-  {
-    id: "founder",
-    label: "Founder Mode",
-    description: "Growth, bottlenecks, CAC, churn, scale decisions",
-  },
-  {
-    id: "ad-builder",
-    label: "Ad Builder",
-    description: "Hooks, offers, angles, CTA, creatives, copy",
-  },
-];
-
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
 
-function MessageBubble({ role, content, attachments = [], mode }) {
+function MessageBubble({ role, content, attachments = [] }) {
   const isUser = role === "user";
 
   return (
@@ -39,19 +28,13 @@ function MessageBubble({ role, content, attachments = [], mode }) {
         ].join(" ")}
       >
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_38%,rgba(34,211,238,0.05))]" />
-
         {!isUser && (
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_45%)]" />
         )}
 
         <div className="relative z-10">
           <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
-            <span>{isUser ? "Founder" : "Assistant"}</span>
-            {mode && (
-              <span className="rounded-full border border-cyan-300/15 bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/80">
-                {mode === "ad-builder" ? "Ad Builder" : "Founder Mode"}
-              </span>
-            )}
+            <span>{isUser ? "Founder" : "Founder Assistant"}</span>
           </div>
 
           {attachments.length > 0 && (
@@ -104,31 +87,12 @@ function AttachmentChip({ attachment, onRemove }) {
   );
 }
 
-function ModePill({ mode, activeMode, onClick }) {
-  const active = activeMode === mode.id;
-
-  return (
-    <button
-      type="button"
-      onClick={() => onClick(mode.id)}
-      className={[
-        "rounded-full px-3 py-1.5 text-xs transition backdrop-blur-xl",
-        active
-          ? "border border-cyan-300/20 bg-cyan-400/12 text-cyan-100 shadow-[0_0_18px_rgba(34,211,238,0.12)]"
-          : "border border-white/8 bg-white/[0.04] text-slate-300 hover:border-cyan-300/15 hover:bg-cyan-400/[0.08] hover:text-slate-100",
-      ].join(" ")}
-      title={mode.description}
-    >
-      {mode.label}
-    </button>
-  );
-}
-
 export default function AdAssistantPage() {
+  const { data } = useSheetData();
+
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      mode: "founder",
       content:
         "I’m locked in on the path to 2,000 clients. Bring me the bottleneck, the numbers, or the decision you need pressure-tested.",
       attachments: [],
@@ -136,7 +100,6 @@ export default function AdAssistantPage() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeMode, setActiveMode] = useState("founder");
   const [attachments, setAttachments] = useState([]);
   const [dragActive, setDragActive] = useState(false);
 
@@ -245,7 +208,6 @@ export default function AdAssistantPage() {
 
     const userMessage = {
       role: "user",
-      mode: activeMode,
       content: trimmed || "Review the attached files/screenshots and help me.",
       attachments,
     };
@@ -257,46 +219,41 @@ export default function AdAssistantPage() {
     setAttachments([]);
 
     try {
-      const response = await fetch("/api/founder-assistant", {
+      const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          assistantType: "founder",
           message: trimmed,
-          mode: activeMode,
           messages: nextMessages.map((message) => ({
             role: message.role,
-            mode: message.mode,
             content: message.content,
-            attachments: (message.attachments || []).map((attachment) => ({
-              name: attachment.name,
-              type: attachment.type,
-            })),
           })),
           attachments: attachments.map((attachment) => ({
             name: attachment.name,
             type: attachment.type,
           })),
+          context: buildFounderAssistantContext(data),
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get assistant response.");
+        throw new Error("Failed to get founder assistant response.");
       }
 
-      const data = await response.json();
+      const dataResponse = await response.json();
       const reply =
-        data?.reply ||
-        data?.message ||
-        data?.content ||
-        "I couldn’t generate a response. Check the assistant route and response shape.";
+        dataResponse?.reply ||
+        dataResponse?.message ||
+        dataResponse?.content ||
+        "I couldn’t generate a response. Check the chat route and response shape.";
 
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          mode: activeMode,
           content: reply,
           attachments: [],
         },
@@ -306,9 +263,8 @@ export default function AdAssistantPage() {
         ...prev,
         {
           role: "assistant",
-          mode: activeMode,
           content:
-            "The assistant request failed. Check the API route wiring and make sure the response returns a reply, message, or content field.",
+            "The founder assistant request failed. Check the API route wiring and make sure the response returns a reply, message, or content field.",
           attachments: [],
         },
       ]);
@@ -332,23 +288,12 @@ export default function AdAssistantPage() {
 
                 <div>
                   <h1 className="text-lg font-semibold tracking-wide text-white">
-                    Ad Assistant
+                    Founder Assistant
                   </h1>
                   <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/65">
                     IntelliFlow Communications
                   </p>
                 </div>
-              </div>
-
-              <div className="hidden items-center gap-2 md:flex">
-                {MODES.map((mode) => (
-                  <ModePill
-                    key={mode.id}
-                    mode={mode}
-                    activeMode={activeMode}
-                    onClick={setActiveMode}
-                  />
-                ))}
               </div>
             </div>
           </div>
@@ -371,7 +316,6 @@ export default function AdAssistantPage() {
                     role={message.role}
                     content={message.content}
                     attachments={message.attachments || []}
-                    mode={message.mode}
                   />
                 ))}
 
@@ -379,7 +323,7 @@ export default function AdAssistantPage() {
                   <div className="flex justify-start">
                     <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
                       <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
-                        Assistant
+                        Founder Assistant
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
@@ -394,19 +338,6 @@ export default function AdAssistantPage() {
 
             <div className="border-t border-white/6 px-4 py-4 md:px-6">
               <form onSubmit={handleSubmit} className="space-y-3">
-                <div className="md:hidden">
-                  <div className="flex flex-wrap gap-2">
-                    {MODES.map((mode) => (
-                      <ModePill
-                        key={mode.id}
-                        mode={mode}
-                        activeMode={activeMode}
-                        onClick={setActiveMode}
-                      />
-                    ))}
-                  </div>
-                </div>
-
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((attachment) => (
@@ -449,18 +380,14 @@ export default function AdAssistantPage() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         rows={3}
-                        placeholder={
-                          activeMode === "ad-builder"
-                            ? "Drop screenshots, ads, landing pages, or ask for hooks, offers, CTA, creatives, and copy..."
-                            : "Ask about growth, bottlenecks, churn, CAC, close rate, onboarding, or what breaks at scale..."
-                        }
+                        placeholder="Ask about growth, bottlenecks, CAC, churn, close rate, onboarding, or what breaks at scale..."
                         className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
                       />
                     </div>
 
                     <div className="flex flex-col items-end gap-2">
                       <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                        {activeMode === "ad-builder" ? "Ad Builder" : "Founder Mode"}
+                        Founder
                       </div>
 
                       <button
