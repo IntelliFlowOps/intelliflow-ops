@@ -46,11 +46,11 @@ function MessageBubble({ role, content, attachments = [], badge }) {
         className={[
           "relative max-w-[90%] overflow-hidden rounded-[24px] px-4 py-3 whitespace-pre-wrap text-sm leading-6 backdrop-blur-xl",
           isUser
-            ? "border border-white/8 bg-white/[0.06] text-white shadow-[0_10px_35px_rgba(0,0,0,0.22)]"
-            : "border border-cyan-300/12 bg-cyan-400/[0.08] text-slate-100 shadow-[0_0_30px_rgba(34,211,238,0.08)]",
+            ? "bg-white/[0.06] text-white shadow-[0_10px_35px_rgba(0,0,0,0.22)]"
+            : "bg-cyan-400/[0.08] text-slate-100 shadow-[0_0_30px_rgba(34,211,238,0.08)]",
         ].join(" ")}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_38%,rgba(34,211,238,0.05))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_38%,rgba(34,211,238,0.05))]" />
         {!isUser && (
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_45%)]" />
         )}
@@ -59,7 +59,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
           <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
             <span>{isUser ? "Marketer" : "Marketer Assistant"}</span>
             {badge && (
-              <span className="rounded-full border border-cyan-300/15 bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/80">
+              <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[9px] text-cyan-100/80">
                 {badge}
               </span>
             )}
@@ -70,7 +70,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
               {attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.05] backdrop-blur-xl"
+                  className="overflow-hidden rounded-2xl bg-white/[0.05] backdrop-blur-xl"
                 >
                   {attachment.previewUrl && attachment.type?.startsWith("image/") ? (
                     <img
@@ -83,7 +83,8 @@ function MessageBubble({ role, content, attachments = [], badge }) {
                       {attachment.name}
                     </div>
                   )}
-                  <div className="border-t border-white/8 px-2 py-1 text-[11px] text-slate-300 truncate">
+
+                  <div className="px-2 py-1 text-[11px] text-slate-300 truncate">
                     {attachment.name}
                   </div>
                 </div>
@@ -100,7 +101,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
 
 function AttachmentChip({ attachment, onRemove }) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
+    <div className="flex items-center gap-2 rounded-full bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
       <span className="max-w-[150px] truncate">{attachment.name}</span>
       <button
         type="button"
@@ -188,7 +189,7 @@ export default function MarketerAssistantPage() {
     if (buildScrollRef.current) {
       buildScrollRef.current.scrollTop = buildScrollRef.current.scrollHeight;
     }
-  }, [builderMessages, loadingBuild]);
+  }, [builderMessages, loadingBuild, buildAdOpen]);
 
   useEffect(() => {
     return () => {
@@ -203,16 +204,12 @@ export default function MarketerAssistantPage() {
 
   function addChatFiles(fileList) {
     const nextFiles = buildAttachmentObjects(fileList, chatAttachments);
-    if (nextFiles.length) {
-      setChatAttachments((prev) => [...prev, ...nextFiles]);
-    }
+    if (nextFiles.length) setChatAttachments((prev) => [...prev, ...nextFiles]);
   }
 
   function addBuildFiles(fileList) {
     const nextFiles = buildAttachmentObjects(fileList, buildAttachments);
-    if (nextFiles.length) {
-      setBuildAttachments((prev) => [...prev, ...nextFiles]);
-    }
+    if (nextFiles.length) setBuildAttachments((prev) => [...prev, ...nextFiles]);
   }
 
   function removeChatAttachment(id) {
@@ -231,20 +228,7 @@ export default function MarketerAssistantPage() {
     });
   }
 
-  function openChatFilePicker() {
-    chatFileInputRef.current?.click();
-  }
-
-  function openBuildFilePicker() {
-    buildFileInputRef.current?.click();
-  }
-
-  async function sendToAssistant({
-    messageText,
-    mode,
-    attachments,
-    nextMessages,
-  }) {
+  async function sendToAssistant({ messageText, mode, attachments, nextMessages }) {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
@@ -272,9 +256,7 @@ export default function MarketerAssistantPage() {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to get marketer assistant response.");
-    }
+    if (!response.ok) throw new Error("Failed to get marketer assistant response.");
 
     const dataResponse = await response.json();
     return (
@@ -314,14 +296,9 @@ export default function MarketerAssistantPage() {
 
       setChatMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: reply,
-          attachments: [],
-          badge: "Chat",
-        },
+        { role: "assistant", content: reply, attachments: [], badge: "Chat" },
       ]);
-    } catch (error) {
+    } catch {
       setChatMessages((prev) => [
         ...prev,
         {
@@ -366,14 +343,9 @@ export default function MarketerAssistantPage() {
 
       setBuilderMessages((prev) => [
         ...prev,
-        {
-          role: "assistant",
-          content: reply,
-          attachments: [],
-          badge: "Build Ad",
-        },
+        { role: "assistant", content: reply, attachments: [], badge: "Build Ad" },
       ]);
-    } catch (error) {
+    } catch {
       setBuilderMessages((prev) => [
         ...prev,
         {
@@ -392,14 +364,14 @@ export default function MarketerAssistantPage() {
   return (
     <div className="min-h-screen bg-[#07111f] text-white">
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[30px] border border-cyan-300/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),rgba(7,17,31,0.97)_42%)] shadow-[0_0_60px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
-          <div className="border-b border-white/6 px-5 py-4 md:px-6">
+        <div className="overflow-hidden rounded-[30px] bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),rgba(7,17,31,0.97)_42%)] shadow-[0_0_60px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
+          <div className="px-5 py-4 md:px-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="relative h-11 w-11 rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
-                  <div className="absolute inset-2 rounded-xl border border-cyan-300/12" />
+                <div className="relative h-11 w-11 rounded-2xl bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
+                  <div className="absolute inset-2 rounded-xl bg-white/[0.03]" />
                   <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
-                  <div className="absolute inset-0 animate-pulse rounded-2xl border border-cyan-200/8" />
+                  <div className="absolute inset-0 animate-pulse rounded-2xl bg-cyan-200/5" />
                 </div>
 
                 <div>
@@ -415,22 +387,220 @@ export default function MarketerAssistantPage() {
               <button
                 type="button"
                 onClick={() => setBuildAdOpen((prev) => !prev)}
-                className="rounded-full border border-cyan-300/20 bg-cyan-400/12 px-4 py-2 text-sm text-cyan-100 backdrop-blur-xl transition hover:bg-cyan-400/18"
+                className="rounded-full bg-cyan-400/12 px-4 py-2 text-sm text-cyan-100 backdrop-blur-xl transition hover:bg-cyan-400/18"
               >
                 {buildAdOpen ? "Close Build Ad" : "Build An Ad"}
               </button>
             </div>
           </div>
 
-          <div className="flex min-h-[80vh] flex-col">
+          {buildAdOpen && (
+            <div className="mx-4 mb-4 rounded-[26px] bg-white/[0.035] p-4 backdrop-blur-2xl md:mx-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">Build Ad</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/60">
+                    Structured ad output
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-[20px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Platform
+                  </div>
+                  <select
+                    value={selectedPlatform}
+                    onChange={(e) => setSelectedPlatform(e.target.value)}
+                    className="w-full rounded-[16px] bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
+                  >
+                    {PLATFORMS.map((platform) => (
+                      <option key={platform} value={platform} className="bg-[#081a2c]">
+                        {platform}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="rounded-[20px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Niche
+                  </div>
+                  <select
+                    value={selectedNiche}
+                    onChange={(e) => setSelectedNiche(e.target.value)}
+                    className="w-full rounded-[16px] bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
+                  >
+                    {NICHES.map((niche) => (
+                      <option key={niche} value={niche} className="bg-[#081a2c]">
+                        {niche}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div
+                ref={buildScrollRef}
+                className="mt-4 max-h-[320px] space-y-4 overflow-y-auto"
+              >
+                {builderMessages.map((message, index) => (
+                  <MessageBubble
+                    key={`build-${message.role}-${index}`}
+                    role={message.role}
+                    content={message.content}
+                    attachments={message.attachments || []}
+                    badge={message.badge}
+                  />
+                ))}
+
+                {loadingBuild && (
+                  <div className="flex justify-start">
+                    <div className="rounded-[24px] bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+                      <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
+                        Marketer Assistant
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <form onSubmit={handleBuildSubmit} className="mt-4 space-y-3">
+                {buildAttachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {buildAttachments.map((attachment) => (
+                      <AttachmentChip
+                        key={attachment.id}
+                        attachment={attachment}
+                        onRemove={removeBuildAttachment}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setBuildDragActive(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const related = e.relatedTarget;
+                    if (!e.currentTarget.contains(related)) setBuildDragActive(false);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setBuildDragActive(true);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setBuildDragActive(false);
+                    if (e.dataTransfer?.files?.length) addBuildFiles(e.dataTransfer.files);
+                  }}
+                  className={[
+                    "relative overflow-hidden rounded-[26px] p-3 transition backdrop-blur-2xl",
+                    buildDragActive
+                      ? "bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
+                      : "bg-white/[0.03]",
+                  ].join(" ")}
+                >
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
+
+                  <div className="relative z-10 flex items-end gap-3">
+                    <button
+                      type="button"
+                      onClick={() => buildFileInputRef.current?.click()}
+                      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
+                    >
+                      +
+                    </button>
+
+                    <div className="flex-1">
+                      <textarea
+                        value={buildInput}
+                        onChange={(e) => setBuildInput(e.target.value)}
+                        rows={3}
+                        placeholder={`Build a ${selectedPlatform} ad for ${selectedNiche}...`}
+                        className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
+                      />
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="rounded-full bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
+                        Build Ad
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loadingBuild || (!buildInput.trim() && buildAttachments.length === 0)}
+                        className="h-[52px] rounded-[22px] bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {loadingBuild ? "Thinking..." : "Send"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <input
+                    ref={buildFileInputRef}
+                    type="file"
+                    multiple
+                    accept="image/*,.pdf,.txt,.doc,.docx"
+                    onChange={(e) => {
+                      addBuildFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                    className="hidden"
+                  />
+
+                  <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                    <span>Drag and drop screenshots or files here</span>
+                    <span>•</span>
+                    <span>Up to 4 files</span>
+                    <span>•</span>
+                    <span>Max 8MB each</span>
+                  </div>
+                </div>
+
+                <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                    Build Ad prompts
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {buildExamples.map((example) => (
+                      <button
+                        key={example}
+                        type="button"
+                        onClick={() => setBuildInput(example)}
+                        className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:bg-cyan-400/[0.08]"
+                      >
+                        {example}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </form>
+            </div>
+          )}
+
+          <div className="px-4 pb-4 md:px-6">
             <div
               ref={chatScrollRef}
-              className="relative flex-1 space-y-4 overflow-y-auto px-4 py-5 md:px-6"
+              className="relative max-h-[360px] overflow-y-auto rounded-[26px] bg-white/[0.03] px-4 py-4 backdrop-blur-2xl"
             >
               <div className="pointer-events-none absolute inset-0 opacity-60">
                 <div className="absolute left-[8%] top-12 h-32 w-32 rounded-full bg-cyan-400/6 blur-3xl" />
                 <div className="absolute right-[12%] top-24 h-36 w-36 rounded-full bg-cyan-300/6 blur-3xl" />
-                <div className="absolute bottom-24 left-1/3 h-40 w-40 rounded-full bg-cyan-400/5 blur-3xl" />
               </div>
 
               <div className="relative z-10 space-y-4">
@@ -446,7 +616,7 @@ export default function MarketerAssistantPage() {
 
                 {loadingChat && (
                   <div className="flex justify-start">
-                    <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+                    <div className="rounded-[24px] bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
                       <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
                         Marketer Assistant
                       </div>
@@ -461,338 +631,125 @@ export default function MarketerAssistantPage() {
               </div>
             </div>
 
-            <div className="border-t border-white/6 px-4 py-4 md:px-6">
-              <form onSubmit={handleChatSubmit} className="space-y-3">
-                {chatAttachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {chatAttachments.map((attachment) => (
-                      <AttachmentChip
-                        key={attachment.id}
-                        attachment={attachment}
-                        onRemove={removeChatAttachment}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <div
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setChatDragActive(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const related = e.relatedTarget;
-                    if (!e.currentTarget.contains(related)) {
-                      setChatDragActive(false);
-                    }
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setChatDragActive(true);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setChatDragActive(false);
-                    if (e.dataTransfer?.files?.length) {
-                      addChatFiles(e.dataTransfer.files);
-                    }
-                  }}
-                  className={[
-                    "relative overflow-hidden rounded-[26px] border p-3 transition backdrop-blur-2xl",
-                    chatDragActive
-                      ? "border-cyan-300/20 bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
-                      : "border-white/6 bg-white/[0.03]",
-                  ].join(" ")}
-                >
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
-
-                  <div className="relative z-10 flex items-end gap-3">
-                    <button
-                      type="button"
-                      onClick={openChatFilePicker}
-                      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
-                      aria-label="Add files"
-                      title="Add files or screenshots"
-                    >
-                      +
-                    </button>
-
-                    <div className="flex-1">
-                      <textarea
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        rows={3}
-                        placeholder={`Ask about ${selectedPlatform} performance, budget, hooks, CAC, CPL, close rate, what is underperforming, or drop screenshots for review...`}
-                        className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
-                      />
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                        Chat
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loadingChat || (!chatInput.trim() && chatAttachments.length === 0)}
-                        className="h-[52px] rounded-[22px] border border-cyan-300/15 bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {loadingChat ? "Thinking..." : "Send"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <input
-                    ref={chatFileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*,.pdf,.txt,.doc,.docx"
-                    onChange={(e) => {
-                      addChatFiles(e.target.files);
-                      e.target.value = "";
-                    }}
-                    className="hidden"
-                  />
-
-                  <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                    <span>Drag and drop screenshots or files here</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                    <span>Up to 4 files</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                    <span>Max 8MB each</span>
-                  </div>
-                </div>
-
-                <div className="rounded-[22px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Example prompts
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    {chatExamples.map((example) => (
-                      <button
-                        key={example}
-                        type="button"
-                        onClick={() => setChatInput(example)}
-                        className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
-                      >
-                        {example}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </form>
-
-              {buildAdOpen && (
-                <div className="mt-4 rounded-[28px] border border-cyan-300/10 bg-white/[0.03] p-4 backdrop-blur-2xl">
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-semibold text-white">Build Ad</div>
-                      <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/60">
-                        Structured ad output
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                        Platform
-                      </div>
-                      <select
-                        value={selectedPlatform}
-                        onChange={(e) => setSelectedPlatform(e.target.value)}
-                        className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
-                      >
-                        {PLATFORMS.map((platform) => (
-                          <option key={platform} value={platform} className="bg-[#081a2c]">
-                            {platform}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="rounded-[20px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                        Niche
-                      </div>
-                      <select
-                        value={selectedNiche}
-                        onChange={(e) => setSelectedNiche(e.target.value)}
-                        className="w-full rounded-[16px] border border-cyan-300/10 bg-[#081a2c]/60 px-3 py-2 text-sm text-white outline-none"
-                      >
-                        {NICHES.map((niche) => (
-                          <option key={niche} value={niche} className="bg-[#081a2c]">
-                            {niche}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div
-                    ref={buildScrollRef}
-                    className="mt-4 max-h-[360px] space-y-4 overflow-y-auto"
-                  >
-                    {builderMessages.map((message, index) => (
-                      <MessageBubble
-                        key={`build-${message.role}-${index}`}
-                        role={message.role}
-                        content={message.content}
-                        attachments={message.attachments || []}
-                        badge={message.badge}
-                      />
-                    ))}
-
-                    {loadingBuild && (
-                      <div className="flex justify-start">
-                        <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
-                          <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
-                            Marketer Assistant
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
-                            <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <form onSubmit={handleBuildSubmit} className="mt-4 space-y-3">
-                    {buildAttachments.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {buildAttachments.map((attachment) => (
-                          <AttachmentChip
-                            key={attachment.id}
-                            attachment={attachment}
-                            onRemove={removeBuildAttachment}
-                          />
-                        ))}
-                      </div>
-                    )}
-
-                    <div
-                      onDragEnter={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setBuildDragActive(true);
-                      }}
-                      onDragLeave={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const related = e.relatedTarget;
-                        if (!e.currentTarget.contains(related)) {
-                          setBuildDragActive(false);
-                        }
-                      }}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setBuildDragActive(true);
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setBuildDragActive(false);
-                        if (e.dataTransfer?.files?.length) {
-                          addBuildFiles(e.dataTransfer.files);
-                        }
-                      }}
-                      className={[
-                        "relative overflow-hidden rounded-[26px] border p-3 transition backdrop-blur-2xl",
-                        buildDragActive
-                          ? "border-cyan-300/20 bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
-                          : "border-white/6 bg-white/[0.03]",
-                      ].join(" ")}
-                    >
-                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
-
-                      <div className="relative z-10 flex items-end gap-3">
-                        <button
-                          type="button"
-                          onClick={openBuildFilePicker}
-                          className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
-                          aria-label="Add files"
-                          title="Add files or screenshots"
-                        >
-                          +
-                        </button>
-
-                        <div className="flex-1">
-                          <textarea
-                            value={buildInput}
-                            onChange={(e) => setBuildInput(e.target.value)}
-                            rows={3}
-                            placeholder={`Build a ${selectedPlatform} ad for ${selectedNiche}...`}
-                            className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
-                          />
-                        </div>
-
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                            Build Ad
-                          </div>
-
-                          <button
-                            type="submit"
-                            disabled={loadingBuild || (!buildInput.trim() && buildAttachments.length === 0)}
-                            className="h-[52px] rounded-[22px] border border-cyan-300/15 bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            {loadingBuild ? "Thinking..." : "Send"}
-                          </button>
-                        </div>
-                      </div>
-
-                      <input
-                        ref={buildFileInputRef}
-                        type="file"
-                        multiple
-                        accept="image/*,.pdf,.txt,.doc,.docx"
-                        onChange={(e) => {
-                          addBuildFiles(e.target.files);
-                          e.target.value = "";
-                        }}
-                        className="hidden"
-                      />
-
-                      <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-                        <span>Drag and drop screenshots or files here</span>
-                        <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                        <span>Up to 4 files</span>
-                        <span className="h-1 w-1 rounded-full bg-slate-500/60" />
-                        <span>Max 8MB each</span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-[22px] border border-white/6 bg-white/[0.03] p-3 backdrop-blur-2xl">
-                      <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                        Build Ad prompts
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {buildExamples.map((example) => (
-                          <button
-                            key={example}
-                            type="button"
-                            onClick={() => setBuildInput(example)}
-                            className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
-                          >
-                            {example}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </form>
+            <form onSubmit={handleChatSubmit} className="mt-4 space-y-3">
+              {chatAttachments.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {chatAttachments.map((attachment) => (
+                    <AttachmentChip
+                      key={attachment.id}
+                      attachment={attachment}
+                      onRemove={removeChatAttachment}
+                    />
+                  ))}
                 </div>
               )}
-            </div>
+
+              <div
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setChatDragActive(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const related = e.relatedTarget;
+                  if (!e.currentTarget.contains(related)) setChatDragActive(false);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setChatDragActive(true);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setChatDragActive(false);
+                  if (e.dataTransfer?.files?.length) addChatFiles(e.dataTransfer.files);
+                }}
+                className={[
+                  "relative overflow-hidden rounded-[26px] p-3 transition backdrop-blur-2xl",
+                  chatDragActive
+                    ? "bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
+                    : "bg-white/[0.03]",
+                ].join(" ")}
+              >
+                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
+
+                <div className="relative z-10 flex items-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => chatFileInputRef.current?.click()}
+                    className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
+                  >
+                    +
+                  </button>
+
+                  <div className="flex-1">
+                    <textarea
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      rows={3}
+                      placeholder={`Ask about ${selectedPlatform} performance, budget, hooks, CAC, CPL, close rate, what is underperforming, or drop screenshots for review...`}
+                      className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="rounded-full bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
+                      Chat
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loadingChat || (!chatInput.trim() && chatAttachments.length === 0)}
+                      className="h-[52px] rounded-[22px] bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {loadingChat ? "Thinking..." : "Send"}
+                    </button>
+                  </div>
+                </div>
+
+                <input
+                  ref={chatFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.txt,.doc,.docx"
+                  onChange={(e) => {
+                    addChatFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                />
+
+                <div className="relative z-10 mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                  <span>Drag and drop screenshots or files here</span>
+                  <span>•</span>
+                  <span>Up to 4 files</span>
+                  <span>•</span>
+                  <span>Max 8MB each</span>
+                </div>
+              </div>
+
+              <div className="rounded-[22px] bg-white/[0.03] p-3 backdrop-blur-2xl">
+                <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+                  Example prompts
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {chatExamples.map((example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      onClick={() => setChatInput(example)}
+                      className="rounded-full bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:bg-cyan-400/[0.08]"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
