@@ -3,19 +3,19 @@ import { useSheetData } from "../hooks/useSheetData.jsx";
 import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const CHAT_EXAMPLES = [
-  "What is underperforming most right now across our ad data?",
+  "How are our ads performing right now across our data?",
+  "What should I post on LinkedIn this week for IntelliFlow Communications?",
   "How should I allocate budget between Meta and Google Search this week?",
-  "Which niche looks strongest based on customers won, CAC, and close rate?",
-  "What hooks are likely to work best for HVAC right now?",
+  "Which target niche looks strongest based on customers won, CAC, and close rate?",
+  "What angle should we use to target HVAC owners?",
   "Why did this campaign likely work better than the others?",
-  "What should I test next for a roofer offer?",
 ];
 
 const BUILD_EXAMPLES = [
-  "Build 3 hook options for a Meta ad for HVAC.",
-  "Build headlines and primary text for a Google Search campaign for dentists.",
-  "Give me CTA options and creative direction for a chiropractor ad.",
-  "Build an ad test matrix for plumbing on Meta.",
+  "Build 3 hook options for an IntelliFlow Communications Meta ad targeted at HVAC owners.",
+  "Build headlines and primary text for an IntelliFlow Communications Google Search ad targeted at dentists.",
+  "Give me CTA options and creative direction for an IntelliFlow Communications ad targeted at chiropractors.",
+  "Build an ad test matrix for IntelliFlow Communications targeted at plumbing companies.",
 ];
 
 const PLATFORMS = ["Meta", "Google Ads", "Google Search"];
@@ -144,7 +144,7 @@ export default function MarketerAssistantPage() {
     {
       role: "assistant",
       content:
-        "Ask about ad performance, budget allocation, platforms, hooks, offers, creative direction, or what is underperforming.",
+        "Ask about ad performance, budget allocation, LinkedIn content, hooks, offers, creative direction, niche targeting, or what is underperforming.",
       attachments: [],
       badge: "Chat",
     },
@@ -154,7 +154,7 @@ export default function MarketerAssistantPage() {
     {
       role: "assistant",
       content:
-        "Build Ad mode is ready. Pick a platform and niche, then ask for hooks, headlines, primary text, CTA, creative direction, or a testing matrix.",
+        "Build Ad mode is ready. This builds ads for IntelliFlow Communications targeted at the selected niche.",
       attachments: [],
       badge: "Build Ad",
     },
@@ -400,7 +400,7 @@ export default function MarketerAssistantPage() {
                 <div>
                   <div className="text-sm font-semibold text-white">Build Ad</div>
                   <div className="text-xs uppercase tracking-[0.18em] text-cyan-200/60">
-                    Structured ad output
+                    IntelliFlow ad targeted at {selectedNiche}
                   </div>
                 </div>
               </div>
@@ -425,7 +425,7 @@ export default function MarketerAssistantPage() {
 
                 <div className="rounded-[20px] bg-white/[0.03] p-3 backdrop-blur-2xl">
                   <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Niche
+                    Target Niche
                   </div>
                   <select
                     value={selectedNiche}
@@ -530,7 +530,7 @@ export default function MarketerAssistantPage() {
                         value={buildInput}
                         onChange={(e) => setBuildInput(e.target.value)}
                         rows={3}
-                        placeholder={`Build a ${selectedPlatform} ad for ${selectedNiche}...`}
+                        placeholder={`Build an IntelliFlow Communications ${selectedPlatform} ad targeted at ${selectedNiche}...`}
                         className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
                       />
                     </div>
@@ -690,7 +690,7 @@ export default function MarketerAssistantPage() {
                       value={chatInput}
                       onChange={(e) => setChatInput(e.target.value)}
                       rows={3}
-                      placeholder={`Ask about ${selectedPlatform} performance, budget, hooks, CAC, CPL, close rate, what is underperforming, or drop screenshots for review...`}
+                      placeholder={`Ask about IntelliFlow Communications marketing performance, content, positioning, hooks, budget, or niche targeting for ${selectedNiche}...`}
                       className="min-h-[88px] w-full resize-none rounded-[22px] bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl"
                     />
                   </div>
