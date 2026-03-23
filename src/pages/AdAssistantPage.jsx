@@ -1,15 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
 import { buildFounderAssistantContext } from "../lib/assistantContextBuilders.js";
-
-const EXAMPLE_QUESTIONS = [
-  "What is the highest-leverage move right now?",
-  "What breaks at scale if we keep onboarding this way?",
-  "What is our weakest conversion bottleneck right now?",
-  "Should we broaden ICP or fix close rate first?",
-  "What should we change on the offer to improve sign-up rate?",
-  "Where are we leaking revenue operationally?",
-];
 
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
@@ -18,31 +9,27 @@ function MessageBubble({ role, content, attachments = [] }) {
   const isUser = role === "user";
 
   return (
-    <div className={`w-full flex ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={[
-          "relative max-w-[90%] overflow-hidden rounded-[24px] px-4 py-3 whitespace-pre-wrap text-sm leading-6 backdrop-blur-xl",
+        className={`group relative max-w-[86%] overflow-hidden rounded-[30px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-2xl transition-all duration-200 ${
           isUser
-            ? "border border-white/8 bg-white/[0.06] text-white shadow-[0_10px_35px_rgba(0,0,0,0.22)]"
-            : "border border-cyan-300/12 bg-cyan-400/[0.08] text-slate-100 shadow-[0_0_30px_rgba(34,211,238,0.08)]",
-        ].join(" ")}
+            ? "border border-white/10 bg-white/[0.08] text-white shadow-[0_18px_60px_rgba(0,0,0,0.32)]"
+            : "border border-cyan-300/16 bg-cyan-300/[0.09] text-slate-100 shadow-[0_20px_70px_rgba(34,211,238,0.10)]"
+        }`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_38%,rgba(34,211,238,0.05))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_32%,rgba(34,211,238,0.08))]" />
+        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-white/25" />
         {!isUser && (
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(34,211,238,0.12),transparent_45%)]" />
+          <div className="pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full bg-cyan-300/12 blur-2xl" />
         )}
 
         <div className="relative z-10">
-          <div className="mb-1 flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] opacity-70">
-            <span>{isUser ? "Founder" : "Founder Assistant"}</span>
-          </div>
-
           {attachments.length > 0 && (
             <div className="mb-3 grid grid-cols-2 gap-2">
               {attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="overflow-hidden rounded-2xl border border-white/8 bg-white/[0.05] backdrop-blur-xl"
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-xl"
                 >
                   {attachment.previewUrl && attachment.type?.startsWith("image/") ? (
                     <img
@@ -56,7 +43,7 @@ function MessageBubble({ role, content, attachments = [] }) {
                     </div>
                   )}
 
-                  <div className="border-t border-white/8 px-2 py-1 text-[11px] text-slate-300 truncate">
+                  <div className="border-t border-white/10 px-2 py-1 text-[11px] text-slate-300 truncate">
                     {attachment.name}
                   </div>
                 </div>
@@ -73,7 +60,7 @@ function MessageBubble({ role, content, attachments = [] }) {
 
 function AttachmentChip({ attachment, onRemove }) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-cyan-300/15 bg-cyan-400/10 px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
+    <div className="flex items-center gap-2 rounded-full border border-cyan-300/18 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100 shadow-[0_8px_24px_rgba(34,211,238,0.08)] backdrop-blur-xl">
       <span className="max-w-[150px] truncate">{attachment.name}</span>
       <button
         type="button"
@@ -102,7 +89,6 @@ export default function AdAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);
   const [dragActive, setDragActive] = useState(false);
-  const [showExamples, setShowExamples] = useState(false);
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -119,8 +105,6 @@ export default function AdAssistantPage() {
       });
     };
   }, [attachments]);
-
-  const compactExamples = useMemo(() => EXAMPLE_QUESTIONS.slice(0, 6), []);
 
   function normalizeFiles(fileList) {
     const incoming = Array.from(fileList || []);
@@ -159,10 +143,6 @@ export default function AdAssistantPage() {
   function handleFileChange(event) {
     normalizeFiles(event.target.files);
     event.target.value = "";
-  }
-
-  function handleExampleClick(example) {
-    setInput(example);
   }
 
   function openFilePicker() {
@@ -275,40 +255,24 @@ export default function AdAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07111f] text-white">
-      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[30px] border border-cyan-300/10 bg-[radial-gradient(circle_at_top,rgba(34,211,238,0.10),rgba(7,17,31,0.97)_42%)] shadow-[0_0_60px_rgba(34,211,238,0.06)] backdrop-blur-2xl">
-          <div className="border-b border-white/6 px-5 py-4 md:px-6">
-            <div className="flex items-center gap-3">
-              <div className="relative h-11 w-11 rounded-2xl border border-cyan-300/18 bg-cyan-400/10 shadow-[0_0_30px_rgba(34,211,238,0.14)] backdrop-blur-xl">
-                <div className="absolute inset-2 rounded-xl border border-cyan-300/12" />
-                <div className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.85)]" />
-                <div className="absolute inset-0 animate-pulse rounded-2xl border border-cyan-200/8" />
-              </div>
+    <div className="min-h-screen overflow-hidden bg-[#06101c] text-white">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-[8%] top-[8%] h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="absolute right-[10%] top-[18%] h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="absolute bottom-[8%] left-1/3 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
+      </div>
 
-              <div>
-                <h1 className="text-lg font-semibold tracking-wide text-white">
-                  Founder Assistant
-                </h1>
-                <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/65">
-                  IntelliFlow Communications
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
+        <div className="overflow-hidden rounded-[38px] border border-white/10 bg-white/[0.05] shadow-[0_30px_120px_rgba(0,0,0,0.42)] backdrop-blur-3xl">
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_22%,transparent_78%,rgba(255,255,255,0.03))]" />
+          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-white/20" />
 
-          <div className="grid min-h-[80vh] grid-rows-[1fr_auto]">
+          <div className="grid min-h-[82vh] grid-rows-[1fr_auto]">
             <div
               ref={scrollRef}
-              className="relative overflow-y-auto px-4 py-4 md:px-6"
+              className="relative overflow-y-auto px-4 py-5 md:px-6 md:py-6"
             >
-              <div className="pointer-events-none absolute inset-0 opacity-60">
-                <div className="absolute left-[8%] top-12 h-32 w-32 rounded-full bg-cyan-400/6 blur-3xl" />
-                <div className="absolute right-[12%] top-24 h-36 w-36 rounded-full bg-cyan-300/6 blur-3xl" />
-                <div className="absolute bottom-24 left-1/3 h-40 w-40 rounded-full bg-cyan-400/5 blur-3xl" />
-              </div>
-
-              <div className="relative z-10 space-y-4">
+              <div className="space-y-5">
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={`${message.role}-${index}`}
@@ -320,14 +284,12 @@ export default function AdAssistantPage() {
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="rounded-[24px] border border-cyan-300/12 bg-cyan-400/[0.08] px-4 py-3 text-sm text-cyan-100 shadow-[0_0_22px_rgba(34,211,238,0.08)] backdrop-blur-xl">
-                      <div className="mb-1 text-[10px] uppercase tracking-[0.18em] opacity-60">
-                        Founder Assistant
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300" />
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
-                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
+                    <div className="relative overflow-hidden rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.09] px-5 py-4 shadow-[0_20px_70px_rgba(34,211,238,0.10)] backdrop-blur-2xl">
+                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.10),transparent_38%,rgba(34,211,238,0.08))]" />
+                      <div className="relative z-10 flex items-center gap-2">
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
+                        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300 [animation-delay:240ms]" />
                       </div>
                     </div>
                   </div>
@@ -335,7 +297,7 @@ export default function AdAssistantPage() {
               </div>
             </div>
 
-            <div className="border-t border-white/6 px-4 py-4 md:px-6">
+            <div className="border-t border-white/8 bg-black/10 px-4 py-4 md:px-6">
               <form onSubmit={handleSubmit} className="space-y-3">
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -354,20 +316,19 @@ export default function AdAssistantPage() {
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={[
-                    "relative overflow-hidden rounded-[26px] border p-3 transition backdrop-blur-2xl",
+                  className={`relative overflow-hidden rounded-[30px] border p-3 shadow-[0_20px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl transition ${
                     dragActive
-                      ? "border-cyan-300/20 bg-cyan-400/[0.08] shadow-[0_0_35px_rgba(34,211,238,0.10)]"
-                      : "border-white/6 bg-white/[0.03]",
-                  ].join(" ")}
+                      ? "border-cyan-300/20 bg-cyan-400/[0.10]"
+                      : "border-white/10 bg-white/[0.05]"
+                  }`}
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(34,211,238,0.04),transparent)]" />
+                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.06),transparent_26%,rgba(34,211,238,0.06),transparent_72%)]" />
 
                   <div className="relative z-10 flex items-end gap-3">
                     <button
                       type="button"
                       onClick={openFilePicker}
-                      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/15 bg-cyan-400/[0.08] text-2xl text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.14]"
+                      className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-300/10 text-2xl text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/14"
                       aria-label="Add files"
                       title="Add files or screenshots"
                     >
@@ -379,24 +340,18 @@ export default function AdAssistantPage() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         rows={3}
-                        placeholder="Ask about growth, bottlenecks, CAC, churn, close rate, onboarding, or what breaks at scale..."
-                        className="min-h-[88px] w-full resize-none rounded-[22px] border border-cyan-300/10 bg-[#081a2c]/60 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/22"
+                        placeholder="Type your question..."
+                        className="min-h-[92px] w-full resize-none rounded-[24px] border border-white/10 bg-[#08192b]/70 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/24"
                       />
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="rounded-full border border-cyan-300/15 bg-cyan-400/[0.08] px-3 py-1.5 text-xs text-cyan-100 backdrop-blur-xl">
-                        Founder
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading || (!input.trim() && attachments.length === 0)}
-                        className="h-[52px] rounded-[22px] border border-cyan-300/15 bg-cyan-400/[0.10] px-5 text-sm font-medium text-cyan-100 transition backdrop-blur-xl hover:bg-cyan-400/[0.16] disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {loading ? "Thinking..." : "Send"}
-                      </button>
-                    </div>
+                    <button
+                      type="submit"
+                      disabled={loading || (!input.trim() && attachments.length === 0)}
+                      className="h-[54px] rounded-[22px] border border-cyan-300/18 bg-cyan-300/10 px-5 text-sm font-medium text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {loading ? "Thinking..." : "Send"}
+                    </button>
                   </div>
 
                   <input
@@ -407,42 +362,6 @@ export default function AdAssistantPage() {
                     onChange={handleFileChange}
                     className="hidden"
                   />
-
-                  <div className="relative z-10 mt-2 text-[11px] text-slate-400">
-                    Drag and drop screenshots or files here
-                  </div>
-                </div>
-
-                <div className="rounded-[22px] border border-white/6 bg-white/[0.03] backdrop-blur-2xl">
-                  <button
-                    type="button"
-                    onClick={() => setShowExamples((prev) => !prev)}
-                    className="flex w-full items-center justify-between px-4 py-3 text-left"
-                  >
-                    <span className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                      Example prompts
-                    </span>
-                    <span className="text-sm text-cyan-100">
-                      {showExamples ? "Hide" : "Show"}
-                    </span>
-                  </button>
-
-                  {showExamples && (
-                    <div className="border-t border-white/6 px-4 pb-4 pt-2">
-                      <div className="flex flex-wrap gap-2">
-                        {compactExamples.map((example) => (
-                          <button
-                            key={example}
-                            type="button"
-                            onClick={() => handleExampleClick(example)}
-                            className="rounded-full border border-white/8 bg-white/[0.04] px-3 py-1.5 text-xs text-slate-200 transition backdrop-blur-xl hover:border-cyan-300/15 hover:bg-cyan-400/[0.08]"
-                          >
-                            {example}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </form>
             </div>
