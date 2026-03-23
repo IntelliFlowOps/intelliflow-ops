@@ -17,6 +17,9 @@ const PIN_MAP = {
   ED: '1876',
 };
 
+const PAYOUT_WEBHOOK_URL =
+  'https://script.google.com/macros/s/AKfycbwMpHfBcGwjk1doLDuRLRCuLpmlFZyZFdTUc4CHBLSOY-yvtKN2yxGkySEkubnJr6_9/exec';
+
 function parseMoney(value) {
   if (value === null || value === undefined || value === '') return 0;
   const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
@@ -99,13 +102,25 @@ function DetailRow({ label, value }) {
 }
 
 export default function MarketersPage() {
-  const { rows: ledgerRows, loading: ledgerLoading, error: ledgerError } = useTabData('COMMISSION_LEDGER');
-  const { rows: payoutRows, loading: payoutLoading, error: payoutError } = useTabData('PAYOUT_BATCHES');
+  const {
+    rows: ledgerRows,
+    loading: ledgerLoading,
+    error: ledgerError,
+  } = useTabData('COMMISSION_LEDGER');
+
+  const {
+    rows: payoutRows,
+    loading: payoutLoading,
+    error: payoutError,
+  } = useTabData('PAYOUT_BATCHES');
 
   const [selectedPerson, setSelectedPerson] = useState(null);
   const [pinInput, setPinInput] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isPayingOut, setIsPayingOut] = useState(false);
+  const [payoutMessage, setPayoutMessage] = useState('');
 
   const loading = ledgerLoading || payoutLoading;
   const error = ledgerError || payoutError;
@@ -113,7 +128,7 @@ export default function MarketersPage() {
   const personRows = useMemo(() => {
     if (!selectedPerson || !ledgerRows) return [];
     return ledgerRows.filter((row) => rowBelongsToPerson(row, selectedPerson.name));
-  }, [ledgerRows, selectedPerson]);
+  }, [ledgerRows, selectedPerson, refreshKey]);
 
   const unpaidRows = useMemo(() => {
     return personRows.filter((row) => isUnpaidRow(row));
@@ -130,7 +145,7 @@ export default function MarketersPage() {
   const lastPayout = useMemo(() => {
     if (!selectedPerson) return null;
     return getLastPayoutInfo(payoutRows, selectedPerson.name);
-  }, [payoutRows, selectedPerson]);
+  }, [payoutRows, selectedPerson, refreshKey]);
 
   const summaryStats = useMemo(() => {
     if (!selectedPerson) return null;
@@ -155,6 +170,7 @@ export default function MarketersPage() {
     setIsUnlocked(false);
     setPinInput('');
     setPinError('');
+    setPayoutMessage('');
   }
 
   function closeDrawer() {
@@ -162,6 +178,7 @@ export default function MarketersPage() {
     setIsUnlocked(false);
     setPinInput('');
     setPinError('');
+    setPayoutMessage('');
   }
 
   function handleUnlock() {
@@ -181,7 +198,49 @@ export default function MarketersPage() {
     }
 
     setPinError('');
+    setPayoutMessage('');
     setIsUnlocked(true);
+  }
+
+  async function handleMarkPaidOut() {
+    if (!selectedPerson || unpaidRows.length === 0 || isPayingOut) return;
+
+    const confirmed = window.confirm(
+      `Mark all current unpaid ${selectedPerson.name} commission rows as paid out?`
+    );
+
+    if (!confirmed) return;
+
+    setIsPayingOut(true);
+    setPayoutMessage('');
+
+    try {
+      const response = await fetch(PAYOUT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          person: selectedPerson.name,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Payout failed.');
+      }
+
+      setPayoutMessage(
+        `Paid out ${selectedPerson.name}: ${formatMoney(result.totalPaid)} across ${result.updatedRows} row(s). Refresh the page in a few seconds to see updated totals.`
+      );
+
+      setRefreshKey((prev) => prev + 1);
+    } catch (err) {
+      setPayoutMessage(`Payout failed: ${err.message}`);
+    } finally {
+      setIsPayingOut(false);
+    }
   }
 
   if (loading) return <LoadingSpinner />;
@@ -278,6 +337,21 @@ export default function MarketersPage() {
                 </div>
               </div>
             </section>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleMarkPaidOut}
+                disabled={isPayingOut || unpaidRows.length === 0}
+                className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isPayingOut ? 'Marking Paid...' : 'Mark Paid Out'}
+              </button>
+
+              {payoutMessage ? (
+                <p className="text-sm text-zinc-300">{payoutMessage}</p>
+              ) : null}
+            </div>
 
             <section className="space-y-2">
               <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
