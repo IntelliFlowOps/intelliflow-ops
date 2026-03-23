@@ -48,7 +48,9 @@ function isUnpaidRow(row) {
 }
 
 function getLastPayoutInfo(batches, personName) {
-  const personBatches = (batches || []).filter((row) => row['Person'] === personName && row['Paid Date']);
+  const personBatches = (batches || []).filter(
+    (row) => String(row['Person'] || '').trim() === personName && row['Paid Date']
+  );
   if (!personBatches.length) return null;
 
   const sorted = [...personBatches].sort((a, b) =>
@@ -103,13 +105,21 @@ export default function MarketersPage() {
   const loading = ledgerLoading || accessLoading || payoutLoading;
   const error = ledgerError || accessError || payoutError;
 
+  const cleanAccessRows = useMemo(() => {
+    return (accessRows || []).filter((row) => {
+      const person = String(row.Person || '').trim();
+      return PEOPLE.some((p) => p.name === person);
+    });
+  }, [accessRows]);
+
   const accessMap = useMemo(() => {
     const map = new Map();
-    (accessRows || []).forEach((row) => {
-      if (row.Person) map.set(row.Person, row);
+    cleanAccessRows.forEach((row) => {
+      const person = String(row.Person || '').trim();
+      map.set(person, row);
     });
     return map;
-  }, [accessRows]);
+  }, [cleanAccessRows]);
 
   const personRows = useMemo(() => {
     if (!selectedPerson || !ledgerRows) return [];
@@ -137,15 +147,11 @@ export default function MarketersPage() {
     if (!selectedPerson) return null;
 
     const allClients = new Set(
-      personRows
-        .map((row) => row['Customer Name'])
-        .filter(Boolean)
+      personRows.map((row) => row['Customer Name']).filter(Boolean)
     );
 
     const unpaidClients = new Set(
-      unpaidRows
-        .map((row) => row['Customer Name'])
-        .filter(Boolean)
+      unpaidRows.map((row) => row['Customer Name']).filter(Boolean)
     );
 
     return {
@@ -171,11 +177,12 @@ export default function MarketersPage() {
 
   function handleUnlock() {
     if (!selectedPerson) return;
-    const accessRow = accessMap.get(selectedPerson.name);
-    const correctPin = String(accessRow?.PIN || '').trim();
-    const enteredPin = String(pinInput || '').trim();
 
-    if (!correctPin) {
+    const accessRow = accessMap.get(selectedPerson.name);
+    const correctPin = String(accessRow?.PIN ?? '').trim();
+    const enteredPin = String(pinInput ?? '').trim();
+
+    if (!accessRow || !correctPin) {
       setPinError('PIN not set in COMMISSION_ACCESS yet.');
       return;
     }
@@ -241,9 +248,7 @@ export default function MarketersPage() {
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-white/20"
                 placeholder="Enter PIN"
               />
-              {pinError ? (
-                <p className="text-sm text-red-400">{pinError}</p>
-              ) : null}
+              {pinError ? <p className="text-sm text-red-400">{pinError}</p> : null}
 
               <button
                 type="button"
