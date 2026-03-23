@@ -8,6 +8,8 @@ export const TABS = {
   CREATIVE_INSIGHTS: 'Creative_Insights',
   COMMISSION_RULES: 'Commission_Rules',
   COMMISSION_LEDGER: 'Commission_Ledger',
+  PAYOUT_BATCHES: 'PAYOUT_BATCHES',
+  CLOSER_ASSIGNMENTS: 'CLOSER_ASSIGNMENTS',
   FOUNDERS_KPIS: 'Founders_KPIs',
   CUSTOMER_ACTIVITY: 'Customer_Activity',
   DATA_DICTIONARY: 'Data_Dictionary',
