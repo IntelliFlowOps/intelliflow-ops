@@ -1,349 +1,188 @@
 import { useMemo, useState } from "react";
 import { useTabData } from "../hooks/useSheetData.jsx";
 import DrawerPanel from "../components/DrawerPanel.jsx";
-import LoadingSpinner from "../components/LoadingSpinner.jsx";
-import ErrorBanner from "../components/ErrorBanner.jsx";
-import EmptyState from "../components/EmptyState.jsx";
 
-const PEOPLE = [
-  { name: "Emma", role: "Marketer" },
-  { name: "Wyatt", role: "Marketer" },
-  { name: "ED", role: "Sales" },
-  { name: "Micah", role: "Sales" },
-];
+const PEOPLE = ["Emma","Wyatt","ED","Micah"];
 
 const PIN_MAP = {
-  Emma: "3724",
-  Wyatt: "2654",
-  ED: "1876",
-  Micah: "9789",
+  Emma:"3724",
+  Wyatt:"2654",
+  ED:"1876",
+  Micah:"9789"
 };
 
-function normalize(v) {
-  return String(v ?? "").trim().toLowerCase();
-}
+const money=v=>parseFloat(String(v??"").replace(/[^0-9.-]/g,""))||0;
 
-function get(row, keys) {
-  for (const key of keys) {
-    if (row[key] !== undefined && row[key] !== "") return row[key];
-  }
-  return "";
-}
+const fmt=v=>`$${Number(v||0).toLocaleString(undefined,{
+minimumFractionDigits:2,
+maximumFractionDigits:2
+})}`;
 
-function money(v) {
-  return parseFloat(String(v ?? "").replace(/[^0-9.-]/g, "")) || 0;
-}
+function findAssignmentColumn(row){
 
-function fmt(v) {
-  return `$${Number(v || 0).toLocaleString(undefined,{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  })}`;
-}
-
-function belongs(row, person) {
-
-  if (person === "Emma" || person === "Wyatt") {
-
-    return normalize(
-      get(row, [
-        "Direct Marketer",
-        "Closer",
-        "Assigned Marketer",
-        "Owner"
-      ])
-    ) === person.toLowerCase();
-
-  }
-
-  if (person === "ED" || person === "Micah") {
-
-    return normalize(
-      get(row, [
-        "Sales Rep",
-        "Sales Person",
-        "Salesperson",
-        "Assigned Rep"
-      ])
-    ) === person.toLowerCase();
-
-  }
-
-  return false;
-}
-
-function unpaid(row) {
-
-  const paid = normalize(get(row, ["Paid Out?", "Status"]));
-
-  const batch = get(row, [
-    "Payout Batch / Month",
-    "Batch ID"
-  ]);
-
-  if (batch) return false;
-
-  return !(paid === "yes" || paid === "paid");
+return Object.keys(row).find(k=>
+k.toLowerCase().includes("rep")||
+k.toLowerCase().includes("marketer")||
+k.toLowerCase().includes("closer")
+);
 
 }
 
-function commission(row, person) {
+function belongs(row,person){
 
-  if (person === "Emma")
-    return money(get(row, ["Emma Commission"]));
+const col=findAssignmentColumn(row);
 
-  if (person === "Wyatt")
-    return money(get(row, ["Wyatt Commission"]));
+if(!col) return false;
 
-  if (person === "ED" || person === "Micah")
-    return money(get(row, ["Sales Commission"]));
-
-  return 0;
+return String(row[col]).trim().toLowerCase()===person.toLowerCase();
 
 }
 
-function base(row) {
+function unpaid(row){
 
-  return money(
-    get(row, [
-      "Commission Base Amount",
-      "Base Amount"
-    ])
-  );
+if(row["_isPaidOut"]) return false;
 
-}
+if(row["Payout Batch / Month"]) return false;
 
-function rate(row, person) {
-
-  if (person === "ED" || person === "Micah") {
-
-    const r = money(
-      get(row, [
-        "Sales Rep Rate",
-        "Sales Rate"
-      ])
-    );
-
-    return r <= 1 ? r * 100 : r;
-
-  }
-
-  const r = money(
-    get(row, [
-      "Commission %",
-      "Commission Rate"
-    ])
-  );
-
-  return r <= 1 ? r * 100 : r;
+return true;
 
 }
 
-function plan(row) {
+function commission(row,person){
 
-  const b = base(row);
+if(person==="Emma") return money(row["Emma Commission"]);
 
-  if (b === 299) return "Starter";
-  if (b === 499) return "Pro";
-  if (b === 999) return "Premium";
+if(person==="Wyatt") return money(row["Wyatt Commission"]);
 
-  return "Enterprise";
+if(person==="ED"||person==="Micah")
+return money(row["Sales Commission"]);
 
-}
-
-function explanation(row, person) {
-
-  const customer = get(row, [
-    "Customer Name",
-    "Customer"
-  ]);
-
-  const r = rate(row, person);
-  const b = base(row);
-  const c = commission(row, person);
-
-  return `${customer} → ${fmt(b)} × ${r}% = ${fmt(c)}`;
+return 0;
 
 }
 
-function summary(rows, person) {
+function summary(rows,person){
 
-  const owned = rows.filter(r => belongs(r, person));
+const owned=rows.filter(r=>belongs(r,person));
 
-  const unpaidRows = owned
-    .filter(unpaid)
-    .map(r => ({
-      amount: commission(r, person),
-      plan: plan(r),
-      note: explanation(r, person)
-    }))
-    .filter(r => r.amount > 0);
+const unpaidRows=owned
+.filter(unpaid)
+.map(r=>commission(r,person))
+.filter(Boolean);
 
-  const total = unpaidRows.reduce((a,b)=>a+b.amount,0);
+const total=unpaidRows.reduce((a,b)=>a+b,0);
 
-  const grouped = unpaidRows.reduce((acc,r)=>{
-    acc[r.plan]=(acc[r.plan]||0)+r.amount;
-    return acc;
-  },{});
-
-  return { total, unpaidRows, grouped };
+return total;
 
 }
 
 export default function MarketersPage(){
 
-  const {
-    rows: ledger = [],
-    loading,
-    error
-  } = useTabData("COMMISSION_LEDGER");
+const {rows:ledger=[]}=useTabData("COMMISSION_LEDGER");
 
-  const [pins,setPins]=useState({
-    Emma:"",
-    Wyatt:"",
-    ED:"",
-    Micah:""
-  });
+const [pins,setPins]=useState({
+Emma:"",
+Wyatt:"",
+ED:"",
+Micah:""
+});
 
-  const [open,setOpen]=useState(null);
+const [open,setOpen]=useState(null);
 
-  const sums=useMemo(()=>({
-    Emma:summary(ledger,"Emma"),
-    Wyatt:summary(ledger,"Wyatt"),
-    ED:summary(ledger,"ED"),
-    Micah:summary(ledger,"Micah")
-  }),[ledger]);
+const totals=useMemo(()=>({
 
-  function unlock(name){
+Emma:summary(ledger,"Emma"),
+Wyatt:summary(ledger,"Wyatt"),
+ED:summary(ledger,"ED"),
+Micah:summary(ledger,"Micah")
 
-    if(pins[name]!==PIN_MAP[name]) return;
+}),[ledger]);
 
-    setOpen(name);
+function unlock(name){
 
-  }
+if(pins[name]!==PIN_MAP[name]) return;
 
-  function close(){
+setOpen(name);
 
-    setOpen(null);
+}
 
-    setPins({
-      Emma:"",
-      Wyatt:"",
-      ED:"",
-      Micah:""
-    });
+function close(){
 
-  }
+setOpen(null);
 
-  if(loading)
-    return <LoadingSpinner label="Loading..." />;
+setPins({
+Emma:"",
+Wyatt:"",
+ED:"",
+Micah:""
+});
 
-  if(error)
-    return <ErrorBanner message="Commission ledger failed to load." />;
+}
 
-  return(
-    <div className="space-y-6">
+return(
 
-      <h1 className="text-3xl font-semibold text-white">
-        Marketer Commissions
-      </h1>
+<div className="space-y-6">
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+<h1 className="text-3xl font-semibold text-white">
+Marketer Commissions
+</h1>
 
-        {PEOPLE.map(p=>(
-          <div key={p.name}
-            className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 shadow-lg">
+<div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-            <div className="text-lg font-semibold text-white">
-              {p.name}
-            </div>
+{PEOPLE.map(name=>(
 
-            <input
-              type="password"
-              value={pins[p.name]}
-              onChange={e=>setPins(x=>({...x,[p.name]:e.target.value}))}
-              placeholder="Enter PIN"
-              className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white"
-            />
+<div
+key={name}
+className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 shadow-lg">
 
-            <button
-              onClick={()=>unlock(p.name)}
-              className="mt-3 w-full rounded-xl bg-white text-black py-2 font-semibold">
+<div className="text-lg font-semibold text-white">
 
-              Unlock
+{name}
 
-            </button>
+</div>
 
-          </div>
-        ))}
+<input
+type="password"
+value={pins[name]}
+onChange={e=>setPins(x=>({...x,[name]:e.target.value}))}
+placeholder="Enter PIN"
+className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white"
+/>
 
-      </div>
+<button
+onClick={()=>unlock(name)}
+className="mt-3 w-full rounded-xl bg-white text-black py-2 font-semibold">
 
-      {open && (
+Unlock
 
-        <DrawerPanel
-          isOpen
-          onClose={close}
-          title={`${open} Commission Details`}
-          description="Only unpaid ledger rows included"
-        >
+</button>
 
-          <div className="space-y-6">
+</div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+))}
 
-              <div className="text-xs text-gray-400 uppercase">
-                Current Unpaid
-              </div>
+</div>
 
-              <div className="text-3xl text-white font-semibold mt-2">
-                {fmt(sums[open].total)}
-              </div>
+{open && (
 
-            </div>
+<DrawerPanel
+isOpen
+onClose={close}
+title={`${open} Commission`}
+description="Current unpaid total">
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+<div className="text-3xl text-white font-semibold">
 
-              <div className="text-xs text-gray-400 uppercase mb-3">
-                Plan Breakdown
-              </div>
+{fmt(totals[open])}
 
-              {Object.entries(sums[open].grouped).length===0
-                ? <EmptyState title="No unpaid commission" description="Everything already paid."/>
-                : Object.entries(sums[open].grouped).map(([plan,value])=>(
-                  <div key={plan}
-                    className="flex justify-between text-sm text-white mb-2">
+</div>
 
-                    <span>{plan}</span>
-                    <span>{fmt(value)}</span>
+</DrawerPanel>
 
-                  </div>
-                ))
-              }
+)}
 
-            </div>
+</div>
 
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+);
 
-              <div className="text-xs text-gray-400 uppercase mb-3">
-                Calculation Details
-              </div>
-
-              {sums[open].unpaidRows.map((r,i)=>(
-                <div key={i}
-                  className="text-sm text-gray-300 mb-2">
-                  {r.note}
-                </div>
-              ))}
-
-            </div>
-
-          </div>
-
-        </DrawerPanel>
-
-      )}
-
-    </div>
-  );
 }
