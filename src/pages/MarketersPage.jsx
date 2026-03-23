@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import {
   Lock,
   X,
@@ -139,11 +138,21 @@ function getLedgerCommissionAmount(row, marketerName) {
   const marketerLower = normalizeLower(marketerName);
 
   if (marketerLower === 'emma') {
-    return parseAmount(row, ['emma_amount', 'Emma Amount', 'marketer_a_amount', 'Marketer A Amount']);
+    return parseAmount(row, [
+      'emma_amount',
+      'Emma Amount',
+      'marketer_a_amount',
+      'Marketer A Amount',
+    ]);
   }
 
   if (marketerLower === 'wyatt') {
-    return parseAmount(row, ['wyatt_amount', 'Wyatt Amount', 'marketer_b_amount', 'Marketer B Amount']);
+    return parseAmount(row, [
+      'wyatt_amount',
+      'Wyatt Amount',
+      'marketer_b_amount',
+      'Marketer B Amount',
+    ]);
   }
 
   if (marketerLower === 'ed') {
@@ -209,7 +218,6 @@ function buildMarketerSummary(ledgerRows, payoutRows, marketerName) {
   const paidRows = ownedLedgerRows.filter((row) => isPaidLedgerRow(row));
 
   const unpaidTotal = unpaidRows.reduce((sum, row) => sum + row.__commissionAmount, 0);
-  const lifetimeTotal = ownedLedgerRows.reduce((sum, row) => sum + row.__commissionAmount, 0);
 
   const planBuckets = unpaidRows.reduce((acc, row) => {
     const plan = pickValue(row, ['plan', 'Plan', 'package', 'Package', 'tier', 'Tier']) || 'Unknown';
@@ -237,7 +245,6 @@ function buildMarketerSummary(ledgerRows, payoutRows, marketerName) {
   return {
     marketerName,
     unpaidTotal,
-    lifetimeTotal,
     unpaidCount: unpaidRows.length,
     paidCount: paidRows.length,
     planBuckets: Object.entries(planBuckets)
@@ -300,177 +307,178 @@ function UnlockedCard({ summary, onClose }) {
   const latestPayout = summary.payoutHistory[0];
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        initial={{ opacity: 0, y: 10, scale: 0.985 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 8, scale: 0.985 }}
-        transition={{ duration: 0.2 }}
-        className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-slate-900 to-slate-950 p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]"
-      >
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div>
-            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-              <Shield className="h-3.5 w-3.5" />
-              Private commission view
-            </div>
-            <h3 className="text-xl font-semibold text-white">{summary.marketerName}</h3>
-            <p className="mt-1 text-sm text-slate-400">
-              Current unpaid total only. Paid items are excluded after payout.
-            </p>
+    <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-slate-900 to-slate-950 p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
+            <Shield className="h-3.5 w-3.5" />
+            Private commission view
           </div>
-
-          <button
-            onClick={onClose}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
-          >
-            <X className="h-4 w-4" />
-            Close
-          </button>
+          <h3 className="text-xl font-semibold text-white">{summary.marketerName}</h3>
+          <p className="mt-1 text-sm text-slate-400">
+            Current unpaid total only. Paid items are excluded after payout.
+          </p>
         </div>
 
-        <div className="mb-6 grid gap-4 md:grid-cols-3">
-          <StatCard
-            title="Current Unpaid"
-            value={money(summary.unpaidTotal)}
-            subtitle={`${summary.unpaidCount} unpaid item${summary.unpaidCount === 1 ? '' : 's'}`}
-            icon={DollarSign}
-            variant="success"
-          />
-          <StatCard
-            title="Paid Items Logged"
-            value={String(summary.paidCount)}
-            subtitle="Already cleared from current unpaid"
-            icon={CheckCircle2}
-            variant="info"
-          />
-          <StatCard
-            title="Latest Payout"
-            value={latestPayout ? money(latestPayout.amount) : '$0.00'}
-            subtitle={latestPayout ? formatDate(latestPayout.date) : 'No payout logged yet'}
-            icon={Calendar}
-            variant="warning"
-          />
-        </div>
+        <button
+          onClick={onClose}
+          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
+        >
+          <X className="h-4 w-4" />
+          Close
+        </button>
+      </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <Receipt className="h-4 w-4 text-emerald-300" />
-                <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                  Unpaid by plan
-                </h4>
-              </div>
+      <div className="mb-6 grid gap-4 md:grid-cols-3">
+        <StatCard
+          title="Current Unpaid"
+          value={money(summary.unpaidTotal)}
+          subtitle={`${summary.unpaidCount} unpaid item${summary.unpaidCount === 1 ? '' : 's'}`}
+          icon={DollarSign}
+          variant="success"
+        />
+        <StatCard
+          title="Paid Items Logged"
+          value={String(summary.paidCount)}
+          subtitle="Already cleared from current unpaid"
+          icon={CheckCircle2}
+          variant="info"
+        />
+        <StatCard
+          title="Latest Payout"
+          value={latestPayout ? money(latestPayout.amount) : '$0.00'}
+          subtitle={latestPayout ? formatDate(latestPayout.date) : 'No payout logged yet'}
+          icon={Calendar}
+          variant="warning"
+        />
+      </div>
 
-              {summary.planBuckets.length ? (
-                <div className="space-y-3">
-                  {summary.planBuckets.map((item) => (
-                    <div
-                      key={item.plan}
-                      className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3"
-                    >
-                      <span className="text-sm text-slate-300">{item.plan}</span>
-                      <span className="text-sm font-semibold text-white">{money(item.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  title="No unpaid commission"
-                  description="Once payout is recorded in the sheet, current unpaid drops back to zero."
-                />
-              )}
-            </section>
-
-            <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-              <div className="mb-4 flex items-center gap-2">
-                <Clock3 className="h-4 w-4 text-emerald-300" />
-                <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                  Current unpaid items
-                </h4>
-              </div>
-
-              {summary.unpaidRows.length ? (
-                <div className="space-y-3">
-                  {summary.unpaidRows.slice(0, 12).map((row, index) => {
-                    const customer = pickValue(row, ['customer_name', 'Customer Name', 'customer', 'Customer']) || 'Unknown Customer';
-                    const plan = pickValue(row, ['plan', 'Plan', 'package', 'Package', 'tier', 'Tier']) || 'Unknown';
-                    const date = pickValue(row, ['paid_at', 'Paid At', 'date', 'Date']);
-                    const invoice = pickValue(row, ['invoice_number', 'Invoice Number', 'invoice', 'Invoice']);
-
-                    return (
-                      <div
-                        key={`${customer}-${invoice || index}`}
-                        className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
-                      >
-                        <div className="mb-2 flex items-start justify-between gap-3">
-                          <div>
-                            <p className="font-medium text-white">{customer}</p>
-                            <p className="text-sm text-slate-400">
-                              {plan}
-                              {invoice ? ` • Invoice ${invoice}` : ''}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-emerald-300">
-                              {money(row.__commissionAmount)}
-                            </p>
-                            <p className="text-xs text-slate-500">{formatDate(date)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  title="Nothing unpaid right now"
-                  description="That is expected after a payout batch is logged and linked to paid items."
-                />
-              )}
-            </section>
-          </div>
-
+      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+        <div className="space-y-6">
           <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
             <div className="mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-emerald-300" />
+              <Receipt className="h-4 w-4 text-emerald-300" />
               <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                Payout history
+                Unpaid by plan
               </h4>
             </div>
 
-            {summary.payoutHistory.length ? (
+            {summary.planBuckets.length ? (
               <div className="space-y-3">
-                {summary.payoutHistory.slice(0, 12).map((payout) => (
+                {summary.planBuckets.map((item) => (
                   <div
-                    key={payout.id}
-                    className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
+                    key={item.plan}
+                    className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-medium text-white">{formatDate(payout.date)}</p>
-                        <p className="text-sm text-slate-400">
-                          {payout.note || 'Payout batch recorded in sheet'}
-                        </p>
-                      </div>
-                      <span className="font-semibold text-emerald-300">
-                        {money(payout.amount)}
-                      </span>
-                    </div>
+                    <span className="text-sm text-slate-300">{item.plan}</span>
+                    <span className="text-sm font-semibold text-white">{money(item.amount)}</span>
                   </div>
                 ))}
               </div>
             ) : (
               <EmptyState
-                title="No payout history found"
-                description="This card will populate once your payout batch rows are being written correctly."
+                title="No unpaid commission"
+                description="Once payout is recorded in the sheet, current unpaid drops back to zero."
+              />
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Clock3 className="h-4 w-4 text-emerald-300" />
+              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+                Current unpaid items
+              </h4>
+            </div>
+
+            {summary.unpaidRows.length ? (
+              <div className="space-y-3">
+                {summary.unpaidRows.slice(0, 12).map((row, index) => {
+                  const customer =
+                    pickValue(row, ['customer_name', 'Customer Name', 'customer', 'Customer']) ||
+                    'Unknown Customer';
+                  const plan =
+                    pickValue(row, ['plan', 'Plan', 'package', 'Package', 'tier', 'Tier']) ||
+                    'Unknown';
+                  const date = pickValue(row, ['paid_at', 'Paid At', 'date', 'Date']);
+                  const invoice = pickValue(row, [
+                    'invoice_number',
+                    'Invoice Number',
+                    'invoice',
+                    'Invoice',
+                  ]);
+
+                  return (
+                    <div
+                      key={`${customer}-${invoice || index}`}
+                      className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
+                    >
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-white">{customer}</p>
+                          <p className="text-sm text-slate-400">
+                            {plan}
+                            {invoice ? ` • Invoice ${invoice}` : ''}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-emerald-300">
+                            {money(row.__commissionAmount)}
+                          </p>
+                          <p className="text-xs text-slate-500">{formatDate(date)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                title="Nothing unpaid right now"
+                description="That is expected after a payout batch is logged and linked to paid items."
               />
             )}
           </section>
         </div>
-      </motion.div>
-    </AnimatePresence>
+
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-emerald-300" />
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
+              Payout history
+            </h4>
+          </div>
+
+          {summary.payoutHistory.length ? (
+            <div className="space-y-3">
+              {summary.payoutHistory.slice(0, 12).map((payout) => (
+                <div
+                  key={payout.id}
+                  className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-medium text-white">{formatDate(payout.date)}</p>
+                      <p className="text-sm text-slate-400">
+                        {payout.note || 'Payout batch recorded in sheet'}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-emerald-300">
+                      {money(payout.amount)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              title="No payout history found"
+              description="This card will populate once your payout batch rows are being written correctly."
+            />
+          )}
+        </section>
+      </div>
+    </div>
   );
 }
 
@@ -499,18 +507,14 @@ export default function MarketersPage() {
     ED: '',
   });
 
-  const summaries = useMemo(() => {
-    return {
+  const summaries = useMemo(
+    () => ({
       Emma: buildMarketerSummary(ledgerRows, payoutRows, 'Emma'),
       Wyatt: buildMarketerSummary(ledgerRows, payoutRows, 'Wyatt'),
       ED: buildMarketerSummary(ledgerRows, payoutRows, 'ED'),
-    };
-  }, [ledgerRows, payoutRows]);
-
-  useEffect(() => {
-    if (!activeUnlocked) return;
-    return () => setActiveUnlocked(null);
-  }, [activeUnlocked]);
+    }),
+    [ledgerRows, payoutRows]
+  );
 
   const isLoading = ledgerLoading || payoutLoading;
   const error = ledgerError || payoutError;
