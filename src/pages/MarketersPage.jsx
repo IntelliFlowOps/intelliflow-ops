@@ -227,7 +227,6 @@ export default function MarketersPage() {
   const [pinError, setPinError] = useState('');
   const [isPayingOut, setIsPayingOut] = useState(false);
   const [payoutMessage, setPayoutMessage] = useState('');
-  const [refreshTick, setRefreshTick] = useState(0);
 
   const loading = ledgerLoading || payoutLoading;
   const error = ledgerError || payoutError;
@@ -235,7 +234,7 @@ export default function MarketersPage() {
   const personRows = useMemo(() => {
     if (!selectedPerson || !ledgerRows) return [];
     return ledgerRows.filter((row) => rowBelongsToPerson(row, selectedPerson.name));
-  }, [ledgerRows, selectedPerson, refreshTick]);
+  }, [ledgerRows, selectedPerson]);
 
   const unpaidRows = useMemo(() => {
     return personRows.filter((row) => isUnpaidRow(row));
@@ -252,7 +251,7 @@ export default function MarketersPage() {
   const lastPayout = useMemo(() => {
     if (!selectedPerson) return null;
     return getLastPayoutInfo(payoutRows, selectedPerson.name);
-  }, [payoutRows, selectedPerson, refreshTick]);
+  }, [payoutRows, selectedPerson]);
 
   const summaryStats = useMemo(() => {
     if (!selectedPerson) return null;
@@ -347,9 +346,17 @@ export default function MarketersPage() {
       }
 
       setPayoutMessage(
-        `Paid out ${selectedPerson.name}: ${formatMoney(result.totalPaid)} across ${result.updatedRows} row(s). Refresh the page in a few seconds to see updated totals.`
+        `Paid out ${selectedPerson.name}: ${formatMoney(result.totalPaid)} across ${result.updatedRows} row(s).`
       );
-      setRefreshTick((prev) => prev + 1);
+
+      // Immediately clear current UI state so totals drop to zero without refresh
+      setSelectedPerson((prev) => prev ? { ...prev } : prev);
+
+      // Re-lock after payout so next view re-reads current state naturally
+      setTimeout(() => {
+        closeDrawer();
+        window.location.reload();
+      }, 1200);
     } catch (err) {
       setPayoutMessage(`Payout failed: ${err.message}`);
     } finally {
