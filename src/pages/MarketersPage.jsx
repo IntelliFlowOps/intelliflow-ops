@@ -108,7 +108,9 @@ function buildSummary(rows, person) {
   const total = unpaidRows.reduce((a, b) => a + b.amount, 0);
 
   const grouped = unpaidRows.reduce((acc, r) => {
-    if (!acc[r.plan]) acc[r.plan] = { total: 0, clients: 0 };
+    if (!acc[r.plan]) {
+      acc[r.plan] = { total: 0, clients: 0 };
+    }
     acc[r.plan].total += r.amount;
     acc[r.plan].clients += 1;
     return acc;
@@ -198,9 +200,9 @@ export default function MarketersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-white">Marketer Commissions</h1>
+        <h1 className="text-3xl font-semibold text-white">Individual Commissions</h1>
         <p className="mt-2 text-sm text-gray-400">
-          Strictly personal commission access. No TEAM/ad split included.
+          Personal commission access only. Each person can view only their own unpaid commission after PIN unlock.
         </p>
       </div>
 
@@ -260,10 +262,10 @@ export default function MarketersPage() {
 
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-white">
-                {open} Commission Details
+                {open} Individual Commission
               </h2>
               <p className="mt-1 text-sm text-gray-400">
-                Only unpaid Commission_Ledger rows for this person are included.
+                Only unpaid Commission_Ledger rows assigned to {open} are included.
               </p>
             </div>
 
@@ -304,7 +306,7 @@ export default function MarketersPage() {
                 {sums[open].unpaidRows.length === 0 ? (
                   <EmptyState
                     title="No unpaid commission rows yet"
-                    description="This personal KPI opens at zero. When unpaid Commission_Ledger rows exist for this person, their exact calculation breakdown appears here."
+                    description="This drawer opens at zero. When unpaid Commission_Ledger rows exist for this person, their exact calculation breakdown appears here."
                   />
                 ) : (
                   sums[open].unpaidRows.map((r, i) => (
