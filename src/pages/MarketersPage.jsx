@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { useTabData } from "../hooks/useSheetData.jsx";
-import DrawerPanel from "../components/DrawerPanel.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import ErrorBanner from "../components/ErrorBanner.jsx";
 import EmptyState from "../components/EmptyState.jsx";
@@ -109,15 +108,32 @@ function buildSummary(rows, person) {
   const total = unpaidRows.reduce((a, b) => a + b.amount, 0);
 
   const grouped = unpaidRows.reduce((acc, r) => {
-    if (!acc[r.plan]) {
-      acc[r.plan] = { total: 0, clients: 0 };
-    }
+    if (!acc[r.plan]) acc[r.plan] = { total: 0, clients: 0 };
     acc[r.plan].total += r.amount;
     acc[r.plan].clients += 1;
     return acc;
   }, {});
 
   return { total, unpaidRows, grouped };
+}
+
+function ZeroBreakdown() {
+  return (
+    <div className="space-y-3">
+      {["Starter", "Pro", "Premium"].map((name) => (
+        <div
+          key={name}
+          className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+        >
+          <div>
+            <div className="text-sm font-medium text-white">{name}</div>
+            <div className="text-xs text-gray-400">0 clients</div>
+          </div>
+          <div className="text-sm font-semibold text-white">{fmt(0)}</div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function MarketersPage() {
@@ -163,7 +179,7 @@ export default function MarketersPage() {
     setOpen(name);
   }
 
-  function close() {
+  function closeModal() {
     setOpen(null);
     setPins({
       Emma: "",
@@ -195,7 +211,7 @@ export default function MarketersPage() {
         {PEOPLE.map((p) => (
           <div
             key={p.name}
-            className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.28)]"
+            className="rounded-[28px] border border-white/10 bg-white/[0.07] backdrop-blur-2xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.28)]"
           >
             <div className="mb-4">
               <div className="text-lg font-semibold text-white">{p.name}</div>
@@ -232,88 +248,79 @@ export default function MarketersPage() {
         ))}
       </div>
 
-      <DrawerPanel
-        isOpen={Boolean(open)}
-        onClose={close}
-        title={open ? `${open} Commission Details` : "Commission Details"}
-        description="Only unpaid Commission_Ledger rows for this person are included."
-      >
-        {open ? (
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
-              <div className="text-xs uppercase text-gray-400">Current Unpaid</div>
-              <div className="mt-2 text-3xl font-semibold text-white">
-                {fmt(sums[open].total)}
+      {open ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4">
+          <div className="relative w-full max-w-3xl rounded-[32px] border border-white/10 bg-[#0b0b0f]/95 backdrop-blur-2xl p-6 shadow-[0_20px_80px_rgba(0,0,0,0.45)]">
+            <button
+              onClick={closeModal}
+              className="absolute right-4 top-4 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white"
+            >
+              X
+            </button>
+
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-white">
+                {open} Commission Details
+              </h2>
+              <p className="mt-1 text-sm text-gray-400">
+                Only unpaid Commission_Ledger rows for this person are included.
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+                <div className="text-xs uppercase text-gray-400">Current Unpaid</div>
+                <div className="mt-2 text-3xl font-semibold text-white">
+                  {fmt(sums[open].total)}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+                <div className="text-xs uppercase text-gray-400 mb-3">Plan Breakdown</div>
+
+                {Object.entries(sums[open].grouped).length === 0 ? (
+                  <ZeroBreakdown />
+                ) : (
+                  Object.entries(sums[open].grouped).map(([planName, data]) => (
+                    <div
+                      key={planName}
+                      className="mb-3 flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+                    >
+                      <div>
+                        <div className="text-sm font-medium text-white">{planName}</div>
+                        <div className="text-xs text-gray-400">
+                          {data.clients} {data.clients === 1 ? "client" : "clients"}
+                        </div>
+                      </div>
+                      <div className="text-sm font-semibold text-white">{fmt(data.total)}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+                <div className="text-xs uppercase text-gray-400 mb-3">Calculation Details</div>
+
+                {sums[open].unpaidRows.length === 0 ? (
+                  <EmptyState
+                    title="No unpaid commission rows yet"
+                    description="This personal KPI opens at zero. When unpaid Commission_Ledger rows exist for this person, their exact calculation breakdown appears here."
+                  />
+                ) : (
+                  sums[open].unpaidRows.map((r, i) => (
+                    <div
+                      key={`${open}-${r.customer}-${i}`}
+                      className="mb-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300"
+                    >
+                      {r.note}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
-              <div className="text-xs uppercase text-gray-400 mb-3">Plan Breakdown</div>
-
-              {Object.entries(sums[open].grouped).length === 0 ? (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                    <div>
-                      <div className="text-sm font-medium text-white">Starter</div>
-                      <div className="text-xs text-gray-400">0 clients</div>
-                    </div>
-                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                    <div>
-                      <div className="text-sm font-medium text-white">Pro</div>
-                      <div className="text-xs text-gray-400">0 clients</div>
-                    </div>
-                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
-                  </div>
-                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
-                    <div>
-                      <div className="text-sm font-medium text-white">Premium</div>
-                      <div className="text-xs text-gray-400">0 clients</div>
-                    </div>
-                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
-                  </div>
-                </div>
-              ) : (
-                Object.entries(sums[open].grouped).map(([planName, data]) => (
-                  <div
-                    key={planName}
-                    className="mb-3 flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-white">{planName}</div>
-                      <div className="text-xs text-gray-400">
-                        {data.clients} {data.clients === 1 ? "client" : "clients"}
-                      </div>
-                    </div>
-                    <div className="text-sm font-semibold text-white">{fmt(data.total)}</div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
-              <div className="text-xs uppercase text-gray-400 mb-3">Calculation Details</div>
-
-              {sums[open].unpaidRows.length === 0 ? (
-                <EmptyState
-                  title="No unpaid commission rows yet"
-                  description="This drawer opens even at zero. Once unpaid Commission_Ledger rows exist for this person, the exact calculation breakdown will appear here."
-                />
-              ) : (
-                sums[open].unpaidRows.map((r, i) => (
-                  <div
-                    key={`${open}-${r.customer}-${i}`}
-                    className="mb-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300"
-                  >
-                    {r.note}
-                  </div>
-                ))
-              )}
-            </div>
           </div>
-        ) : null}
-      </DrawerPanel>
+        </div>
+      ) : null}
     </div>
   );
 }
