@@ -7,67 +7,140 @@ import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
 export default function CommissionsPage() {
-  const { rows: ledgerRows, loading: ll, error: le } = useTabData('COMMISSION_LEDGER');
-  const { rows: rulesData, loading: rl, error: re } = useTabData('COMMISSION_RULES');
-  const loading = ll || rl;
-  if (loading && !ledgerRows?.length && !rulesData) return <LoadingSpinner />;
-  const rules = rulesData?.rules || [];
-  const notes = rulesData?.notes || [];
-  const hasPaidOutField = ledgerRows?.length > 0 && 'Paid Out?' in (ledgerRows[0] || {});
+  const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
+
+  if (loading && !ledgerRows.length) return <LoadingSpinner />;
+
+  const stats = useMemo(() => {
+    const activeRows = ledgerRows.filter((row) =>
+      Object.values(row || {}).some((value) => String(value || '').trim() !== '')
+    );
+
+    const unpaidRows = activeRows.filter((row) => {
+      const paidOut = String(row['Paid Out?'] || '').trim().toLowerCase();
+      const payoutBatch = String(row['Payout Batch / Month'] || '').trim();
+      return !row._isPaidOut && paidOut !== 'paid' && paidOut !== 'yes' && !payoutBatch;
+    });
+
+    const paidRows = activeRows.filter((row) => {
+      const paidOut = String(row['Paid Out?'] || '').trim().toLowerCase();
+      const payoutBatch = String(row['Payout Batch / Month'] || '').trim();
+      return row._isPaidOut || paidOut === 'paid' || paidOut === 'yes' || Boolean(payoutBatch);
+    });
+
+    const uniqueCustomers = new Set(
+      activeRows.map((row) => String(row['Customer Name'] || '').trim()).filter(Boolean)
+    ).size;
+
+    const founderRows = activeRows.filter(
+      (row) => String(row['Attribution Type'] || '').trim().toLowerCase() === 'founder'
+    ).length;
+
+    return {
+      totalRows: activeRows.length,
+      unpaidRows: unpaidRows.length,
+      paidRows: paidRows.length,
+      uniqueCustomers,
+      founderRows,
+    };
+  }, [ledgerRows]);
+
+  const columns = [
+    { key: 'Date', label: 'Date' },
+    { key: 'Customer Name', label: 'Customer' },
+    { key: 'Revenue Collected', label: 'Revenue' },
+    {
+      key: 'Attribution Type',
+      label: 'Attribution',
+      render: (value) => value || '—',
+    },
+    {
+      key: 'Owner',
+      label: 'Owner',
+      render: (_, row) => {
+        const salesRep = String(row['Sales Rep'] || '').trim();
+        const directMarketer = String(row['Direct Marketer'] || '').trim();
+        if (salesRep) return salesRep;
+        if (directMarketer) return directMarketer;
+        return '—';
+      },
+    },
+    { key: 'Months Active / Paid Month', label: 'Month' },
+    {
+      key: 'Paid Out?',
+      label: 'Status',
+      render: (_, row) => {
+        const payoutBatch = String(row['Payout Batch / Month'] || '').trim();
+        const paidOut = String(row['Paid Out?'] || '').trim().toLowerCase();
+        const isPaid = row._isPaidOut || paidOut === 'paid' || paidOut === 'yes' || Boolean(payoutBatch);
+
+        return (
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+              isPaid
+                ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
+                : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
+            }`}
+          >
+            {isPaid ? 'Paid' : 'Unpaid'}
+          </span>
+        );
+      },
+    },
+    { key: 'Payout Batch / Month', label: 'Payout Batch' },
+    { key: 'Notes', label: 'Notes' },
+  ];
 
   return (
     <div className="space-y-8 fade-in">
       <section>
-        <h2 className="section-title mb-3">Commission Rules</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-          <div className="card p-4"><div className="text-xs text-zinc-500 mb-1">TEAM Attribution</div><div className="text-lg font-bold text-accent-glow">25% total</div><div className="text-xs text-zinc-400 mt-1">12.5% Emma / 12.5% Wyatt — first 3 months only</div></div>
-          <div className="card p-4"><div className="text-xs text-zinc-500 mb-1">DIRECT Attribution</div><div className="text-lg font-bold text-emerald-400">5% lifetime</div><div className="text-xs text-zinc-400 mt-1">Paid to the named direct marketer only</div></div>
-          <div className="card p-4"><div className="text-xs text-zinc-500 mb-1">FOUNDER Attribution</div><div className="text-lg font-bold text-zinc-400">0%</div><div className="text-xs text-zinc-400 mt-1">No marketer commission on founder deals</div></div>
-        </div>
-        {re && <ErrorBanner message={re} />}
-        {rules.length > 0 ? <DataTable rows={rules} columns={[{key:'Attribution Type',label:'Attribution'},{key:'Direct Marketer',label:'Marketer'},{key:'Commission % Total',label:'Total %'},{key:'Emma %',label:'Emma %'},{key:'Wyatt %',label:'Wyatt %'},{key:'Term',label:'Term'},{key:'When It Applies',label:'Applies When'},{key:'Notes',label:'Notes'}]} searchable={false} /> : <EmptyState message="No commission rules found" />}
-        {notes.length > 0 && <div className="mt-4 space-y-2"><h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Agent Notes</h3>{notes.map((n,i) => <div key={i} className="card p-3 text-sm"><span className="font-medium text-zinc-300">{n.label}:</span> <span className="text-zinc-400">{n.value}</span></div>)}</div>}
-      </section>
+        <h2 className="section-title mb-3">Ledger</h2>
+        <p className="mb-4 text-sm text-zinc-400">
+          Internal operational ledger only. This page does not expose personal commission amounts.
+        </p>
 
-      {hasPaidOutField && ledgerRows?.length > 0 && <PayoutSummary ledgerRows={ledgerRows} />}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <KpiCard label="Ledger Rows" value={stats.totalRows > 0 ? stats.totalRows : '—'} color="info" />
+          <KpiCard label="Unpaid Rows" value={stats.unpaidRows > 0 ? stats.unpaidRows : '0'} color="warning" />
+          <KpiCard label="Paid Rows" value={stats.paidRows > 0 ? stats.paidRows : '0'} color="success" />
+          <KpiCard
+            label="Customers in Ledger"
+            value={stats.uniqueCustomers > 0 ? stats.uniqueCustomers : '0'}
+            color="accent"
+          />
+          <KpiCard
+            label="Founder Rows"
+            value={stats.founderRows > 0 ? stats.founderRows : '0'}
+            color="default"
+          />
+        </div>
+      </section>
 
       <section>
-        <h2 className="section-title mb-3">Commission Ledger</h2>
-        {hasPaidOutField && <p className="text-xs text-zinc-500 mb-3">"Paid Out?" is the source of truth for payout status, set in Google Sheets.</p>}
-        {le && <ErrorBanner message={le} />}
-        <LedgerTable ledgerRows={ledgerRows || []} hasPaidOutField={hasPaidOutField} />
+        <div className="card p-4 text-sm text-zinc-400">
+          Personal commission amounts are hidden on this page. Emma, Wyatt, ED, and Micah should only see
+          their own numbers inside the Individual Commissions page after PIN unlock.
+        </div>
       </section>
-      <p className="text-[10px] text-zinc-600">Commission calculations and payout status happen in Google Sheets. This app does NOT recalculate or modify payout status.</p>
+
+      <section>
+        <h2 className="section-title mb-3">Ledger Entries</h2>
+        {error && <ErrorBanner message={error} />}
+        {ledgerRows.length > 0 ? (
+          <DataTable
+            rows={ledgerRows}
+            columns={columns}
+            searchPlaceholder="Search ledger..."
+            emptyMessage="No ledger entries yet"
+          />
+        ) : (
+          <EmptyState message="No ledger entries yet" />
+        )}
+      </section>
+
+      <p className="text-[10px] text-zinc-600">
+        This page is operational only. Personal payout math belongs exclusively in Individual Commissions.
+      </p>
     </div>
   );
-}
-
-function PayoutSummary({ ledgerRows }) {
-  const s = useMemo(() => {
-    let total = 0, paid = 0, unpaid = 0, pc = 0, uc = 0;
-    ledgerRows.forEach((r) => { const v = parseFloat((r['Commission Total']||'0').replace(/[^0-9.-]/g,'')); if (isNaN(v)||v===0) return; total+=v; if (r._isPaidOut) { paid+=v; pc++; } else { unpaid+=v; uc++; } });
-    const fmt = (n) => n > 0 ? '$'+n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
-    return { total:fmt(total), paid:fmt(paid), unpaid:fmt(unpaid), pc, uc, tc:pc+uc };
-  }, [ledgerRows]);
-  return (
-    <section>
-      <h2 className="section-title mb-3">Payout Summary (from Ledger)</h2>
-      <p className="text-xs text-zinc-500 mb-3">Derived from "Paid Out?" in each ledger row. Read-only.</p>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        <KpiCard label="Total Commission" value={s.total} color="accent" />
-        <KpiCard label="Paid Out" value={s.paid} color="success" subtitle={`${s.pc} transactions`} />
-        <KpiCard label="Unpaid / Pending" value={s.unpaid} color="warning" subtitle={`${s.uc} transactions`} />
-        <KpiCard label="Total Transactions" value={s.tc>0?s.tc:'—'} color="info" />
-        <KpiCard label="Paid Transactions" value={s.pc>0?s.pc:'—'} color="success" />
-        <KpiCard label="Unpaid Transactions" value={s.uc>0?s.uc:'—'} color="warning" />
-      </div>
-    </section>
-  );
-}
-
-function LedgerTable({ ledgerRows, hasPaidOutField }) {
-  const cols = [{key:'Date',label:'Date'},{key:'Customer Name',label:'Customer'},{key:'Revenue Collected',label:'Revenue'},{key:'Attribution Type',label:'Attribution'},{key:'Direct Marketer',label:'Marketer'},{key:'Months Active / Paid Month',label:'Month'},{key:'Commission %',label:'Comm %'},{key:'Emma %',label:'Emma %'},{key:'Wyatt %',label:'Wyatt %'},{key:'Commission Total',label:'Total'},{key:'Emma Commission',label:'Emma $'},{key:'Wyatt Commission',label:'Wyatt $'}];
-  if (hasPaidOutField) cols.push({key:'Paid Out?',label:'Paid Out?',render:(val)=>{const raw=(val||'').trim().toLowerCase();const isPaid=['yes','true','paid','y','1'].includes(raw);if(!val||!val.trim())return<span className="text-zinc-500 text-xs">—</span>;return<span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${isPaid?'bg-emerald-500/15 text-emerald-400 border-emerald-500/30':'bg-amber-500/15 text-amber-400 border-amber-500/30'}`}>{isPaid?'Paid':val}</span>;}});
-  cols.push({key:'Payout Batch / Month',label:'Payout Batch'},{key:'Notes',label:'Notes'});
-  return <DataTable rows={ledgerRows} columns={cols} searchPlaceholder="Search transactions..." emptyMessage="No commission transactions yet" />;
 }
