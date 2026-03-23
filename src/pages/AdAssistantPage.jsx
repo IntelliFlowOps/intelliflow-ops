@@ -11,16 +11,19 @@ function MessageBubble({ role, content, attachments = [] }) {
   return (
     <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`group relative max-w-[86%] overflow-hidden rounded-[30px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-2xl transition-all duration-200 ${
+        className={`relative max-w-[86%] overflow-hidden rounded-[32px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200 ${
           isUser
-            ? "border border-white/10 bg-white/[0.08] text-white shadow-[0_18px_60px_rgba(0,0,0,0.32)]"
-            : "border border-cyan-300/16 bg-cyan-300/[0.09] text-slate-100 shadow-[0_20px_70px_rgba(34,211,238,0.10)]"
+            ? "bg-white/[0.045] text-white shadow-[0_20px_70px_rgba(0,0,0,0.34)]"
+            : "bg-cyan-300/[0.07] text-slate-100 shadow-[0_22px_80px_rgba(34,211,238,0.10)]"
         }`}
       >
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.12),transparent_32%,rgba(34,211,238,0.08))]" />
-        <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-white/25" />
+        <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[linear-gradient(135deg,rgba(255,255,255,0.07),transparent_34%,rgba(34,211,238,0.06))]" />
+        <div className="pointer-events-none absolute inset-[1px] rounded-[31px] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%,transparent_72%,rgba(255,255,255,0.02))]" />
         {!isUser && (
-          <div className="pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full bg-cyan-300/12 blur-2xl" />
+          <>
+            <div className="pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full bg-cyan-300/10 blur-2xl" />
+            <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-16 rounded-full bg-sky-300/8 blur-2xl" />
+          </>
         )}
 
         <div className="relative z-10">
@@ -29,7 +32,7 @@ function MessageBubble({ role, content, attachments = [] }) {
               {attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-xl"
+                  className="overflow-hidden rounded-2xl bg-white/[0.05] shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl"
                 >
                   {attachment.previewUrl && attachment.type?.startsWith("image/") ? (
                     <img
@@ -43,7 +46,7 @@ function MessageBubble({ role, content, attachments = [] }) {
                     </div>
                   )}
 
-                  <div className="border-t border-white/10 px-2 py-1 text-[11px] text-slate-300 truncate">
+                  <div className="px-2 py-1 text-[11px] text-slate-300 truncate">
                     {attachment.name}
                   </div>
                 </div>
@@ -60,7 +63,7 @@ function MessageBubble({ role, content, attachments = [] }) {
 
 function AttachmentChip({ attachment, onRemove }) {
   return (
-    <div className="flex items-center gap-2 rounded-full border border-cyan-300/18 bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100 shadow-[0_8px_24px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+    <div className="flex items-center gap-2 rounded-full bg-cyan-300/10 px-3 py-1.5 text-xs text-cyan-100 shadow-[0_10px_24px_rgba(34,211,238,0.08)] backdrop-blur-2xl">
       <span className="max-w-[150px] truncate">{attachment.name}</span>
       <button
         type="button"
@@ -81,7 +84,7 @@ export default function AdAssistantPage() {
     {
       role: "assistant",
       content:
-        "Locked on the path to 2,000 clients. Bring the bottleneck, numbers, or decision.",
+        "Bring the decision, bottleneck, numbers, or messy situation. I’ll help you find the strongest next move.",
       attachments: [],
     },
   ]);
@@ -255,17 +258,16 @@ export default function AdAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#06101c] text-white">
+    <div className="min-h-screen overflow-hidden bg-[#040b14] text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[8%] top-[8%] h-56 w-56 rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="absolute right-[10%] top-[18%] h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
-        <div className="absolute bottom-[8%] left-1/3 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute left-[6%] top-[8%] h-64 w-64 rounded-full bg-cyan-400/8 blur-3xl" />
+        <div className="absolute right-[8%] top-[18%] h-80 w-80 rounded-full bg-sky-400/8 blur-3xl" />
+        <div className="absolute bottom-[6%] left-1/3 h-72 w-72 rounded-full bg-white/4 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[38px] border border-white/10 bg-white/[0.05] shadow-[0_30px_120px_rgba(0,0,0,0.42)] backdrop-blur-3xl">
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),transparent_22%,transparent_78%,rgba(255,255,255,0.03))]" />
-          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-white/20" />
+        <div className="overflow-hidden rounded-[40px] bg-white/[0.04] shadow-[0_36px_120px_rgba(0,0,0,0.46)] backdrop-blur-3xl">
+          <div className="pointer-events-none absolute inset-0 rounded-[40px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_18%,transparent_82%,rgba(255,255,255,0.02))]" />
 
           <div className="grid min-h-[82vh] grid-rows-[1fr_auto]">
             <div
@@ -284,8 +286,8 @@ export default function AdAssistantPage() {
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="relative overflow-hidden rounded-[28px] border border-cyan-300/16 bg-cyan-300/[0.09] px-5 py-4 shadow-[0_20px_70px_rgba(34,211,238,0.10)] backdrop-blur-2xl">
-                      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.10),transparent_38%,rgba(34,211,238,0.08))]" />
+                    <div className="relative overflow-hidden rounded-[30px] bg-cyan-300/[0.07] px-5 py-4 shadow-[0_22px_80px_rgba(34,211,238,0.10)] backdrop-blur-3xl">
+                      <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_34%,rgba(34,211,238,0.06))]" />
                       <div className="relative z-10 flex items-center gap-2">
                         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
                         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
@@ -297,7 +299,7 @@ export default function AdAssistantPage() {
               </div>
             </div>
 
-            <div className="border-t border-white/8 bg-black/10 px-4 py-4 md:px-6">
+            <div className="bg-black/10 px-4 py-4 md:px-6">
               <form onSubmit={handleSubmit} className="space-y-3">
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -316,19 +318,17 @@ export default function AdAssistantPage() {
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={`relative overflow-hidden rounded-[30px] border p-3 shadow-[0_20px_60px_rgba(0,0,0,0.22)] backdrop-blur-2xl transition ${
-                    dragActive
-                      ? "border-cyan-300/20 bg-cyan-400/[0.10]"
-                      : "border-white/10 bg-white/[0.05]"
+                  className={`relative overflow-hidden rounded-[32px] p-3 shadow-[0_22px_70px_rgba(0,0,0,0.28)] backdrop-blur-3xl transition ${
+                    dragActive ? "bg-cyan-400/[0.09]" : "bg-white/[0.045]"
                   }`}
                 >
-                  <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.06),transparent_26%,rgba(34,211,238,0.06),transparent_72%)]" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_26%,rgba(34,211,238,0.05),transparent_72%)]" />
 
                   <div className="relative z-10 flex items-end gap-3">
                     <button
                       type="button"
                       onClick={openFilePicker}
-                      className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl border border-cyan-300/18 bg-cyan-300/10 text-2xl text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/14"
+                      className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-2xl bg-cyan-300/10 text-2xl text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/14"
                       aria-label="Add files"
                       title="Add files or screenshots"
                     >
@@ -340,15 +340,15 @@ export default function AdAssistantPage() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         rows={3}
-                        placeholder="Type your question..."
-                        className="min-h-[92px] w-full resize-none rounded-[24px] border border-white/10 bg-[#08192b]/70 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-xl transition focus:border-cyan-300/24"
+                        placeholder="Ask about growth, offer, delivery, ops, hiring, churn, objections, pricing, clients, or the next move."
+                        className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071625]/78 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading || (!input.trim() && attachments.length === 0)}
-                      className="h-[54px] rounded-[22px] border border-cyan-300/18 bg-cyan-300/10 px-5 text-sm font-medium text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="h-[54px] rounded-[22px] bg-cyan-300/10 px-5 text-sm font-medium text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {loading ? "Thinking..." : "Send"}
                     </button>
