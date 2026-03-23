@@ -11,6 +11,12 @@ const PEOPLE = [
   { name: 'ED', role: 'Sales' },
 ];
 
+const PIN_MAP = {
+  Emma: '3724',
+  Wyatt: '2654',
+  ED: '1876',
+};
+
 function parseMoney(value) {
   if (value === null || value === undefined || value === '') return 0;
   const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
@@ -94,7 +100,6 @@ function DetailRow({ label, value }) {
 
 export default function MarketersPage() {
   const { rows: ledgerRows, loading: ledgerLoading, error: ledgerError } = useTabData('COMMISSION_LEDGER');
-  const { rows: accessRows, loading: accessLoading, error: accessError } = useTabData('COMMISSION_ACCESS');
   const { rows: payoutRows, loading: payoutLoading, error: payoutError } = useTabData('PAYOUT_BATCHES');
 
   const [selectedPerson, setSelectedPerson] = useState(null);
@@ -102,24 +107,8 @@ export default function MarketersPage() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState('');
 
-  const loading = ledgerLoading || accessLoading || payoutLoading;
-  const error = ledgerError || accessError || payoutError;
-
-  const cleanAccessRows = useMemo(() => {
-    return (accessRows || []).filter((row) => {
-      const person = String(row.Person || '').trim();
-      return PEOPLE.some((p) => p.name === person);
-    });
-  }, [accessRows]);
-
-  const accessMap = useMemo(() => {
-    const map = new Map();
-    cleanAccessRows.forEach((row) => {
-      const person = String(row.Person || '').trim();
-      map.set(person, row);
-    });
-    return map;
-  }, [cleanAccessRows]);
+  const loading = ledgerLoading || payoutLoading;
+  const error = ledgerError || payoutError;
 
   const personRows = useMemo(() => {
     if (!selectedPerson || !ledgerRows) return [];
@@ -178,12 +167,11 @@ export default function MarketersPage() {
   function handleUnlock() {
     if (!selectedPerson) return;
 
-    const accessRow = accessMap.get(selectedPerson.name);
-    const correctPin = String(accessRow?.PIN ?? '').trim();
+    const correctPin = PIN_MAP[selectedPerson.name];
     const enteredPin = String(pinInput ?? '').trim();
 
-    if (!accessRow || !correctPin) {
-      setPinError('PIN not set in COMMISSION_ACCESS yet.');
+    if (!correctPin) {
+      setPinError('PIN not configured.');
       return;
     }
 
