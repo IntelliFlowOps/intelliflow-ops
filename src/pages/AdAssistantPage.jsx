@@ -11,17 +11,17 @@ function MessageBubble({ role, content, attachments = [] }) {
   return (
     <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`relative max-w-[86%] overflow-hidden rounded-[32px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200 ${
+        className={`relative max-w-[84%] overflow-hidden rounded-[34px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200 ${
           isUser
-            ? "bg-white/[0.045] text-white shadow-[0_20px_70px_rgba(0,0,0,0.34)]"
-            : "bg-cyan-300/[0.07] text-slate-100 shadow-[0_22px_80px_rgba(34,211,238,0.10)]"
+            ? "bg-white/[0.05] text-white shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
+            : "bg-cyan-300/[0.06] text-slate-100 shadow-[0_26px_90px_rgba(34,211,238,0.10)]"
         }`}
       >
-        <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[linear-gradient(135deg,rgba(255,255,255,0.07),transparent_34%,rgba(34,211,238,0.06))]" />
-        <div className="pointer-events-none absolute inset-[1px] rounded-[31px] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_28%,transparent_72%,rgba(255,255,255,0.02))]" />
+        <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_35%,rgba(34,211,238,0.05))]" />
+        <div className="pointer-events-none absolute inset-[1px] rounded-[33px] bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_26%,transparent_72%,rgba(255,255,255,0.018))]" />
         {!isUser && (
           <>
-            <div className="pointer-events-none absolute -left-10 top-0 h-24 w-24 rounded-full bg-cyan-300/10 blur-2xl" />
+            <div className="pointer-events-none absolute -left-8 top-0 h-20 w-20 rounded-full bg-cyan-300/10 blur-2xl" />
             <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-16 rounded-full bg-sky-300/8 blur-2xl" />
           </>
         )}
@@ -84,7 +84,7 @@ export default function AdAssistantPage() {
     {
       role: "assistant",
       content:
-        "Bring the decision, bottleneck, numbers, or messy situation. I’ll help you find the strongest next move.",
+        "Drop the problem, the numbers, or the messy situation. I’ll help you find the strongest next move.",
       attachments: [],
     },
   ]);
@@ -258,22 +258,28 @@ export default function AdAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#040b14] text-white">
+    <div className="min-h-screen overflow-hidden bg-[#040a12] text-white">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[6%] top-[8%] h-64 w-64 rounded-full bg-cyan-400/8 blur-3xl" />
-        <div className="absolute right-[8%] top-[18%] h-80 w-80 rounded-full bg-sky-400/8 blur-3xl" />
+        <div className="absolute left-[6%] top-[8%] h-64 w-64 rounded-full bg-cyan-400/7 blur-3xl" />
+        <div className="absolute right-[8%] top-[16%] h-80 w-80 rounded-full bg-sky-400/7 blur-3xl" />
         <div className="absolute bottom-[6%] left-1/3 h-72 w-72 rounded-full bg-white/4 blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[40px] bg-white/[0.04] shadow-[0_36px_120px_rgba(0,0,0,0.46)] backdrop-blur-3xl">
-          <div className="pointer-events-none absolute inset-0 rounded-[40px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_18%,transparent_82%,rgba(255,255,255,0.02))]" />
+        <div className="overflow-hidden rounded-[42px] bg-white/[0.04] shadow-[0_40px_120px_rgba(0,0,0,0.50)] backdrop-blur-3xl">
+          <div className="pointer-events-none absolute inset-0 rounded-[42px] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),transparent_16%,transparent_84%,rgba(255,255,255,0.018))]" />
 
           <div className="grid min-h-[82vh] grid-rows-[1fr_auto]">
             <div
               ref={scrollRef}
-              className="relative overflow-y-auto px-4 py-5 md:px-6 md:py-6"
+              className="relative overflow-y-auto px-4 py-6 md:px-6 md:py-7"
             >
+              <div className="mb-5 flex justify-center">
+                <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 shadow-[0_12px_30px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
+                  Founder Assistant
+                </div>
+              </div>
+
               <div className="space-y-5">
                 {messages.map((message, index) => (
                   <MessageBubble
@@ -286,8 +292,8 @@ export default function AdAssistantPage() {
 
                 {loading && (
                   <div className="flex justify-start">
-                    <div className="relative overflow-hidden rounded-[30px] bg-cyan-300/[0.07] px-5 py-4 shadow-[0_22px_80px_rgba(34,211,238,0.10)] backdrop-blur-3xl">
-                      <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_34%,rgba(34,211,238,0.06))]" />
+                    <div className="relative overflow-hidden rounded-[30px] bg-cyan-300/[0.06] px-5 py-4 shadow-[0_22px_80px_rgba(34,211,238,0.10)] backdrop-blur-3xl">
+                      <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_34%,rgba(34,211,238,0.05))]" />
                       <div className="relative z-10 flex items-center gap-2">
                         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300" />
                         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-cyan-300 [animation-delay:120ms]" />
@@ -299,7 +305,7 @@ export default function AdAssistantPage() {
               </div>
             </div>
 
-            <div className="bg-black/10 px-4 py-4 md:px-6">
+            <div className="px-4 pb-4 md:px-6 md:pb-6">
               <form onSubmit={handleSubmit} className="space-y-3">
                 {attachments.length > 0 && (
                   <div className="flex flex-wrap gap-2">
@@ -318,11 +324,11 @@ export default function AdAssistantPage() {
                   onDragLeave={handleDragLeave}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
-                  className={`relative overflow-hidden rounded-[32px] p-3 shadow-[0_22px_70px_rgba(0,0,0,0.28)] backdrop-blur-3xl transition ${
-                    dragActive ? "bg-cyan-400/[0.09]" : "bg-white/[0.045]"
+                  className={`relative overflow-hidden rounded-[34px] p-3 shadow-[0_22px_70px_rgba(0,0,0,0.30)] backdrop-blur-3xl transition ${
+                    dragActive ? "bg-cyan-400/[0.08]" : "bg-white/[0.045]"
                   }`}
                 >
-                  <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-[linear-gradient(120deg,rgba(255,255,255,0.05),transparent_26%,rgba(34,211,238,0.05),transparent_72%)]" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[linear-gradient(120deg,rgba(255,255,255,0.04),transparent_26%,rgba(34,211,238,0.05),transparent_72%)]" />
 
                   <div className="relative z-10 flex items-end gap-3">
                     <button
@@ -340,8 +346,8 @@ export default function AdAssistantPage() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         rows={3}
-                        placeholder="Ask about growth, offer, delivery, ops, hiring, churn, objections, pricing, clients, or the next move."
-                        className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071625]/78 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
+                        placeholder="Ask about growth, delivery, pricing, churn, hiring, sales, ops, objections, or the next move."
+                        className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>
 
