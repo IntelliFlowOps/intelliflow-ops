@@ -1,542 +1,346 @@
-import { useMemo, useState } from 'react';
-import { useTabData } from '../hooks/useSheetData.jsx';
-import DrawerPanel from '../components/DrawerPanel.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ErrorBanner from '../components/ErrorBanner.jsx';
-import EmptyState from '../components/EmptyState.jsx';
+import { useMemo, useState } from 'react'
+import { useTabData } from '../hooks/useSheetData.jsx'
+import DrawerPanel from '../components/DrawerPanel.jsx'
+import LoadingSpinner from '../components/LoadingSpinner.jsx'
+import ErrorBanner from '../components/ErrorBanner.jsx'
+import EmptyState from '../components/EmptyState.jsx'
 
 const PEOPLE = [
   { name: 'Emma', role: 'Marketer' },
   { name: 'Wyatt', role: 'Marketer' },
   { name: 'ED', role: 'Sales' },
   { name: 'Micah', role: 'Sales' },
-];
+]
 
 const PIN_MAP = {
   Emma: '3724',
   Wyatt: '2654',
   ED: '1876',
   Micah: '9789',
-};
-
-function parseMoney(value) {
-  if (value === null || value === undefined || value === '') return 0;
-  const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
-  return Number.isFinite(num) ? num : 0;
-}
-
-function formatMoney(value) {
-  return `$${Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-}
-
-function displayValue(value) {
-  if (value === null || value === undefined || value === '') return '—';
-  return String(value);
 }
 
 function normalize(value) {
-  return String(value ?? '').trim();
+  return String(value ?? '').trim()
 }
 
 function normalizeLower(value) {
-  return normalize(value).toLowerCase();
+  return normalize(value).toLowerCase()
 }
 
-function pickFirst(row, keys) {
-  for (const key of keys) {
-    const value = row?.[key];
-    if (value !== undefined && value !== null && String(value).trim() !== '') {
-      return value;
-    }
+function pick(row, keys) {
+  for (const k of keys) {
+    if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '')
+      return row[k]
   }
-  return '';
+  return ''
 }
 
-function getCommissionAmountForPerson(row, personName) {
-  if (personName === 'Emma') {
-    return parseMoney(
-      pickFirst(row, [
-        'Emma Commission',
-        'emma_amount',
-        'Emma Amount',
-        'marketer_a_amount',
-        'Marketer A Amount',
-      ])
-    );
-  }
-
-  if (personName === 'Wyatt') {
-    return parseMoney(
-      pickFirst(row, [
-        'Wyatt Commission',
-        'wyatt_amount',
-        'Wyatt Amount',
-        'marketer_b_amount',
-        'Marketer B Amount',
-      ])
-    );
-  }
-
-  if (personName === 'ED' || personName === 'Micah') {
-    return parseMoney(
-      pickFirst(row, [
-        'Sales Commission',
-        'sales_commission',
-        'ed_amount',
-        'ED Amount',
-        'commission_amount',
-        'Commission Amount',
-      ])
-    );
-  }
-
-  return 0;
+function money(v) {
+  if (!v) return 0
+  const n = parseFloat(String(v).replace(/[^0-9.-]/g, ''))
+  return Number.isFinite(n) ? n : 0
 }
 
-function getRateForPerson(row, personName) {
-  if (personName === 'ED' || personName === 'Micah') {
-    const raw = parseMoney(
-      pickFirst(row, ['Sales Rep Rate', 'sales_rep_rate', 'Sales Rate'])
-    );
-    return raw <= 1 ? raw * 100 : raw;
-  }
-
-  const raw = parseMoney(
-    pickFirst(row, ['Commission %', 'commission_rate', 'Commission Rate'])
-  );
-  return raw <= 1 ? raw * 100 : raw;
+function fmt(v) {
+  return `$${Number(v || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
 }
 
-function rowBelongsToPerson(row, personName) {
-  if (personName === 'Emma') {
+function belongs(row, person) {
+  if (person === 'Emma' || person === 'Wyatt') {
     return (
       normalizeLower(
-        pickFirst(row, [
-          'Direct Marketer',
-          'direct_marketer',
-          'Closer',
-          'closer',
-          'marketer',
-        ])
-      ) === 'emma'
-    );
+        pick(row, ['Direct Marketer', 'direct_marketer', 'Closer', 'closer'])
+      ) === person.toLowerCase()
+    )
   }
 
-  if (personName === 'Wyatt') {
+  if (person === 'ED' || person === 'Micah') {
     return (
       normalizeLower(
-        pickFirst(row, [
-          'Direct Marketer',
-          'direct_marketer',
-          'Closer',
-          'closer',
-          'marketer',
-        ])
-      ) === 'wyatt'
-    );
+        pick(row, ['Sales Rep', 'sales_rep', 'Salesperson'])
+      ) === person.toLowerCase()
+    )
   }
 
-  if (personName === 'ED') {
-    return (
-      normalizeLower(
-        pickFirst(row, [
-          'Sales Rep',
-          'sales_rep',
-          'Salesperson',
-          'salesperson',
-          'Recipient',
-          'recipient',
-        ])
-      ) === 'ed'
-    );
+  return false
+}
+
+function unpaid(row) {
+  const paid = normalizeLower(
+    pick(row, ['Paid Out?', 'paid_out', 'status'])
+  )
+
+  const batch = normalize(
+    pick(row, ['Payout Batch / Month', 'payout_batch_id'])
+  )
+
+  if (batch) return false
+
+  return !(paid === 'yes' || paid === 'paid')
+}
+
+function commission(row, person) {
+  if (person === 'Emma')
+    return money(pick(row, ['Emma Commission']))
+
+  if (person === 'Wyatt')
+    return money(pick(row, ['Wyatt Commission']))
+
+  if (person === 'ED' || person === 'Micah')
+    return money(pick(row, ['Sales Commission']))
+
+  return 0
+}
+
+function base(row) {
+  return money(pick(row, ['Commission Base Amount']))
+}
+
+function rate(row, person) {
+  if (person === 'ED' || person === 'Micah') {
+    const r = money(pick(row, ['Sales Rep Rate']))
+    return r <= 1 ? r * 100 : r
   }
 
-  if (personName === 'Micah') {
-    return (
-      normalizeLower(
-        pickFirst(row, [
-          'Sales Rep',
-          'sales_rep',
-          'Salesperson',
-          'salesperson',
-          'Recipient',
-          'recipient',
-        ])
-      ) === 'micah'
-    );
-  }
-
-  return false;
+  const r = money(pick(row, ['Commission %']))
+  return r <= 1 ? r * 100 : r
 }
 
-function isUnpaidRow(row) {
-  const paidOut = normalizeLower(
-    pickFirst(row, [
-      'Paid Out?',
-      'paid_out',
-      'status',
-      'Status',
-      'payout_status',
-      'Payout Status',
-    ])
-  );
-  const payoutBatchId = normalize(
-    pickFirst(row, [
-      'Payout Batch / Month',
-      'payout_batch_id',
-      'Payout Batch ID',
-      'batch_id',
-      'Batch ID',
-    ])
-  );
+function plan(row) {
+  const p = pick(row, ['Plan', 'Package'])
+  if (p) return p
 
-  if (payoutBatchId) return false;
-
-  return !(
-    paidOut === 'yes' ||
-    paidOut === 'paid' ||
-    paidOut === 'paid_out' ||
-    paidOut === 'completed'
-  );
+  const b = base(row)
+  if (b === 299) return 'Starter'
+  if (b === 499) return 'Pro'
+  if (b === 999) return 'Premium'
+  return 'Enterprise'
 }
 
-function getLastPayoutInfo(batches, personName) {
-  const personBatches = (batches || []).filter((row) => {
-    const owner = normalizeLower(
-      pickFirst(row, [
-        'Person',
-        'person',
-        'Marketer',
-        'marketer',
-        'Recipient',
-        'recipient',
-        'Payee',
-        'payee',
-      ])
-    );
-    return owner === normalizeLower(personName);
-  });
+function explanation(row, person) {
+  const customer = pick(row, ['Customer Name'])
+  const r = rate(row, person)
+  const b = base(row)
+  const c = commission(row, person)
 
-  if (!personBatches.length) return null;
-
-  const sorted = [...personBatches].sort((a, b) => {
-    const aDate = String(
-      pickFirst(a, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || ''
-    );
-    const bDate = String(
-      pickFirst(b, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || ''
-    );
-    return bDate.localeCompare(aDate);
-  });
-
-  const latest = sorted[0];
-
-  return {
-    amount: parseMoney(
-      pickFirst(latest, [
-        'Amount Paid',
-        'amount',
-        'Payout Amount',
-        'payout_amount',
-        'Total Paid',
-      ])
-    ),
-    date: pickFirst(latest, [
-      'Paid Date',
-      'paid_at',
-      'Payout Date',
-      'payout_date',
-      'Date',
-      'date',
-    ]),
-    batch: pickFirst(latest, [
-      'Batch Label',
-      'batch_label',
-      'Payout Batch / Month',
-      'payout_batch_id',
-      'Batch ID',
-    ]),
-  };
+  return `${customer} → ${fmt(b)} × ${r}% = ${fmt(c)}`
 }
 
-function buildPersonSummary(ledgerRows, payoutRows, personName) {
-  const ownedRows = (ledgerRows || []).filter((row) => rowBelongsToPerson(row, personName));
+function summary(rows, batches, person) {
+  const owned = rows.filter((r) => belongs(r, person))
 
-  const unpaidRows = ownedRows
-    .filter(isUnpaidRow)
-    .map((row) => ({
-      ...row,
-      __commissionAmount: getCommissionAmountForPerson(row, personName),
-      __rate: getRateForPerson(row, personName),
-      __customer: pickFirst(row, ['Customer', 'customer_name', 'Customer Name']),
-      __plan: pickFirst(row, ['Plan', 'plan', 'Package']),
-      __month: pickFirst(row, ['Month #', 'month_number', 'Months Active / Paid Month', 'Commission Month']),
-      __invoice: pickFirst(row, ['Invoice ID', 'invoice_id', 'Invoice Number']),
+  const unpaidRows = owned
+    .filter(unpaid)
+    .map((r) => ({
+      row: r,
+      amount: commission(r, person),
+      plan: plan(r),
+      note: explanation(r, person),
     }))
-    .filter((row) => row.__commissionAmount > 0);
+    .filter((r) => r.amount > 0)
 
-  const unpaidTotal = unpaidRows.reduce((sum, row) => sum + row.__commissionAmount, 0);
+  const total = unpaidRows.reduce((a, b) => a + b.amount, 0)
 
-  const groupedByPlan = unpaidRows.reduce((acc, row) => {
-    const key = row.__plan || 'Unknown';
-    acc[key] = (acc[key] || 0) + row.__commissionAmount;
-    return acc;
-  }, {});
+  const grouped = unpaidRows.reduce((acc, r) => {
+    acc[r.plan] = (acc[r.plan] || 0) + r.amount
+    return acc
+  }, {})
 
-  const planGroups = Object.entries(groupedByPlan)
-    .map(([plan, total]) => ({ plan, total }))
-    .sort((a, b) => b.total - a.total);
+  const lastBatch = batches
+    .filter(
+      (b) =>
+        normalizeLower(pick(b, ['Person'])) ===
+        person.toLowerCase()
+    )
+    .sort((a, b) =>
+      String(pick(b, ['Paid Date'])).localeCompare(
+        String(pick(a, ['Paid Date']))
+      )
+    )[0]
 
   return {
-    personName,
+    total,
     unpaidRows,
-    unpaidTotal,
-    planGroups,
-    lastPayout: getLastPayoutInfo(payoutRows, personName),
-  };
-}
-
-function LockCard({ person, pin, setPin, onUnlock, error }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-[#111111] p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-white">{person.name}</h3>
-        <p className="text-sm text-gray-400">{person.role} commission access</p>
-      </div>
-
-      <div className="space-y-3">
-        <input
-          type="password"
-          inputMode="numeric"
-          placeholder="Enter PIN"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-white outline-none"
-        />
-
-        {error ? <p className="text-sm text-red-400">{error}</p> : null}
-
-        <button
-          onClick={onUnlock}
-          className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:opacity-90"
-        >
-          Unlock
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CommissionPanel({ summary, onClose }) {
-  return (
-    <DrawerPanel
-      isOpen
-      onClose={onClose}
-      title={`${summary.personName} Commission Details`}
-      description="Current unpaid commission only. Paid batches should stop counting after payout is logged."
-    >
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
-            <p className="text-xs uppercase tracking-wide text-gray-400">Current Unpaid</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
-              {formatMoney(summary.unpaidTotal)}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
-            <p className="text-xs uppercase tracking-wide text-gray-400">Unpaid Items</p>
-            <p className="mt-2 text-3xl font-semibold text-white">
-              {summary.unpaidRows.length}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
-            <p className="text-xs uppercase tracking-wide text-gray-400">Last Payout</p>
-            <p className="mt-2 text-2xl font-semibold text-white">
-              {summary.lastPayout ? formatMoney(summary.lastPayout.amount) : '—'}
-            </p>
-            <p className="mt-1 text-sm text-gray-400">
-              {summary.lastPayout ? displayValue(summary.lastPayout.date) : 'No payout logged'}
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-300">
-            Unpaid grouped by plan
-          </h4>
-
-          {summary.planGroups.length === 0 ? (
-            <EmptyState
-              title="No unpaid commission"
-              description="That usually means payout rows were logged and current unpaid reset correctly."
-            />
-          ) : (
-            <div className="space-y-3">
-              {summary.planGroups.map((group) => (
-                <div
-                  key={group.plan}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-black px-4 py-3"
-                >
-                  <span className="text-sm text-gray-300">{group.plan}</span>
-                  <span className="text-sm font-semibold text-white">
-                    {formatMoney(group.total)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
-          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-300">
-            Current unpaid items
-          </h4>
-
-          {summary.unpaidRows.length === 0 ? (
-            <EmptyState
-              title="Nothing unpaid right now"
-              description="After payout is logged, current unpaid should drop back to zero."
-            />
-          ) : (
-            <div className="space-y-3">
-              {summary.unpaidRows.map((row, index) => (
-                <div
-                  key={`${summary.personName}-${row.__invoice || index}`}
-                  className="rounded-xl border border-white/10 bg-black p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-white">{displayValue(row.__customer)}</p>
-                      <p className="text-sm text-gray-400">
-                        {displayValue(row.__plan)} • Month {displayValue(row.__month)}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Invoice: {displayValue(row.__invoice)}
-                      </p>
-                    </div>
-
-                    <div className="text-right">
-                      <p className="font-semibold text-white">
-                        {formatMoney(row.__commissionAmount)}
-                      </p>
-                      <p className="text-xs text-gray-400">{displayValue(row.__rate)}%</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </DrawerPanel>
-  );
+    grouped,
+    lastBatch,
+  }
 }
 
 export default function MarketersPage() {
-  const {
-    data: ledgerRows = [],
-    loading: ledgerLoading,
-    error: ledgerError,
-  } = useTabData('COMMISSION_LEDGER');
+  const { data: ledger = [], loading: l1, error: e1 } =
+    useTabData('COMMISSION_LEDGER')
 
-  const {
-    data: payoutRows = [],
-    loading: payoutLoading,
-    error: payoutError,
-  } = useTabData('PAYOUT_BATCHES');
+  const { data: batches = [], loading: l2, error: e2 } =
+    useTabData('PAYOUT_BATCHES')
 
   const [pins, setPins] = useState({
     Emma: '',
     Wyatt: '',
     ED: '',
     Micah: '',
-  });
+  })
 
-  const [errors, setErrors] = useState({
-    Emma: '',
-    Wyatt: '',
-    ED: '',
-    Micah: '',
-  });
+  const [open, setOpen] = useState(null)
 
-  const [openPerson, setOpenPerson] = useState(null);
+  const sums = useMemo(
+    () => ({
+      Emma: summary(ledger, batches, 'Emma'),
+      Wyatt: summary(ledger, batches, 'Wyatt'),
+      ED: summary(ledger, batches, 'ED'),
+      Micah: summary(ledger, batches, 'Micah'),
+    }),
+    [ledger, batches]
+  )
 
-  const summaries = useMemo(() => {
-    return {
-      Emma: buildPersonSummary(ledgerRows, payoutRows, 'Emma'),
-      Wyatt: buildPersonSummary(ledgerRows, payoutRows, 'Wyatt'),
-      ED: buildPersonSummary(ledgerRows, payoutRows, 'ED'),
-      Micah: buildPersonSummary(ledgerRows, payoutRows, 'Micah'),
-    };
-  }, [ledgerRows, payoutRows]);
+  const loading = l1 || l2
+  const error = e1 || e2
 
-  const loading = ledgerLoading || payoutLoading;
-  const error = ledgerError || payoutError;
-
-  function handleUnlock(personName) {
-    if (pins[personName] !== PIN_MAP[personName]) {
-      setErrors((prev) => ({ ...prev, [personName]: 'Incorrect PIN' }));
-      return;
-    }
-
-    setErrors((prev) => ({ ...prev, [personName]: '' }));
-    setOpenPerson(personName);
+  function unlock(name) {
+    if (pins[name] !== PIN_MAP[name]) return
+    setOpen(name)
   }
 
-  function handleClosePanel() {
-    setOpenPerson(null);
+  function close() {
+    setOpen(null)
     setPins({
       Emma: '',
       Wyatt: '',
       ED: '',
       Micah: '',
-    });
-    setErrors({
-      Emma: '',
-      Wyatt: '',
-      ED: '',
-      Micah: '',
-    });
+    })
   }
 
   return (
     <div className="space-y-6">
+
       <div>
-        <h1 className="text-3xl font-semibold text-white">Marketer Commissions</h1>
-        <p className="mt-2 text-sm text-gray-400">
-          Private commission access for Emma, Wyatt, ED, and Micah. Current unpaid resets after payout is logged in the sheet.
-        </p>
+        <h1 className="text-3xl font-semibold text-white">
+          Marketer Commissions
+        </h1>
       </div>
 
-      {loading ? <LoadingSpinner label="Loading commission data..." /> : null}
+      {loading && <LoadingSpinner label="Loading..." />}
 
-      {error ? (
-        <ErrorBanner message="Failed to load Commission_Ledger or PAYOUT_BATCHES. Check your Google Sheet tab names and publishing." />
-      ) : null}
+      {error && (
+        <ErrorBanner message="Sheet read failed. Check tab names." />
+      )}
 
-      {!loading && !error ? (
+      {!loading && !error && (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {PEOPLE.map((person) => (
-            <LockCard
-              key={person.name}
-              person={person}
-              pin={pins[person.name]}
-              setPin={(value) => setPins((prev) => ({ ...prev, [person.name]: value }))}
-              error={errors[person.name]}
-              onUnlock={() => handleUnlock(person.name)}
-            />
-          ))}
-        </div>
-      ) : null}
 
-      {openPerson ? (
-        <CommissionPanel summary={summaries[openPerson]} onClose={handleClosePanel} />
-      ) : null}
+          {PEOPLE.map((p) => (
+            <div
+              key={p.name}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 shadow-lg transition hover:bg-white/[0.07]"
+            >
+              <div className="mb-3">
+                <div className="text-lg font-semibold text-white">
+                  {p.name}
+                </div>
+
+                <div className="text-xs text-gray-400">
+                  {p.role} commission access
+                </div>
+              </div>
+
+              <input
+                type="password"
+                value={pins[p.name]}
+                onChange={(e) =>
+                  setPins((x) => ({
+                    ...x,
+                    [p.name]: e.target.value,
+                  }))
+                }
+                placeholder="Enter PIN"
+                className="w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white"
+              />
+
+              <button
+                onClick={() => unlock(p.name)}
+                className="mt-3 w-full rounded-xl bg-white text-black py-2 font-semibold"
+              >
+                Unlock
+              </button>
+            </div>
+          ))}
+
+        </div>
+      )}
+
+      {open && (
+        <DrawerPanel
+          isOpen
+          onClose={close}
+          title={`${open} Commission Details`}
+          description="Only unpaid ledger rows are included."
+        >
+
+          <div className="space-y-6">
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+
+              <div className="text-xs text-gray-400 uppercase">
+                Current Unpaid
+              </div>
+
+              <div className="text-3xl text-white font-semibold mt-2">
+                {fmt(sums[open].total)}
+              </div>
+
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+
+              <div className="text-xs text-gray-400 uppercase mb-3">
+                Plan Breakdown
+              </div>
+
+              {Object.keys(sums[open].grouped).length === 0 && (
+                <EmptyState
+                  title="No unpaid commission"
+                  description="Ledger rows marked paid no longer appear."
+                />
+              )}
+
+              {Object.entries(sums[open].grouped).map(
+                ([plan, value]) => (
+                  <div
+                    key={plan}
+                    className="flex justify-between text-sm text-white mb-2"
+                  >
+                    <span>{plan}</span>
+                    <span>{fmt(value)}</span>
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6">
+
+              <div className="text-xs text-gray-400 uppercase mb-3">
+                Calculation Details
+              </div>
+
+              {sums[open].unpaidRows.map((r, i) => (
+                <div
+                  key={i}
+                  className="text-sm text-gray-300 mb-2"
+                >
+                  {r.note}
+                </div>
+              ))}
+
+            </div>
+
+          </div>
+
+        </DrawerPanel>
+      )}
+
     </div>
-  );
+  )
 }
