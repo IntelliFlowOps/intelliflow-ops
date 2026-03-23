@@ -300,3 +300,58 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
     customers: sliceRows(filteredCustomers, 15),
   };
 }
+
+
+/* ===== IntelliFlow Pricing Knowledge (shared marketing context layer) ===== */
+
+export const INTELLIFLOW_PRICING_CONTEXT = `
+Starter Plan:
+$299/month
+600 texts included
+No voice minutes
+
+Pro Plan:
+$499/month
+1,500 texts included
+400 voice minutes included
+
+Premium Plan:
+$999/month
+4,000 texts included
+1,000 voice minutes included
+
+Overages:
+
+Starter
+$0.12/text
+
+Pro
+$0.10/text
+$0.25/voice-minute
+
+Premium
+$0.08/text
+$0.20/voice-minute
+
+Usage Notifications:
+
+70% usage alert
+90% usage alert
+100% usage triggers overages
+
+Escalation Policy:
+
+Human escalation is safety net only
+Frequent escalation means upgrade tier
+
+Company Stage Context:
+
+Paid ads not launched yet
+Close rate unknown
+CAC unknown
+
+Instruction:
+
+Do not assume benchmarks
+Recommend testing strategy instead
+`;
