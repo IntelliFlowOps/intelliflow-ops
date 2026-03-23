@@ -4,15 +4,14 @@ import { NavLink, Outlet } from 'react-router-dom';
 const navItems = [
   { to: '/', label: 'Dashboard' },
   { to: '/customers', label: 'Customers' },
-  { to: '/marketers', label: 'Marketers' },
+  { to: '/marketers', label: 'Individual Commissions' },
   { to: '/campaigns', label: 'Campaigns' },
   { to: '/creative', label: 'Creative Insights' },
   { to: '/founder-assistant', label: 'Founder Assistant' },
   { to: '/marketer-assistant', label: 'Marketer Assistant' },
-  { to: '/commissions', label: 'Commissions' },
+  { to: '/commissions', label: 'Ledger' },
   { to: '/activity', label: 'Activity' },
   { to: '/analytics', label: 'Analytics' },
-  { to: '/rules', label: 'Rules' },
 ];
 
 export default function AppLayout() {

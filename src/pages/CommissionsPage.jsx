@@ -32,16 +32,11 @@ export default function CommissionsPage() {
       activeRows.map((row) => String(row['Customer Name'] || '').trim()).filter(Boolean)
     ).size;
 
-    const founderRows = activeRows.filter(
-      (row) => String(row['Attribution Type'] || '').trim().toLowerCase() === 'founder'
-    ).length;
-
     return {
       totalRows: activeRows.length,
       unpaidRows: unpaidRows.length,
       paidRows: paidRows.length,
       uniqueCustomers,
-      founderRows,
     };
   }, [ledgerRows]);
 
@@ -96,11 +91,11 @@ export default function CommissionsPage() {
       <section>
         <h2 className="section-title mb-3">Ledger</h2>
         <p className="mb-4 text-sm text-zinc-400">
-          Internal operational ledger only. This page does not expose personal commission amounts.
+          Internal operational ledger only. Personal commission numbers are hidden from this page.
         </p>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
-          <KpiCard label="Ledger Rows" value={stats.totalRows > 0 ? stats.totalRows : '—'} color="info" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <KpiCard label="Ledger Rows" value={stats.totalRows > 0 ? stats.totalRows : '0'} color="info" />
           <KpiCard label="Unpaid Rows" value={stats.unpaidRows > 0 ? stats.unpaidRows : '0'} color="warning" />
           <KpiCard label="Paid Rows" value={stats.paidRows > 0 ? stats.paidRows : '0'} color="success" />
           <KpiCard
@@ -108,18 +103,13 @@ export default function CommissionsPage() {
             value={stats.uniqueCustomers > 0 ? stats.uniqueCustomers : '0'}
             color="accent"
           />
-          <KpiCard
-            label="Founder Rows"
-            value={stats.founderRows > 0 ? stats.founderRows : '0'}
-            color="default"
-          />
         </div>
       </section>
 
       <section>
         <div className="card p-4 text-sm text-zinc-400">
-          Personal commission amounts are hidden on this page. Emma, Wyatt, ED, and Micah should only see
-          their own numbers inside the Individual Commissions page after PIN unlock.
+          This page is for internal ledger operations only. Emma, Wyatt, ED, and Micah should only see
+          their own payout math inside Individual Commissions after PIN unlock.
         </div>
       </section>
 
@@ -137,10 +127,6 @@ export default function CommissionsPage() {
           <EmptyState message="No ledger entries yet" />
         )}
       </section>
-
-      <p className="text-[10px] text-zinc-600">
-        This page is operational only. Personal payout math belongs exclusively in Individual Commissions.
-      </p>
     </div>
   );
 }

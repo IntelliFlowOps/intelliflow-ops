@@ -11,7 +11,6 @@ import CreativeInsightsPage from './pages/CreativeInsightsPage.jsx';
 import CommissionsPage from './pages/CommissionsPage.jsx';
 import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
-import RulesPage from './pages/RulesPage.jsx';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
 import CursorTrail from './components/CursorTrail.jsx';
@@ -35,7 +34,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="commissions" element={<CommissionsPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="rules" element={<RulesPage />} />
           </Route>
         </Routes>
       </DataProvider>
