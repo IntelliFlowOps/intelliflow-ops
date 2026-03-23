@@ -77,17 +77,29 @@ function plan(row) {
 
 function explanation(row, person) {
   const customer = row["Customer Name"] || "Unknown Customer";
+  const month =
+    row["Sales Rep Paid Month Count"] ||
+    row["Months Active / Paid Month"] ||
+    "—";
+
+  if (person === "ED" || person === "Micah") {
+    return `${customer} → ${fmt(base(row))} × ${rate(row, person)}% = ${fmt(
+      commission(row, person)
+    )} (paid month ${month} of 6)`;
+  }
+
   return `${customer} → ${fmt(base(row))} × ${rate(row, person)}% = ${fmt(
     commission(row, person)
   )}`;
 }
 
-function summary(rows, person) {
+function buildSummary(rows, person) {
   const owned = rows.filter((r) => belongs(r, person));
 
   const unpaidRows = owned
     .filter(unpaid)
     .map((r) => ({
+      customer: r["Customer Name"] || "Unknown Customer",
       amount: commission(r, person),
       plan: plan(r),
       note: explanation(r, person),
@@ -97,7 +109,11 @@ function summary(rows, person) {
   const total = unpaidRows.reduce((a, b) => a + b.amount, 0);
 
   const grouped = unpaidRows.reduce((acc, r) => {
-    acc[r.plan] = (acc[r.plan] || 0) + r.amount;
+    if (!acc[r.plan]) {
+      acc[r.plan] = { total: 0, clients: 0 };
+    }
+    acc[r.plan].total += r.amount;
+    acc[r.plan].clients += 1;
     return acc;
   }, {});
 
@@ -118,20 +134,32 @@ export default function MarketersPage() {
     Micah: "",
   });
 
+  const [pinErrors, setPinErrors] = useState({
+    Emma: "",
+    Wyatt: "",
+    ED: "",
+    Micah: "",
+  });
+
   const [open, setOpen] = useState(null);
 
   const sums = useMemo(
     () => ({
-      Emma: summary(ledger, "Emma"),
-      Wyatt: summary(ledger, "Wyatt"),
-      ED: summary(ledger, "ED"),
-      Micah: summary(ledger, "Micah"),
+      Emma: buildSummary(ledger, "Emma"),
+      Wyatt: buildSummary(ledger, "Wyatt"),
+      ED: buildSummary(ledger, "ED"),
+      Micah: buildSummary(ledger, "Micah"),
     }),
     [ledger]
   );
 
   function unlock(name) {
-    if (pins[name] !== PIN_MAP[name]) return;
+    if (pins[name] !== PIN_MAP[name]) {
+      setPinErrors((prev) => ({ ...prev, [name]: "Incorrect PIN" }));
+      return;
+    }
+
+    setPinErrors((prev) => ({ ...prev, [name]: "" }));
     setOpen(name);
   }
 
@@ -143,29 +171,35 @@ export default function MarketersPage() {
       ED: "",
       Micah: "",
     });
+    setPinErrors({
+      Emma: "",
+      Wyatt: "",
+      ED: "",
+      Micah: "",
+    });
   }
-
-  if (loading) return <LoadingSpinner label="Loading commissions..." />;
-  if (error) return <ErrorBanner message="Commission ledger failed to load." />;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-semibold text-white">Marketer Commissions</h1>
         <p className="mt-2 text-sm text-gray-400">
-          Strict per-person commission view. No TEAM/ad split included.
+          Strictly personal commission access. No TEAM/ad split included.
         </p>
       </div>
+
+      {loading ? <LoadingSpinner label="Loading commissions..." /> : null}
+      {error ? <ErrorBanner message="Commission ledger failed to load." /> : null}
 
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {PEOPLE.map((p) => (
           <div
             key={p.name}
-            className="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6 shadow-[0_10px_40px_rgba(0,0,0,0.25)]"
+            className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.28)]"
           >
             <div className="mb-4">
               <div className="text-lg font-semibold text-white">{p.name}</div>
-              <div className="text-xs text-gray-400">{p.role} private commission access</div>
+              <div className="text-xs text-gray-400">{p.role} private KPI</div>
             </div>
 
             <input
@@ -184,6 +218,10 @@ export default function MarketersPage() {
               className="w-full rounded-2xl border border-white/10 bg-black/50 px-4 py-3 text-white outline-none"
             />
 
+            {pinErrors[p.name] ? (
+              <div className="mt-2 text-xs text-red-400">{pinErrors[p.name]}</div>
+            ) : null}
+
             <button
               onClick={() => unlock(p.name)}
               className="mt-3 w-full rounded-2xl bg-white text-black py-3 font-semibold transition hover:opacity-90"
@@ -194,58 +232,88 @@ export default function MarketersPage() {
         ))}
       </div>
 
-      {open && (
-        <DrawerPanel
-          isOpen
-          onClose={close}
-          title={`${open} Commission Details`}
-          description="Only unpaid Commission_Ledger rows are included."
-        >
+      <DrawerPanel
+        isOpen={Boolean(open)}
+        onClose={close}
+        title={open ? `${open} Commission Details` : "Commission Details"}
+        description="Only unpaid Commission_Ledger rows for this person are included."
+      >
+        {open ? (
           <div className="space-y-6">
-            <div className="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
               <div className="text-xs uppercase text-gray-400">Current Unpaid</div>
               <div className="mt-2 text-3xl font-semibold text-white">
                 {fmt(sums[open].total)}
               </div>
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
               <div className="text-xs uppercase text-gray-400 mb-3">Plan Breakdown</div>
 
               {Object.entries(sums[open].grouped).length === 0 ? (
-                <EmptyState
-                  title="No unpaid commission rows"
-                  description="Commission_Ledger has no matching unpaid rows for this person yet."
-                />
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium text-white">Starter</div>
+                      <div className="text-xs text-gray-400">0 clients</div>
+                    </div>
+                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium text-white">Pro</div>
+                      <div className="text-xs text-gray-400">0 clients</div>
+                    </div>
+                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium text-white">Premium</div>
+                      <div className="text-xs text-gray-400">0 clients</div>
+                    </div>
+                    <div className="text-sm font-semibold text-white">{fmt(0)}</div>
+                  </div>
+                </div>
               ) : (
-                Object.entries(sums[open].grouped).map(([plan, value]) => (
-                  <div key={plan} className="flex justify-between text-sm text-white mb-2">
-                    <span>{plan}</span>
-                    <span>{fmt(value)}</span>
+                Object.entries(sums[open].grouped).map(([planName, data]) => (
+                  <div
+                    key={planName}
+                    className="mb-3 flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 px-4 py-3"
+                  >
+                    <div>
+                      <div className="text-sm font-medium text-white">{planName}</div>
+                      <div className="text-xs text-gray-400">
+                        {data.clients} {data.clients === 1 ? "client" : "clients"}
+                      </div>
+                    </div>
+                    <div className="text-sm font-semibold text-white">{fmt(data.total)}</div>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="rounded-3xl border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
               <div className="text-xs uppercase text-gray-400 mb-3">Calculation Details</div>
 
               {sums[open].unpaidRows.length === 0 ? (
                 <EmptyState
-                  title="Nothing to calculate yet"
-                  description="Add real Commission_Ledger rows for this person and the breakdown will appear here."
+                  title="No unpaid commission rows yet"
+                  description="This drawer opens even at zero. Once unpaid Commission_Ledger rows exist for this person, the exact calculation breakdown will appear here."
                 />
               ) : (
                 sums[open].unpaidRows.map((r, i) => (
-                  <div key={i} className="text-sm text-gray-300 mb-2">
+                  <div
+                    key={`${open}-${r.customer}-${i}`}
+                    className="mb-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300"
+                  >
                     {r.note}
                   </div>
                 ))
               )}
             </div>
           </div>
-        </DrawerPanel>
-      )}
+        ) : null}
+      </DrawerPanel>
     </div>
   );
 }
