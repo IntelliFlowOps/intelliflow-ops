@@ -1,26 +1,39 @@
 import { useMemo, useState } from 'react';
-import {
-  Lock,
-  X,
-  Shield,
-  DollarSign,
-  Calendar,
-  CheckCircle2,
-  Clock3,
-  Receipt,
-} from 'lucide-react';
-import StatCard from '../components/ui/StatCard';
-import PageHeader from '../components/ui/PageHeader';
-import EmptyState from '../components/ui/EmptyState';
-import { useTabData } from '../hooks/useSheetData';
+import { useTabData } from '../hooks/useSheetData.jsx';
+import DrawerPanel from '../components/DrawerPanel.jsx';
+import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import ErrorBanner from '../components/ErrorBanner.jsx';
+import EmptyState from '../components/EmptyState.jsx';
 
-const MARKETER_PINS = {
+const PEOPLE = [
+  { name: 'Emma', role: 'Marketer' },
+  { name: 'Wyatt', role: 'Marketer' },
+  { name: 'ED', role: 'Sales' },
+];
+
+const PIN_MAP = {
   Emma: '3724',
   Wyatt: '2654',
   ED: '1876',
 };
 
-const MARKETER_LABELS = ['Emma', 'Wyatt', 'ED'];
+function parseMoney(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  const num = parseFloat(String(value).replace(/[^0-9.-]/g, ''));
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatMoney(value) {
+  return `$${Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function displayValue(value) {
+  if (value === null || value === undefined || value === '') return '—';
+  return String(value);
+}
 
 function normalize(value) {
   return String(value ?? '').trim();
@@ -30,272 +43,168 @@ function normalizeLower(value) {
   return normalize(value).toLowerCase();
 }
 
-function money(value) {
-  const num = Number(value) || 0;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(num);
-}
-
-function formatDate(value) {
-  const raw = normalize(value);
-  if (!raw) return '—';
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return raw;
-
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(parsed);
-}
-
-function parseAmount(row, keys) {
+function pickFirst(row, keys) {
   for (const key of keys) {
-    if (row[key] == null || row[key] === '') continue;
-    const num = Number(String(row[key]).replace(/[^0-9.-]/g, ''));
-    if (!Number.isNaN(num)) return num;
-  }
-  return 0;
-}
-
-function pickValue(row, keys) {
-  for (const key of keys) {
-    const value = row[key];
-    if (value != null && String(value).trim() !== '') return String(value).trim();
+    const value = row?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return value;
+    }
   }
   return '';
 }
 
-function isPaidLedgerRow(row) {
-  const status = normalizeLower(
-    pickValue(row, ['status', 'Status', 'payout_status', 'Payout Status'])
-  );
+function getCommissionAmountForPerson(row, personName) {
+  if (personName === 'Emma') {
+    return parseMoney(
+      pickFirst(row, ['Emma Commission', 'emma_amount', 'Emma Amount', 'marketer_a_amount', 'Marketer A Amount'])
+    );
+  }
 
+  if (personName === 'Wyatt') {
+    return parseMoney(
+      pickFirst(row, ['Wyatt Commission', 'wyatt_amount', 'Wyatt Amount', 'marketer_b_amount', 'Marketer B Amount'])
+    );
+  }
+
+  if (personName === 'ED') {
+    return parseMoney(
+      pickFirst(row, ['Sales Commission', 'ed_amount', 'ED Amount', 'commission_amount', 'Commission Amount'])
+    );
+  }
+
+  return 0;
+}
+
+function getRateForPerson(row, personName) {
+  if (personName === 'ED') {
+    const raw = parseMoney(pickFirst(row, ['Sales Rep Rate', 'sales_rep_rate', 'Sales Rate']));
+    return raw <= 1 ? raw * 100 : raw;
+  }
+
+  const raw = parseMoney(pickFirst(row, ['Commission %', 'commission_rate', 'Commission Rate']));
+  return raw <= 1 ? raw * 100 : raw;
+}
+
+function rowBelongsToPerson(row, personName) {
+  if (personName === 'Emma') {
+    return (
+      normalizeLower(pickFirst(row, ['Direct Marketer', 'direct_marketer', 'Closer', 'closer', 'marketer'])) === 'emma'
+    );
+  }
+
+  if (personName === 'Wyatt') {
+    return (
+      normalizeLower(pickFirst(row, ['Direct Marketer', 'direct_marketer', 'Closer', 'closer', 'marketer'])) === 'wyatt'
+    );
+  }
+
+  if (personName === 'ED') {
+    return (
+      normalizeLower(pickFirst(row, ['Sales Rep', 'sales_rep', 'Salesperson', 'salesperson', 'Recipient', 'recipient'])) === 'ed'
+    );
+  }
+
+  return false;
+}
+
+function isUnpaidRow(row) {
+  const paidOut = normalizeLower(
+    pickFirst(row, ['Paid Out?', 'paid_out', 'status', 'Status', 'payout_status', 'Payout Status'])
+  );
   const payoutBatchId = normalize(
-    pickValue(row, ['payout_batch_id', 'Payout Batch ID', 'batch_id', 'Batch ID'])
+    pickFirst(row, ['Payout Batch / Month', 'payout_batch_id', 'Payout Batch ID', 'batch_id', 'Batch ID'])
   );
 
-  return (
-    status === 'paid' ||
-    status === 'paid_out' ||
-    status === 'payout complete' ||
-    status === 'completed' ||
-    Boolean(payoutBatchId)
-  );
+  if (payoutBatchId) return false;
+  return !(paidOut === 'yes' || paidOut === 'paid' || paidOut === 'paid_out' || paidOut === 'completed');
 }
 
-function getLedgerOwner(row) {
-  const explicitOwner = pickValue(row, [
-    'marketer',
-    'Marketer',
-    'owner',
-    'Owner',
-    'salesperson',
-    'Salesperson',
-    'closer',
-    'Closer',
-    'recipient',
-    'Recipient',
-    'payee',
-    'Payee',
-  ]);
+function getLastPayoutInfo(batches, personName) {
+  const personBatches = (batches || []).filter((row) => {
+    const owner = normalizeLower(
+      pickFirst(row, ['Person', 'person', 'Marketer', 'marketer', 'Recipient', 'recipient', 'Payee', 'payee'])
+    );
+    return owner === normalizeLower(personName);
+  });
 
-  if (explicitOwner) return explicitOwner;
+  if (!personBatches.length) return null;
 
-  const marketerName = pickValue(row, [
-    'marketer_name',
-    'Marketer Name',
-    'salesperson_name',
-    'Salesperson Name',
-    'closer_name',
-    'Closer Name',
-  ]);
+  const sorted = [...personBatches].sort((a, b) => {
+    const aDate = String(pickFirst(a, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || '');
+    const bDate = String(pickFirst(b, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || '');
+    return bDate.localeCompare(aDate);
+  });
 
-  if (marketerName) return marketerName;
-
-  return '';
-}
-
-function getLedgerCommissionAmount(row, marketerName) {
-  const owner = getLedgerOwner(row);
-  if (normalizeLower(owner) === normalizeLower(marketerName)) {
-    return parseAmount(row, [
-      'commission_amount',
-      'Commission Amount',
-      'commission',
-      'Commission',
-      'amount',
-      'Amount',
-      'unpaid_commission',
-      'Unpaid Commission',
-    ]);
-  }
-
-  const marketerLower = normalizeLower(marketerName);
-
-  if (marketerLower === 'emma') {
-    return parseAmount(row, [
-      'emma_amount',
-      'Emma Amount',
-      'marketer_a_amount',
-      'Marketer A Amount',
-    ]);
-  }
-
-  if (marketerLower === 'wyatt') {
-    return parseAmount(row, [
-      'wyatt_amount',
-      'Wyatt Amount',
-      'marketer_b_amount',
-      'Marketer B Amount',
-    ]);
-  }
-
-  if (marketerLower === 'ed') {
-    return parseAmount(row, ['ed_amount', 'ED Amount']);
-  }
-
-  return 0;
-}
-
-function getPayoutOwner(row) {
-  return pickValue(row, [
-    'marketer',
-    'Marketer',
-    'recipient',
-    'Recipient',
-    'payee',
-    'Payee',
-    'salesperson',
-    'Salesperson',
-    'closer',
-    'Closer',
-  ]);
-}
-
-function getPayoutAmount(row) {
-  return parseAmount(row, [
-    'amount',
-    'Amount',
-    'payout_amount',
-    'Payout Amount',
-    'total_paid',
-    'Total Paid',
-    'paid_amount',
-    'Paid Amount',
-  ]);
-}
-
-function getPayoutDate(row) {
-  return pickValue(row, [
-    'paid_at',
-    'Paid At',
-    'payout_date',
-    'Payout Date',
-    'date',
-    'Date',
-    'created_at',
-    'Created At',
-  ]);
-}
-
-function buildMarketerSummary(ledgerRows, payoutRows, marketerName) {
-  const ownedLedgerRows = ledgerRows
-    .map((row) => {
-      const commissionAmount = getLedgerCommissionAmount(row, marketerName);
-      return {
-        ...row,
-        __commissionAmount: commissionAmount,
-      };
-    })
-    .filter((row) => row.__commissionAmount > 0);
-
-  const unpaidRows = ownedLedgerRows.filter((row) => !isPaidLedgerRow(row));
-  const paidRows = ownedLedgerRows.filter((row) => isPaidLedgerRow(row));
-
-  const unpaidTotal = unpaidRows.reduce((sum, row) => sum + row.__commissionAmount, 0);
-
-  const planBuckets = unpaidRows.reduce((acc, row) => {
-    const plan = pickValue(row, ['plan', 'Plan', 'package', 'Package', 'tier', 'Tier']) || 'Unknown';
-    acc[plan] = (acc[plan] || 0) + row.__commissionAmount;
-    return acc;
-  }, {});
-
-  const payoutHistory = payoutRows
-    .filter((row) => normalizeLower(getPayoutOwner(row)) === normalizeLower(marketerName))
-    .map((row, index) => ({
-      id:
-        pickValue(row, ['batch_id', 'Batch ID', 'id', 'ID']) ||
-        `${marketerName}-${index}-${getPayoutDate(row)}`,
-      amount: getPayoutAmount(row),
-      date: getPayoutDate(row),
-      note: pickValue(row, ['note', 'Note', 'description', 'Description']),
-    }))
-    .filter((row) => row.amount > 0)
-    .sort((a, b) => {
-      const aTime = new Date(a.date).getTime();
-      const bTime = new Date(b.date).getTime();
-      return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
-    });
+  const latest = sorted[0];
 
   return {
-    marketerName,
-    unpaidTotal,
-    unpaidCount: unpaidRows.length,
-    paidCount: paidRows.length,
-    planBuckets: Object.entries(planBuckets)
-      .map(([plan, amount]) => ({ plan, amount }))
-      .sort((a, b) => b.amount - a.amount),
-    unpaidRows: unpaidRows.sort((a, b) => {
-      const aTime = new Date(pickValue(a, ['paid_at', 'Paid At', 'date', 'Date'])).getTime();
-      const bTime = new Date(pickValue(b, ['paid_at', 'Paid At', 'date', 'Date'])).getTime();
-      return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
-    }),
-    payoutHistory,
+    amount: parseMoney(pickFirst(latest, ['Amount Paid', 'amount', 'Payout Amount', 'payout_amount', 'Total Paid'])),
+    date: pickFirst(latest, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']),
+    batch: pickFirst(latest, ['Batch Label', 'batch_label', 'Payout Batch / Month', 'payout_batch_id', 'Batch ID']),
   };
 }
 
-function LockedCard({ marketerName, onUnlock, pinInput, setPinInput, error }) {
+function buildPersonSummary(ledgerRows, payoutRows, personName) {
+  const ownedRows = (ledgerRows || []).filter((row) => rowBelongsToPerson(row, personName));
+
+  const unpaidRows = ownedRows
+    .filter(isUnpaidRow)
+    .map((row) => ({
+      ...row,
+      __commissionAmount: getCommissionAmountForPerson(row, personName),
+      __rate: getRateForPerson(row, personName),
+      __customer: pickFirst(row, ['Customer', 'customer_name', 'Customer Name']),
+      __plan: pickFirst(row, ['Plan', 'plan', 'Package']),
+      __month: pickFirst(row, ['Month #', 'month_number', 'Commission Month']),
+      __invoice: pickFirst(row, ['Invoice ID', 'invoice_id', 'Invoice Number']),
+    }))
+    .filter((row) => row.__commissionAmount > 0);
+
+  const unpaidTotal = unpaidRows.reduce((sum, row) => sum + row.__commissionAmount, 0);
+
+  const groupedByPlan = unpaidRows.reduce((acc, row) => {
+    const key = row.__plan || 'Unknown';
+    acc[key] = (acc[key] || 0) + row.__commissionAmount;
+    return acc;
+  }, {});
+
+  const planGroups = Object.entries(groupedByPlan)
+    .map(([plan, total]) => ({ plan, total }))
+    .sort((a, b) => b.total - a.total);
+
+  return {
+    personName,
+    unpaidRows,
+    unpaidTotal,
+    planGroups,
+    lastPayout: getLastPayoutInfo(payoutRows, personName),
+  };
+}
+
+function LockCard({ person, pin, setPin, onUnlock, error }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-      <div className="mb-5 flex items-center gap-3">
-        <div className="rounded-xl bg-white/10 p-3">
-          <Lock className="h-5 w-5 text-white" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-white">{marketerName} Commission Card</h3>
-          <p className="text-sm text-slate-400">Locked private payout view</p>
-        </div>
+    <div className="rounded-2xl border border-white/10 bg-[#111111] p-6">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-white">{person.name}</h3>
+        <p className="text-sm text-gray-400">{person.role} commission access</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-          Enter {marketerName}&apos;s PIN to view current unpaid commission and payout history.
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-300">PIN</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value)}
-            placeholder="Enter PIN"
-            className="w-full rounded-xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white outline-none transition focus:border-emerald-400"
-          />
-        </div>
+      <div className="space-y-3">
+        <input
+          type="password"
+          inputMode="numeric"
+          placeholder="Enter PIN"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-white outline-none"
+        />
 
         {error ? <p className="text-sm text-red-400">{error}</p> : null}
 
         <button
           onClick={onUnlock}
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-400"
+          className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:opacity-90"
         >
-          <Shield className="h-4 w-4" />
           Unlock
         </button>
       </div>
@@ -303,182 +212,100 @@ function LockedCard({ marketerName, onUnlock, pinInput, setPinInput, error }) {
   );
 }
 
-function UnlockedCard({ summary, onClose }) {
-  const latestPayout = summary.payoutHistory[0];
-
+function CommissionPanel({ summary, onClose }) {
   return (
-    <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-slate-900 to-slate-950 p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-            <Shield className="h-3.5 w-3.5" />
-            Private commission view
-          </div>
-          <h3 className="text-xl font-semibold text-white">{summary.marketerName}</h3>
-          <p className="mt-1 text-sm text-slate-400">
-            Current unpaid total only. Paid items are excluded after payout.
-          </p>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
-        >
-          <X className="h-4 w-4" />
-          Close
-        </button>
-      </div>
-
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <StatCard
-          title="Current Unpaid"
-          value={money(summary.unpaidTotal)}
-          subtitle={`${summary.unpaidCount} unpaid item${summary.unpaidCount === 1 ? '' : 's'}`}
-          icon={DollarSign}
-          variant="success"
-        />
-        <StatCard
-          title="Paid Items Logged"
-          value={String(summary.paidCount)}
-          subtitle="Already cleared from current unpaid"
-          icon={CheckCircle2}
-          variant="info"
-        />
-        <StatCard
-          title="Latest Payout"
-          value={latestPayout ? money(latestPayout.amount) : '$0.00'}
-          subtitle={latestPayout ? formatDate(latestPayout.date) : 'No payout logged yet'}
-          icon={Calendar}
-          variant="warning"
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-6">
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Receipt className="h-4 w-4 text-emerald-300" />
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                Unpaid by plan
-              </h4>
-            </div>
-
-            {summary.planBuckets.length ? (
-              <div className="space-y-3">
-                {summary.planBuckets.map((item) => (
-                  <div
-                    key={item.plan}
-                    className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3"
-                  >
-                    <span className="text-sm text-slate-300">{item.plan}</span>
-                    <span className="text-sm font-semibold text-white">{money(item.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState
-                title="No unpaid commission"
-                description="Once payout is recorded in the sheet, current unpaid drops back to zero."
-              />
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <div className="mb-4 flex items-center gap-2">
-              <Clock3 className="h-4 w-4 text-emerald-300" />
-              <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-                Current unpaid items
-              </h4>
-            </div>
-
-            {summary.unpaidRows.length ? (
-              <div className="space-y-3">
-                {summary.unpaidRows.slice(0, 12).map((row, index) => {
-                  const customer =
-                    pickValue(row, ['customer_name', 'Customer Name', 'customer', 'Customer']) ||
-                    'Unknown Customer';
-                  const plan =
-                    pickValue(row, ['plan', 'Plan', 'package', 'Package', 'tier', 'Tier']) ||
-                    'Unknown';
-                  const date = pickValue(row, ['paid_at', 'Paid At', 'date', 'Date']);
-                  const invoice = pickValue(row, [
-                    'invoice_number',
-                    'Invoice Number',
-                    'invoice',
-                    'Invoice',
-                  ]);
-
-                  return (
-                    <div
-                      key={`${customer}-${invoice || index}`}
-                      className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
-                    >
-                      <div className="mb-2 flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-white">{customer}</p>
-                          <p className="text-sm text-slate-400">
-                            {plan}
-                            {invoice ? ` • Invoice ${invoice}` : ''}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-emerald-300">
-                            {money(row.__commissionAmount)}
-                          </p>
-                          <p className="text-xs text-slate-500">{formatDate(date)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <EmptyState
-                title="Nothing unpaid right now"
-                description="That is expected after a payout batch is logged and linked to paid items."
-              />
-            )}
-          </section>
-        </div>
-
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <div className="mb-4 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-emerald-300" />
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-              Payout history
-            </h4>
+    <DrawerPanel
+      isOpen
+      onClose={onClose}
+      title={`${summary.personName} Commission Details`}
+      description="Current unpaid commission only. Paid batches should stop counting after payout is logged."
+    >
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Current Unpaid</p>
+            <p className="mt-2 text-3xl font-semibold text-white">{formatMoney(summary.unpaidTotal)}</p>
           </div>
 
-          {summary.payoutHistory.length ? (
+          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Unpaid Items</p>
+            <p className="mt-2 text-3xl font-semibold text-white">{summary.unpaidRows.length}</p>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
+            <p className="text-xs uppercase tracking-wide text-gray-400">Last Payout</p>
+            <p className="mt-2 text-2xl font-semibold text-white">
+              {summary.lastPayout ? formatMoney(summary.lastPayout.amount) : '—'}
+            </p>
+            <p className="mt-1 text-sm text-gray-400">
+              {summary.lastPayout ? displayValue(summary.lastPayout.date) : 'No payout logged'}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
+          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-300">
+            Unpaid grouped by plan
+          </h4>
+
+          {summary.planGroups.length === 0 ? (
+            <EmptyState
+              title="No unpaid commission"
+              description="That usually means payout rows were logged and current unpaid reset correctly."
+            />
+          ) : (
             <div className="space-y-3">
-              {summary.payoutHistory.slice(0, 12).map((payout) => (
+              {summary.planGroups.map((group) => (
                 <div
-                  key={payout.id}
-                  className="rounded-xl border border-white/10 bg-slate-950/40 p-4"
+                  key={group.plan}
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-black px-4 py-3"
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <span className="text-sm text-gray-300">{group.plan}</span>
+                  <span className="text-sm font-semibold text-white">{formatMoney(group.total)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
+          <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-300">
+            Current unpaid items
+          </h4>
+
+          {summary.unpaidRows.length === 0 ? (
+            <EmptyState
+              title="Nothing unpaid right now"
+              description="After payout is logged, current unpaid should drop back to zero."
+            />
+          ) : (
+            <div className="space-y-3">
+              {summary.unpaidRows.map((row, index) => (
+                <div
+                  key={`${summary.personName}-${row.__invoice || index}`}
+                  className="rounded-xl border border-white/10 bg-black p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-medium text-white">{formatDate(payout.date)}</p>
-                      <p className="text-sm text-slate-400">
-                        {payout.note || 'Payout batch recorded in sheet'}
+                      <p className="font-medium text-white">{displayValue(row.__customer)}</p>
+                      <p className="text-sm text-gray-400">
+                        {displayValue(row.__plan)} • Month {displayValue(row.__month)}
                       </p>
+                      <p className="text-xs text-gray-500">Invoice: {displayValue(row.__invoice)}</p>
                     </div>
-                    <span className="font-semibold text-emerald-300">
-                      {money(payout.amount)}
-                    </span>
+
+                    <div className="text-right">
+                      <p className="font-semibold text-white">{formatMoney(row.__commissionAmount)}</p>
+                      <p className="text-xs text-gray-400">{displayValue(row.__rate)}%</p>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-          ) : (
-            <EmptyState
-              title="No payout history found"
-              description="This card will populate once your payout batch rows are being written correctly."
-            />
           )}
-        </section>
+        </div>
       </div>
-    </div>
+    </DrawerPanel>
   );
 }
 
@@ -495,58 +322,49 @@ export default function MarketersPage() {
     error: payoutError,
   } = useTabData('PAYOUT_BATCHES');
 
-  const [activeUnlocked, setActiveUnlocked] = useState(null);
-  const [pinInputs, setPinInputs] = useState({
-    Emma: '',
-    Wyatt: '',
-    ED: '',
-  });
-  const [pinErrors, setPinErrors] = useState({
+  const [pins, setPins] = useState({
     Emma: '',
     Wyatt: '',
     ED: '',
   });
 
-  const summaries = useMemo(
-    () => ({
-      Emma: buildMarketerSummary(ledgerRows, payoutRows, 'Emma'),
-      Wyatt: buildMarketerSummary(ledgerRows, payoutRows, 'Wyatt'),
-      ED: buildMarketerSummary(ledgerRows, payoutRows, 'ED'),
-    }),
-    [ledgerRows, payoutRows]
-  );
+  const [errors, setErrors] = useState({
+    Emma: '',
+    Wyatt: '',
+    ED: '',
+  });
 
-  const isLoading = ledgerLoading || payoutLoading;
+  const [openPerson, setOpenPerson] = useState(null);
+
+  const summaries = useMemo(() => {
+    return {
+      Emma: buildPersonSummary(ledgerRows, payoutRows, 'Emma'),
+      Wyatt: buildPersonSummary(ledgerRows, payoutRows, 'Wyatt'),
+      ED: buildPersonSummary(ledgerRows, payoutRows, 'ED'),
+    };
+  }, [ledgerRows, payoutRows]);
+
+  const loading = ledgerLoading || payoutLoading;
   const error = ledgerError || payoutError;
 
-  function handleUnlock(marketerName) {
-    const entered = normalize(pinInputs[marketerName]);
-    const expected = MARKETER_PINS[marketerName];
-
-    if (entered !== expected) {
-      setPinErrors((prev) => ({
-        ...prev,
-        [marketerName]: 'Incorrect PIN',
-      }));
+  function handleUnlock(personName) {
+    if (pins[personName] !== PIN_MAP[personName]) {
+      setErrors((prev) => ({ ...prev, [personName]: 'Incorrect PIN' }));
       return;
     }
 
-    setPinErrors((prev) => ({
-      ...prev,
-      [marketerName]: '',
-    }));
-
-    setActiveUnlocked(marketerName);
+    setErrors((prev) => ({ ...prev, [personName]: '' }));
+    setOpenPerson(personName);
   }
 
-  function handleClose() {
-    setActiveUnlocked(null);
-    setPinInputs({
+  function handleClosePanel() {
+    setOpenPerson(null);
+    setPins({
       Emma: '',
       Wyatt: '',
       ED: '',
     });
-    setPinErrors({
+    setErrors({
       Emma: '',
       Wyatt: '',
       ED: '',
@@ -554,60 +372,37 @@ export default function MarketersPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title="Marketer Commissions"
-        description="Private commission cards for Emma, Wyatt, and ED. Current unpaid totals come from commission ledger rows not yet marked as paid."
-      />
-
-      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm text-amber-200">
-        This page assumes your sheet is the source of truth. Unpaid commission is pulled from
-        <span className="font-semibold text-amber-100"> Commission_Ledger </span>
-        rows that are not marked paid. Payout history is pulled from
-        <span className="font-semibold text-amber-100"> PAYOUT_BATCHES</span>.
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-semibold text-white">Marketer Commissions</h1>
+        <p className="mt-2 text-sm text-gray-400">
+          Private commission access for Emma, Wyatt, and ED. Current unpaid resets after payout is logged in the sheet.
+        </p>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-slate-300">
-          Loading commission data...
-        </div>
-      ) : null}
+      {loading ? <LoadingSpinner label="Loading commission data..." /> : null}
 
       {error ? (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-red-200">
-          Failed to load marketer commission data. Check that Commission_Ledger and PAYOUT_BATCHES
-          both exist and are published correctly from Google Sheets.
+        <ErrorBanner message="Failed to load Commission_Ledger or PAYOUT_BATCHES. Check your Google Sheet tab names and publishing." />
+      ) : null}
+
+      {!loading && !error ? (
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {PEOPLE.map((person) => (
+            <LockCard
+              key={person.name}
+              person={person}
+              pin={pins[person.name]}
+              setPin={(value) => setPins((prev) => ({ ...prev, [person.name]: value }))}
+              error={errors[person.name]}
+              onUnlock={() => handleUnlock(person.name)}
+            />
+          ))}
         </div>
       ) : null}
 
-      {!isLoading && !error ? (
-        <div className="grid gap-6 xl:grid-cols-3">
-          {MARKETER_LABELS.map((marketerName) => {
-            const isUnlocked = activeUnlocked === marketerName;
-            const summary = summaries[marketerName];
-
-            return (
-              <div key={marketerName}>
-                {isUnlocked ? (
-                  <UnlockedCard summary={summary} onClose={handleClose} />
-                ) : (
-                  <LockedCard
-                    marketerName={marketerName}
-                    pinInput={pinInputs[marketerName]}
-                    setPinInput={(value) =>
-                      setPinInputs((prev) => ({
-                        ...prev,
-                        [marketerName]: value,
-                      }))
-                    }
-                    error={pinErrors[marketerName]}
-                    onUnlock={() => handleUnlock(marketerName)}
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
+      {openPerson ? (
+        <CommissionPanel summary={summaries[openPerson]} onClose={handleClosePanel} />
       ) : null}
     </div>
   );
