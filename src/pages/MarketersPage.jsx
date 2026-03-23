@@ -45,6 +45,11 @@ function getCommissionAmountForPerson(row, personName) {
   return 0;
 }
 
+function getRateForPerson(row, personName) {
+  if (personName === 'ED') return parseMoney(row['Sales Rep Rate']) * 100;
+  return parseMoney(row['Commission %']) * 100;
+}
+
 function rowBelongsToPerson(row, personName) {
   if (personName === 'Emma') return row['Direct Marketer'] === 'Emma';
   if (personName === 'Wyatt') return row['Direct Marketer'] === 'Wyatt';
@@ -67,6 +72,27 @@ function getLastPayoutInfo(batches, personName) {
   );
 
   return sorted[0];
+}
+
+function inferPlanName(row) {
+  const base = parseMoney(row['Commission Base Amount']);
+  if (base === 299) return 'Starter';
+  if (base === 499) return 'Pro';
+  if (base === 999) return 'Premium';
+  return 'Enterprise / Custom';
+}
+
+function buildExplanation(row, personName) {
+  const base = parseMoney(row['Commission Base Amount']);
+  const rate = getRateForPerson(row, personName);
+  const commission = getCommissionAmountForPerson(row, personName);
+  const monthNumber = displayValue(row['Months Active / Paid Month']);
+
+  if (personName === 'ED') {
+    return `${formatMoney(base)} monthly base × ${rate.toFixed(0)}% = ${formatMoney(commission)} for month ${monthNumber} of 6 eligible months.`;
+  }
+
+  return `${formatMoney(base)} monthly base × ${rate.toFixed(0)}% = ${formatMoney(commission)} for month ${monthNumber}.`;
 }
 
 function LockedCard({ person, onClick }) {
@@ -101,6 +127,87 @@ function DetailRow({ label, value }) {
   );
 }
 
+function PlanGroup({ planName, rows, selectedPerson }) {
+  const total = rows.reduce(
+    (sum, row) => sum + getCommissionAmountForPerson(row, selectedPerson.name),
+    0
+  );
+
+  return (
+    <section className="space-y-3">
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+              {planName}
+            </div>
+            <div className="mt-1 text-lg font-semibold text-zinc-100">
+              {rows.length} unpaid {rows.length === 1 ? 'client' : 'clients'}
+            </div>
+          </div>
+
+          <div className="text-right">
+            <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+              Plan Total
+            </div>
+            <div className="text-xl font-semibold text-emerald-400">
+              {formatMoney(total)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {rows.map((row, index) => {
+          const commissionAmount = getCommissionAmountForPerson(row, selectedPerson.name);
+          const base = parseMoney(row['Commission Base Amount']);
+          const rate = getRateForPerson(row, selectedPerson.name);
+
+          return (
+            <div
+              key={`${planName}-${row['Customer Name'] || 'row'}-${row['Date'] || index}-${index}`}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+            >
+              <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <div className="text-base font-medium text-zinc-100">
+                    {displayValue(row['Customer Name'])}
+                  </div>
+                  <div className="text-sm text-zinc-500">
+                    Invoice Date: {displayValue(row['Date'])}
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">
+                    This Client Pays You
+                  </div>
+                  <div className="text-lg font-semibold text-emerald-400">
+                    {formatMoney(commissionAmount)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-xl border border-white/5 bg-black/10 p-3 text-sm text-zinc-300">
+                {buildExplanation(row, selectedPerson.name)}
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+                <DetailRow label="Plan" value={`${planName} (${formatMoney(base)})`} />
+                <DetailRow label="Your Rate" value={`${rate.toFixed(0)}%`} />
+                <DetailRow label="Month Number" value={row['Months Active / Paid Month']} />
+                <DetailRow label="Revenue Collected" value={row['Revenue Collected']} />
+                <DetailRow label="Payout Status" value={row['Paid Out?'] || 'Included in current unpaid total'} />
+                <DetailRow label="Batch / Period" value={row['Payout Batch / Month']} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export default function MarketersPage() {
   const {
     rows: ledgerRows,
@@ -118,9 +225,9 @@ export default function MarketersPage() {
   const [pinInput, setPinInput] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [pinError, setPinError] = useState('');
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isPayingOut, setIsPayingOut] = useState(false);
   const [payoutMessage, setPayoutMessage] = useState('');
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const loading = ledgerLoading || payoutLoading;
   const error = ledgerError || payoutError;
@@ -128,7 +235,7 @@ export default function MarketersPage() {
   const personRows = useMemo(() => {
     if (!selectedPerson || !ledgerRows) return [];
     return ledgerRows.filter((row) => rowBelongsToPerson(row, selectedPerson.name));
-  }, [ledgerRows, selectedPerson, refreshKey]);
+  }, [ledgerRows, selectedPerson, refreshTick]);
 
   const unpaidRows = useMemo(() => {
     return personRows.filter((row) => isUnpaidRow(row));
@@ -145,14 +252,10 @@ export default function MarketersPage() {
   const lastPayout = useMemo(() => {
     if (!selectedPerson) return null;
     return getLastPayoutInfo(payoutRows, selectedPerson.name);
-  }, [payoutRows, selectedPerson, refreshKey]);
+  }, [payoutRows, selectedPerson, refreshTick]);
 
   const summaryStats = useMemo(() => {
     if (!selectedPerson) return null;
-
-    const allClients = new Set(
-      personRows.map((row) => row['Customer Name']).filter(Boolean)
-    );
 
     const unpaidClients = new Set(
       unpaidRows.map((row) => row['Customer Name']).filter(Boolean)
@@ -161,9 +264,25 @@ export default function MarketersPage() {
     return {
       unpaidInvoices: unpaidRows.length,
       unpaidClients: unpaidClients.size,
-      totalClients: allClients.size,
     };
-  }, [personRows, unpaidRows, selectedPerson]);
+  }, [unpaidRows, selectedPerson]);
+
+  const groupedRows = useMemo(() => {
+    const groups = {
+      Starter: [],
+      Pro: [],
+      Premium: [],
+      'Enterprise / Custom': [],
+    };
+
+    unpaidRows.forEach((row) => {
+      const plan = inferPlanName(row);
+      if (!groups[plan]) groups[plan] = [];
+      groups[plan].push(row);
+    });
+
+    return groups;
+  }, [unpaidRows]);
 
   function openLock(person) {
     setSelectedPerson(person);
@@ -217,12 +336,8 @@ export default function MarketersPage() {
     try {
       const response = await fetch(PAYOUT_WEBHOOK_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          person: selectedPerson.name,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ person: selectedPerson.name }),
       });
 
       const result = await response.json();
@@ -234,8 +349,7 @@ export default function MarketersPage() {
       setPayoutMessage(
         `Paid out ${selectedPerson.name}: ${formatMoney(result.totalPaid)} across ${result.updatedRows} row(s). Refresh the page in a few seconds to see updated totals.`
       );
-
-      setRefreshKey((prev) => prev + 1);
+      setRefreshTick((prev) => prev + 1);
     } catch (err) {
       setPayoutMessage(`Payout failed: ${err.message}`);
     } finally {
@@ -282,7 +396,7 @@ export default function MarketersPage() {
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="text-sm text-zinc-400">
-                Enter the PIN for {selectedPerson.name} to view current unpaid commissions and invoice breakdown.
+                Enter the PIN for {selectedPerson.name} to view current unpaid commissions and payout details.
               </div>
             </div>
 
@@ -368,63 +482,32 @@ export default function MarketersPage() {
 
             <section className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
-                Unpaid Commission Breakdown
+                How Your Current Total Is Calculated
               </h3>
+
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-zinc-300">
+                Your current unpaid total is the sum of all unpaid commission rows assigned to you. They are grouped below by plan so you can quickly verify where your number comes from.
+              </div>
+            </section>
+
+            <div className="space-y-6">
+              {Object.entries(groupedRows)
+                .filter(([, rows]) => rows.length > 0)
+                .map(([planName, rows]) => (
+                  <PlanGroup
+                    key={planName}
+                    planName={planName}
+                    rows={rows}
+                    selectedPerson={selectedPerson}
+                  />
+                ))}
 
               {unpaidRows.length === 0 ? (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-sm text-zinc-400">
                   No unpaid commission rows right now.
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {unpaidRows.map((row, index) => {
-                    const commissionAmount = getCommissionAmountForPerson(row, selectedPerson.name);
-                    const commissionPercent =
-                      selectedPerson.name === 'ED'
-                        ? row['Sales Rep Rate']
-                        : row['Commission %'];
-
-                    return (
-                      <div
-                        key={`${row['Customer Name'] || 'row'}-${row['Date'] || index}-${index}`}
-                        className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
-                      >
-                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <div className="text-base font-medium text-zinc-100">
-                              {displayValue(row['Customer Name'])}
-                            </div>
-                            <div className="text-sm text-zinc-500">
-                              Invoice Date: {displayValue(row['Date'])}
-                            </div>
-                          </div>
-
-                          <div className="text-right">
-                            <div className="text-xs uppercase tracking-[0.16em] text-zinc-500">
-                              Current Row Commission
-                            </div>
-                            <div className="text-lg font-semibold text-emerald-400">
-                              {formatMoney(commissionAmount)}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
-                          <DetailRow label="Revenue Collected" value={row['Revenue Collected']} />
-                          <DetailRow label="Commission Base Amount" value={row['Commission Base Amount']} />
-                          <DetailRow label="Commission %" value={commissionPercent} />
-                          <DetailRow label="Attribution Type" value={row['Attribution Type']} />
-                          <DetailRow label="Months Active / Paid Month" value={row['Months Active / Paid Month']} />
-                          <DetailRow label="Payout Batch / Month" value={row['Payout Batch / Month']} />
-                          <DetailRow label="Paid Out?" value={row['Paid Out?']} />
-                          <DetailRow label="Notes" value={row['Notes']} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+              ) : null}
+            </div>
           </div>
         )}
       </DrawerPanel>
