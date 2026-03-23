@@ -9,12 +9,14 @@ const PEOPLE = [
   { name: 'Emma', role: 'Marketer' },
   { name: 'Wyatt', role: 'Marketer' },
   { name: 'ED', role: 'Sales' },
+  { name: 'Micah', role: 'Sales' },
 ];
 
 const PIN_MAP = {
   Emma: '3724',
   Wyatt: '2654',
   ED: '1876',
+  Micah: '9789',
 };
 
 function parseMoney(value) {
@@ -56,19 +58,38 @@ function pickFirst(row, keys) {
 function getCommissionAmountForPerson(row, personName) {
   if (personName === 'Emma') {
     return parseMoney(
-      pickFirst(row, ['Emma Commission', 'emma_amount', 'Emma Amount', 'marketer_a_amount', 'Marketer A Amount'])
+      pickFirst(row, [
+        'Emma Commission',
+        'emma_amount',
+        'Emma Amount',
+        'marketer_a_amount',
+        'Marketer A Amount',
+      ])
     );
   }
 
   if (personName === 'Wyatt') {
     return parseMoney(
-      pickFirst(row, ['Wyatt Commission', 'wyatt_amount', 'Wyatt Amount', 'marketer_b_amount', 'Marketer B Amount'])
+      pickFirst(row, [
+        'Wyatt Commission',
+        'wyatt_amount',
+        'Wyatt Amount',
+        'marketer_b_amount',
+        'Marketer B Amount',
+      ])
     );
   }
 
-  if (personName === 'ED') {
+  if (personName === 'ED' || personName === 'Micah') {
     return parseMoney(
-      pickFirst(row, ['Sales Commission', 'ed_amount', 'ED Amount', 'commission_amount', 'Commission Amount'])
+      pickFirst(row, [
+        'Sales Commission',
+        'sales_commission',
+        'ed_amount',
+        'ED Amount',
+        'commission_amount',
+        'Commission Amount',
+      ])
     );
   }
 
@@ -76,31 +97,75 @@ function getCommissionAmountForPerson(row, personName) {
 }
 
 function getRateForPerson(row, personName) {
-  if (personName === 'ED') {
-    const raw = parseMoney(pickFirst(row, ['Sales Rep Rate', 'sales_rep_rate', 'Sales Rate']));
+  if (personName === 'ED' || personName === 'Micah') {
+    const raw = parseMoney(
+      pickFirst(row, ['Sales Rep Rate', 'sales_rep_rate', 'Sales Rate'])
+    );
     return raw <= 1 ? raw * 100 : raw;
   }
 
-  const raw = parseMoney(pickFirst(row, ['Commission %', 'commission_rate', 'Commission Rate']));
+  const raw = parseMoney(
+    pickFirst(row, ['Commission %', 'commission_rate', 'Commission Rate'])
+  );
   return raw <= 1 ? raw * 100 : raw;
 }
 
 function rowBelongsToPerson(row, personName) {
   if (personName === 'Emma') {
     return (
-      normalizeLower(pickFirst(row, ['Direct Marketer', 'direct_marketer', 'Closer', 'closer', 'marketer'])) === 'emma'
+      normalizeLower(
+        pickFirst(row, [
+          'Direct Marketer',
+          'direct_marketer',
+          'Closer',
+          'closer',
+          'marketer',
+        ])
+      ) === 'emma'
     );
   }
 
   if (personName === 'Wyatt') {
     return (
-      normalizeLower(pickFirst(row, ['Direct Marketer', 'direct_marketer', 'Closer', 'closer', 'marketer'])) === 'wyatt'
+      normalizeLower(
+        pickFirst(row, [
+          'Direct Marketer',
+          'direct_marketer',
+          'Closer',
+          'closer',
+          'marketer',
+        ])
+      ) === 'wyatt'
     );
   }
 
   if (personName === 'ED') {
     return (
-      normalizeLower(pickFirst(row, ['Sales Rep', 'sales_rep', 'Salesperson', 'salesperson', 'Recipient', 'recipient'])) === 'ed'
+      normalizeLower(
+        pickFirst(row, [
+          'Sales Rep',
+          'sales_rep',
+          'Salesperson',
+          'salesperson',
+          'Recipient',
+          'recipient',
+        ])
+      ) === 'ed'
+    );
+  }
+
+  if (personName === 'Micah') {
+    return (
+      normalizeLower(
+        pickFirst(row, [
+          'Sales Rep',
+          'sales_rep',
+          'Salesperson',
+          'salesperson',
+          'Recipient',
+          'recipient',
+        ])
+      ) === 'micah'
     );
   }
 
@@ -109,20 +174,48 @@ function rowBelongsToPerson(row, personName) {
 
 function isUnpaidRow(row) {
   const paidOut = normalizeLower(
-    pickFirst(row, ['Paid Out?', 'paid_out', 'status', 'Status', 'payout_status', 'Payout Status'])
+    pickFirst(row, [
+      'Paid Out?',
+      'paid_out',
+      'status',
+      'Status',
+      'payout_status',
+      'Payout Status',
+    ])
   );
   const payoutBatchId = normalize(
-    pickFirst(row, ['Payout Batch / Month', 'payout_batch_id', 'Payout Batch ID', 'batch_id', 'Batch ID'])
+    pickFirst(row, [
+      'Payout Batch / Month',
+      'payout_batch_id',
+      'Payout Batch ID',
+      'batch_id',
+      'Batch ID',
+    ])
   );
 
   if (payoutBatchId) return false;
-  return !(paidOut === 'yes' || paidOut === 'paid' || paidOut === 'paid_out' || paidOut === 'completed');
+
+  return !(
+    paidOut === 'yes' ||
+    paidOut === 'paid' ||
+    paidOut === 'paid_out' ||
+    paidOut === 'completed'
+  );
 }
 
 function getLastPayoutInfo(batches, personName) {
   const personBatches = (batches || []).filter((row) => {
     const owner = normalizeLower(
-      pickFirst(row, ['Person', 'person', 'Marketer', 'marketer', 'Recipient', 'recipient', 'Payee', 'payee'])
+      pickFirst(row, [
+        'Person',
+        'person',
+        'Marketer',
+        'marketer',
+        'Recipient',
+        'recipient',
+        'Payee',
+        'payee',
+      ])
     );
     return owner === normalizeLower(personName);
   });
@@ -130,17 +223,42 @@ function getLastPayoutInfo(batches, personName) {
   if (!personBatches.length) return null;
 
   const sorted = [...personBatches].sort((a, b) => {
-    const aDate = String(pickFirst(a, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || '');
-    const bDate = String(pickFirst(b, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || '');
+    const aDate = String(
+      pickFirst(a, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || ''
+    );
+    const bDate = String(
+      pickFirst(b, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']) || ''
+    );
     return bDate.localeCompare(aDate);
   });
 
   const latest = sorted[0];
 
   return {
-    amount: parseMoney(pickFirst(latest, ['Amount Paid', 'amount', 'Payout Amount', 'payout_amount', 'Total Paid'])),
-    date: pickFirst(latest, ['Paid Date', 'paid_at', 'Payout Date', 'payout_date', 'Date', 'date']),
-    batch: pickFirst(latest, ['Batch Label', 'batch_label', 'Payout Batch / Month', 'payout_batch_id', 'Batch ID']),
+    amount: parseMoney(
+      pickFirst(latest, [
+        'Amount Paid',
+        'amount',
+        'Payout Amount',
+        'payout_amount',
+        'Total Paid',
+      ])
+    ),
+    date: pickFirst(latest, [
+      'Paid Date',
+      'paid_at',
+      'Payout Date',
+      'payout_date',
+      'Date',
+      'date',
+    ]),
+    batch: pickFirst(latest, [
+      'Batch Label',
+      'batch_label',
+      'Payout Batch / Month',
+      'payout_batch_id',
+      'Batch ID',
+    ]),
   };
 }
 
@@ -155,7 +273,7 @@ function buildPersonSummary(ledgerRows, payoutRows, personName) {
       __rate: getRateForPerson(row, personName),
       __customer: pickFirst(row, ['Customer', 'customer_name', 'Customer Name']),
       __plan: pickFirst(row, ['Plan', 'plan', 'Package']),
-      __month: pickFirst(row, ['Month #', 'month_number', 'Commission Month']),
+      __month: pickFirst(row, ['Month #', 'month_number', 'Months Active / Paid Month', 'Commission Month']),
       __invoice: pickFirst(row, ['Invoice ID', 'invoice_id', 'Invoice Number']),
     }))
     .filter((row) => row.__commissionAmount > 0);
@@ -224,12 +342,16 @@ function CommissionPanel({ summary, onClose }) {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
             <p className="text-xs uppercase tracking-wide text-gray-400">Current Unpaid</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{formatMoney(summary.unpaidTotal)}</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {formatMoney(summary.unpaidTotal)}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
             <p className="text-xs uppercase tracking-wide text-gray-400">Unpaid Items</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{summary.unpaidRows.length}</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {summary.unpaidRows.length}
+            </p>
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-[#111111] p-5">
@@ -261,7 +383,9 @@ function CommissionPanel({ summary, onClose }) {
                   className="flex items-center justify-between rounded-xl border border-white/10 bg-black px-4 py-3"
                 >
                   <span className="text-sm text-gray-300">{group.plan}</span>
-                  <span className="text-sm font-semibold text-white">{formatMoney(group.total)}</span>
+                  <span className="text-sm font-semibold text-white">
+                    {formatMoney(group.total)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -291,11 +415,15 @@ function CommissionPanel({ summary, onClose }) {
                       <p className="text-sm text-gray-400">
                         {displayValue(row.__plan)} • Month {displayValue(row.__month)}
                       </p>
-                      <p className="text-xs text-gray-500">Invoice: {displayValue(row.__invoice)}</p>
+                      <p className="text-xs text-gray-500">
+                        Invoice: {displayValue(row.__invoice)}
+                      </p>
                     </div>
 
                     <div className="text-right">
-                      <p className="font-semibold text-white">{formatMoney(row.__commissionAmount)}</p>
+                      <p className="font-semibold text-white">
+                        {formatMoney(row.__commissionAmount)}
+                      </p>
                       <p className="text-xs text-gray-400">{displayValue(row.__rate)}%</p>
                     </div>
                   </div>
@@ -326,12 +454,14 @@ export default function MarketersPage() {
     Emma: '',
     Wyatt: '',
     ED: '',
+    Micah: '',
   });
 
   const [errors, setErrors] = useState({
     Emma: '',
     Wyatt: '',
     ED: '',
+    Micah: '',
   });
 
   const [openPerson, setOpenPerson] = useState(null);
@@ -341,6 +471,7 @@ export default function MarketersPage() {
       Emma: buildPersonSummary(ledgerRows, payoutRows, 'Emma'),
       Wyatt: buildPersonSummary(ledgerRows, payoutRows, 'Wyatt'),
       ED: buildPersonSummary(ledgerRows, payoutRows, 'ED'),
+      Micah: buildPersonSummary(ledgerRows, payoutRows, 'Micah'),
     };
   }, [ledgerRows, payoutRows]);
 
@@ -363,11 +494,13 @@ export default function MarketersPage() {
       Emma: '',
       Wyatt: '',
       ED: '',
+      Micah: '',
     });
     setErrors({
       Emma: '',
       Wyatt: '',
       ED: '',
+      Micah: '',
     });
   }
 
@@ -376,7 +509,7 @@ export default function MarketersPage() {
       <div>
         <h1 className="text-3xl font-semibold text-white">Marketer Commissions</h1>
         <p className="mt-2 text-sm text-gray-400">
-          Private commission access for Emma, Wyatt, and ED. Current unpaid resets after payout is logged in the sheet.
+          Private commission access for Emma, Wyatt, ED, and Micah. Current unpaid resets after payout is logged in the sheet.
         </p>
       </div>
 
@@ -387,7 +520,7 @@ export default function MarketersPage() {
       ) : null}
 
       {!loading && !error ? (
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {PEOPLE.map((person) => (
             <LockCard
               key={person.name}
