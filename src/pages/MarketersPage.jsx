@@ -9,112 +9,194 @@ const PEOPLE = [
   { name: "Emma", role: "Marketer" },
   { name: "Wyatt", role: "Marketer" },
   { name: "ED", role: "Sales" },
-  { name: "Micah", role: "Sales" }
+  { name: "Micah", role: "Sales" },
 ];
 
 const PIN_MAP = {
   Emma: "3724",
   Wyatt: "2654",
   ED: "1876",
-  Micah: "9789"
+  Micah: "9789",
 };
 
-const normalize = v => String(v ?? "").trim().toLowerCase();
+function normalize(v) {
+  return String(v ?? "").trim().toLowerCase();
+}
 
-const money = v =>
-  parseFloat(String(v ?? "").replace(/[^0-9.-]/g, "")) || 0;
+function get(row, keys) {
+  for (const key of keys) {
+    if (row[key] !== undefined && row[key] !== "") return row[key];
+  }
+  return "";
+}
 
-const fmt = v =>
-  `$${Number(v || 0).toLocaleString(undefined,{
+function money(v) {
+  return parseFloat(String(v ?? "").replace(/[^0-9.-]/g, "")) || 0;
+}
+
+function fmt(v) {
+  return `$${Number(v || 0).toLocaleString(undefined,{
     minimumFractionDigits:2,
     maximumFractionDigits:2
   })}`;
+}
 
-function belongs(row, person){
-  if(person==="Emma"||person==="Wyatt")
-    return normalize(row["Direct Marketer"])===person.toLowerCase();
+function belongs(row, person) {
 
-  if(person==="ED"||person==="Micah")
-    return normalize(row["Sales Rep"])===person.toLowerCase();
+  if (person === "Emma" || person === "Wyatt") {
+
+    return normalize(
+      get(row, [
+        "Direct Marketer",
+        "Closer",
+        "Assigned Marketer",
+        "Owner"
+      ])
+    ) === person.toLowerCase();
+
+  }
+
+  if (person === "ED" || person === "Micah") {
+
+    return normalize(
+      get(row, [
+        "Sales Rep",
+        "Sales Person",
+        "Salesperson",
+        "Assigned Rep"
+      ])
+    ) === person.toLowerCase();
+
+  }
 
   return false;
 }
 
-function unpaid(row){
-  const paid = normalize(row["Paid Out?"]);
-  const batch = row["Payout Batch / Month"];
-  if(batch) return false;
-  return !(paid==="yes"||paid==="paid");
+function unpaid(row) {
+
+  const paid = normalize(get(row, ["Paid Out?", "Status"]));
+
+  const batch = get(row, [
+    "Payout Batch / Month",
+    "Batch ID"
+  ]);
+
+  if (batch) return false;
+
+  return !(paid === "yes" || paid === "paid");
+
 }
 
-function commission(row, person){
-  if(person==="Emma") return money(row["Emma Commission"]);
-  if(person==="Wyatt") return money(row["Wyatt Commission"]);
-  if(person==="ED"||person==="Micah")
-    return money(row["Sales Commission"]);
+function commission(row, person) {
+
+  if (person === "Emma")
+    return money(get(row, ["Emma Commission"]));
+
+  if (person === "Wyatt")
+    return money(get(row, ["Wyatt Commission"]));
+
+  if (person === "ED" || person === "Micah")
+    return money(get(row, ["Sales Commission"]));
+
   return 0;
+
 }
 
-function base(row){
-  return money(row["Commission Base Amount"]);
+function base(row) {
+
+  return money(
+    get(row, [
+      "Commission Base Amount",
+      "Base Amount"
+    ])
+  );
+
 }
 
-function rate(row, person){
-  if(person==="ED"||person==="Micah"){
-    const r = money(row["Sales Rep Rate"]);
-    return r<=1 ? r*100 : r;
+function rate(row, person) {
+
+  if (person === "ED" || person === "Micah") {
+
+    const r = money(
+      get(row, [
+        "Sales Rep Rate",
+        "Sales Rate"
+      ])
+    );
+
+    return r <= 1 ? r * 100 : r;
+
   }
 
-  const r = money(row["Commission %"]);
-  return r<=1 ? r*100 : r;
+  const r = money(
+    get(row, [
+      "Commission %",
+      "Commission Rate"
+    ])
+  );
+
+  return r <= 1 ? r * 100 : r;
+
 }
 
-function plan(row){
+function plan(row) {
+
   const b = base(row);
 
-  if(b===299) return "Starter";
-  if(b===499) return "Pro";
-  if(b===999) return "Premium";
+  if (b === 299) return "Starter";
+  if (b === 499) return "Pro";
+  if (b === 999) return "Premium";
 
   return "Enterprise";
+
 }
 
-function explanation(row,person){
-  const customer=row["Customer Name"];
-  const r=rate(row,person);
-  const b=base(row);
-  const c=commission(row,person);
+function explanation(row, person) {
+
+  const customer = get(row, [
+    "Customer Name",
+    "Customer"
+  ]);
+
+  const r = rate(row, person);
+  const b = base(row);
+  const c = commission(row, person);
 
   return `${customer} → ${fmt(b)} × ${r}% = ${fmt(c)}`;
+
 }
 
-function summary(rows,person){
+function summary(rows, person) {
 
-  const owned=rows.filter(r=>belongs(r,person));
+  const owned = rows.filter(r => belongs(r, person));
 
-  const unpaidRows=owned
+  const unpaidRows = owned
     .filter(unpaid)
-    .map(r=>({
-      amount:commission(r,person),
-      plan:plan(r),
-      note:explanation(r,person)
+    .map(r => ({
+      amount: commission(r, person),
+      plan: plan(r),
+      note: explanation(r, person)
     }))
-    .filter(r=>r.amount>0);
+    .filter(r => r.amount > 0);
 
-  const total=unpaidRows.reduce((a,b)=>a+b.amount,0);
+  const total = unpaidRows.reduce((a,b)=>a+b.amount,0);
 
-  const grouped=unpaidRows.reduce((acc,r)=>{
+  const grouped = unpaidRows.reduce((acc,r)=>{
     acc[r.plan]=(acc[r.plan]||0)+r.amount;
     return acc;
   },{});
 
-  return{total,unpaidRows,grouped};
+  return { total, unpaidRows, grouped };
+
 }
 
 export default function MarketersPage(){
 
-  const { rows: ledger=[], loading, error }
-    = useTabData("COMMISSION_LEDGER");
+  const {
+    rows: ledger = [],
+    loading,
+    error
+  } = useTabData("COMMISSION_LEDGER");
 
   const [pins,setPins]=useState({
     Emma:"",
@@ -133,22 +215,31 @@ export default function MarketersPage(){
   }),[ledger]);
 
   function unlock(name){
+
     if(pins[name]!==PIN_MAP[name]) return;
+
     setOpen(name);
+
   }
 
   function close(){
+
     setOpen(null);
+
     setPins({
       Emma:"",
       Wyatt:"",
       ED:"",
       Micah:""
     });
+
   }
 
-  if(loading) return <LoadingSpinner label="Loading..." />;
-  if(error) return <ErrorBanner message="Commission ledger failed to load." />;
+  if(loading)
+    return <LoadingSpinner label="Loading..." />;
+
+  if(error)
+    return <ErrorBanner message="Commission ledger failed to load." />;
 
   return(
     <div className="space-y-6">
@@ -165,10 +256,6 @@ export default function MarketersPage(){
 
             <div className="text-lg font-semibold text-white">
               {p.name}
-            </div>
-
-            <div className="text-xs text-gray-400 mb-3">
-              {p.role} commission access
             </div>
 
             <input
