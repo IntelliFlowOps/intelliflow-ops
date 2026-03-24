@@ -273,10 +273,13 @@ recommended next test variation
 Assistant Type: ${assistantType || "founder"}
 Marketer Mode: ${marketerMode || "n/a"}
 Selected Platform: ${platform || "not specified"}
-Selected Target Niche: ${niche || "not specified"}
+Target Niche (audience to speak to): ${niche || "not specified"}
 
-Advertiser = IntelliFlow Communications
-Target audience = selected niche
+Advertiser = IntelliFlow Communications always.
+You are always writing FOR IntelliFlow Communications.
+The niche is only the TARGET AUDIENCE for IntelliFlow ads and posts.
+Never switch advertiser identity. Never override the user request with the niche.
+If the user asks for plumbing hashtags, return plumbing hashtags styled for IntelliFlow targeting plumbers.
 
 CONTEXT DATA:
 ${JSON.stringify(context || {}, null, 2)}

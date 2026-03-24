@@ -152,7 +152,7 @@ export default function MarketerAssistantPage() {
   const [loadingChat, setLoadingChat] = useState(false);
   const [loadingBuild, setLoadingBuild] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("Meta");
-  const [selectedNiche, setSelectedNiche] = useState("HVAC");
+  const [selectedNiche, setSelectedNiche] = useState("");
   const [buildAdOpen, setBuildAdOpen] = useState(false);
 
   const [chatAttachments, setChatAttachments] = useState([]);

@@ -9,7 +9,7 @@ const navItems = [
   { to: '/creative', label: 'Creative Insights' },
   { to: '/founder-assistant', label: 'Founder Assistant' },
   { to: '/marketer-assistant', label: 'Marketer Assistant' },
-  { to: '/commissions', label: 'Ledger' },
+  { to: '/ledger', label: 'Ledger' },
   { to: '/activity', label: 'Activity' },
   { to: '/analytics', label: 'Analytics' },
 ];
