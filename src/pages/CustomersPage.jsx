@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import DataTable from '../components/DataTable.jsx';
 import DrawerPanel from '../components/DrawerPanel.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
@@ -87,6 +87,26 @@ export default function CustomersPage() {
   const { rows, loading, error } = useTabData('CUSTOMERS');
   const [selected, setSelected] = useState(null);
 
+  const stats = useMemo(() => {
+    const active = rows.filter(r => (r['Status'] || '').trim() === 'Active');
+    const totalMRR = active.reduce((sum, r) => {
+      const val = parseFloat(String(r['MRR / Revenue'] || '0').replace(/[^0-9.]/g, ''));
+      return sum + (isFinite(val) ? val : 0);
+    }, 0);
+    const avgMonths = active.length > 0
+      ? active.reduce((sum, r) => {
+          const val = parseFloat(String(r['Months Active'] || '0').replace(/[^0-9.]/g, ''));
+          return sum + (isFinite(val) ? val : 0);
+        }, 0) / active.length
+      : 0;
+    return {
+      total: rows.length,
+      active: active.length,
+      totalMRR: totalMRR > 0 ? `$${totalMRR.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '$0',
+      avgMonths: avgMonths > 0 ? avgMonths.toFixed(1) : '0',
+    };
+  }, [rows]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -95,6 +115,27 @@ export default function CustomersPage() {
 
       {loading && <LoadingSpinner />}
       {error && <ErrorBanner message={error} />}
+
+      {!loading && rows.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Total Customers</div>
+            <div className="mt-1 text-2xl font-semibold text-white">{stats.total}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Active</div>
+            <div className="mt-1 text-2xl font-semibold text-emerald-400">{stats.active}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Total MRR</div>
+            <div className="mt-1 text-2xl font-semibold text-cyan-300">{stats.totalMRR}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Avg Months Active</div>
+            <div className="mt-1 text-2xl font-semibold text-white">{stats.avgMonths}</div>
+          </div>
+        </div>
+      )}
 
       {!loading && !error && (
         <DataTable
