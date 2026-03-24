@@ -66,28 +66,59 @@ function normalizeWithHeaderRow(rawRows, headerIndex) {
 }
 
 function normalizeDashboard(rawRows) {
-  if (!rawRows || rawRows.length < 2) return { kpis: {}, marketing: {}, watchlist: [], lastUpdated: '' };
-  const lastUpdated = (rawRows[1] && rawRows[1][1]) || '';
-  const kpis = {};
-  for (let i = 4; i <= 9 && i < rawRows.length; i++) {
-    const label = (rawRows[i]?.[0] || '').trim();
-    const value = (rawRows[i]?.[1] || '').trim();
-    if (label) kpis[label] = value;
+  if (!rawRows || rawRows.length < 1) return { kpis: {}, marketing: {}, watchlist: [], lastUpdated: '' };
+
+  var lastUpdated = '';
+  var kpis = {};
+  var marketing = {};
+  var watchlistHeaderRow = -1;
+
+  var kpiLabels = ['Total Revenue','Active Customers','MRR','Ad Spend (MTD)','Total Commissions (MTD)','Net Profit (MTD)'];
+  var marketingLabels = ['Leads (MTD)','Customers Won (MTD)','CAC','Cost / Lead','Blended CTR','Blended Close Rate'];
+
+  for (var i = 0; i < rawRows.length; i++) {
+    var row = rawRows[i] || [];
+    var col0 = (row[0] || '').trim();
+    var col1 = (row[1] || '').trim();
+    var col5 = (row[5] || '').trim();
+    var col6 = (row[6] || '').trim();
+
+    if (col0.indexOf('Last Updated') !== -1 && col1) {
+      lastUpdated = col1;
+    }
+    if (col1 && col0.indexOf('Last Updated') === -1 && col0 !== '') {
+      if (col0 === 'Last Updated') { lastUpdated = col1; }
+    }
+    if (col0 === 'Last Updated') { lastUpdated = col1; }
+
+    if (kpiLabels.indexOf(col0) !== -1) {
+      kpis[col0] = col1;
+    }
+    if (marketingLabels.indexOf(col5) !== -1) {
+      marketing[col5] = col6;
+    }
+    if (col0 === 'Customer / Campaign') {
+      watchlistHeaderRow = i;
+    }
   }
-  const marketing = {};
-  for (let i = 4; i <= 9 && i < rawRows.length; i++) {
-    const label = (rawRows[i]?.[5] || '').trim();
-    const value = (rawRows[i]?.[6] || '').trim();
-    if (label) marketing[label] = value;
+
+  var row1 = rawRows[0] || [];
+  if ((row1[0] || '').indexOf('Last Updated') !== -1) {
+    lastUpdated = (row1[1] || '').trim();
   }
-  const watchlistHeaders = (rawRows[12] || []).map((h) => (h || '').trim());
-  const watchlist = rawRows.slice(13)
-    .filter((row) => row.some((cell) => cell && cell.trim() !== ''))
-    .map((row) => {
-      const obj = {};
-      watchlistHeaders.forEach((h, i) => { if (h) obj[h] = (row[i] || '').trim(); });
-      return obj;
-    });
+
+  var watchlist = [];
+  if (watchlistHeaderRow >= 0) {
+    var watchlistHeaders = (rawRows[watchlistHeaderRow] || []).map(function(h) { return (h || '').trim(); });
+    watchlist = rawRows.slice(watchlistHeaderRow + 1)
+      .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
+      .map(function(row) {
+        var obj = {};
+        watchlistHeaders.forEach(function(h, i) { if (h) obj[h] = (row[i] || '').trim(); });
+        return obj;
+      });
+  }
+
   return { lastUpdated, kpis, marketing, watchlist };
 }
 
