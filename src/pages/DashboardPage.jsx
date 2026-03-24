@@ -158,14 +158,14 @@ export default function DashboardPage() {
     },
   ];
 
-  if (loading && !dashboard) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonKPIs count={6} /><SkeletonKPIs count={6} /></div>;
+  if (loading && !dashboard) return <div className='space-y-6 px-6 py-6'><SkeletonKPIs count={6} /><SkeletonKPIs count={6} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!dashboard || (!safeDashboard.kpis && !safeDashboard.marketing)) {
     return <EmptyState message="Dashboard data not available yet" />;
   }
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       {lastUpdated && (
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}

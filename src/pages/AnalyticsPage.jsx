@@ -10,15 +10,15 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 export default function AnalyticsPage() {
   const { rows, loading, error } = useTabData('ALL_ANALYTICS');
   const [chartView, setChartView] = useState('spend');
-  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} /></div>;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!rows || rows.length === 0) return <EmptyState message="No analytics data yet. Add rows to the All Analytics tab in Google Sheets to see campaign performance here." />;
 
   return (
-    <div className="space-y-6 fade-in">
+    <div className="space-y-6">
       <AnalyticsSummary rows={rows} />
       <AnalyticsChart rows={rows} chartView={chartView} setChartView={setChartView} />
-      <div className="space-y-6 fade-in px-6 py-6">
+      <div className="space-y-6 px-6 py-6">
         <h2 className="section-title mb-3">All Analytics Data</h2>
         <DataTable rows={rows} columns={[{key:'Date',label:'Date'},{key:'Platform',label:'Platform'},{key:'Campaign Name',label:'Campaign'},{key:'Spend',label:'Spend'},{key:'Impressions',label:'Impressions'},{key:'Clicks',label:'Clicks'},{key:'CTR',label:'CTR'},{key:'CPC',label:'CPC'},{key:'Status',label:'Status'}]} searchPlaceholder="Search analytics..." emptyMessage="No analytics data yet. Add rows to the All Analytics tab in Google Sheets to see campaign performance here." />
       </div>

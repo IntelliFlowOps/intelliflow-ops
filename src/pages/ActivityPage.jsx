@@ -5,11 +5,11 @@ import ErrorBanner from '../components/ErrorBanner.jsx';
 
 export default function ActivityPage() {
   const { rows, loading, error } = useTabData('CUSTOMER_ACTIVITY');
-  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} /></div>;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} /></div>;
   if (error) return <ErrorBanner message={error} />;
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       <p className="text-sm text-zinc-400">Customer activity timeline — operational notes, actions, and health signals.</p>
       <DataTable rows={rows} columns={[
         {key:'Date',label:'Date'},{key:'Customer Name',label:'Customer'},{key:'Activity Type',label:'Type'},

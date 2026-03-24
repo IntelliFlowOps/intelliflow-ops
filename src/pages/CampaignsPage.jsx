@@ -122,7 +122,7 @@ export default function CampaignsPage() {
   };
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Platform</label>

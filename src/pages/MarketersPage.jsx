@@ -216,7 +216,7 @@ export default function MarketersPage() {
   }
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       <div>
         <h1 className="text-3xl font-semibold text-white">Individual Commissions</h1>
         <p className="mt-2 text-sm text-gray-400">

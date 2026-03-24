@@ -9,7 +9,7 @@ import EmptyState from '../components/EmptyState.jsx';
 export default function CommissionsPage() {
   const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
 
-  if (loading && !ledgerRows.length) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
+  if (loading && !ledgerRows.length) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
 
   const stats = useMemo(() => {
     const activeRows = ledgerRows.filter((row) =>
@@ -87,7 +87,7 @@ export default function CommissionsPage() {
   ];
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       <section>
         <h2 className="section-title mb-3">Ledger</h2>
         <p className="mb-4 text-sm text-zinc-400">

@@ -6,12 +6,12 @@ import EmptyState from '../components/EmptyState.jsx';
 
 export default function CreativeInsightsPage() {
   const { rows, loading, error } = useTabData('CREATIVE_INSIGHTS');
-  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={4} /></div>;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={4} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet. Add rows to the Creative_Insights tab in Google Sheets after reviewing ad performance." />;
 
   return (
-    <div className="space-y-6 fade-in px-6 py-6">
+    <div className="space-y-6 px-6 py-6">
       <p className="text-sm text-zinc-400">What marketers should test, keep, and cut — updated by DoAnything from campaign performance data.</p>
       <DataTable rows={rows} columns={[
         {key:'Date',label:'Date'},{key:'Platform',label:'Platform'},{key:'Niche',label:'Niche'},
