@@ -38,7 +38,7 @@ export async function fetchAllTabs() {
 function normalizeTab(tabKey, rawRows) {
   switch (tabKey) {
     case 'DASHBOARD': return normalizeDashboard(rawRows);
-    case 'CUSTOMERS': return normalizeWithHeaderRow(rawRows, 1);
+    case 'CUSTOMERS': return normalizeCustomers(rawRows);
     case 'MARKETERS': return normalizeMarketers(rawRows);
     case 'CAMPAIGNS': return normalizeWithHeaderRow(rawRows, 1);
     case 'CREATIVE_INSIGHTS': return normalizeWithHeaderRow(rawRows, 1);
@@ -135,4 +135,21 @@ function normalizeCommissionRules(rawRows) {
     .filter((row) => row[0] && row[0].trim() !== '')
     .map((row) => ({ label: (row[0] || '').trim(), value: (row[1] || '').trim() }));
   return { rules, notes };
+}
+
+function normalizeCustomers(rawRows) {
+  if (!rawRows || rawRows.length < 2) return [];
+  var headerIndex = 0;
+  if (rawRows[0] && rawRows[0][0] && rawRows[0][0].indexOf('Customer Master List') !== -1) {
+    headerIndex = 1;
+  }
+  if (rawRows.length <= headerIndex) return [];
+  var headers = rawRows[headerIndex].map(function(h) { return (h || '').trim(); });
+  return rawRows.slice(headerIndex + 1)
+    .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(header, i) { if (header) obj[header] = (row[i] || '').trim(); });
+      return obj;
+    });
 }
