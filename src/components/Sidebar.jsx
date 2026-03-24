@@ -34,22 +34,22 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-2">
 
         {[
-          "Dashboard",
-          "Customers",
-          "Marketers",
-          "Campaigns",
-          "Creative Insights",
-          "Founder Assistant",
-          "Marketer Assistant",
-          "Commissions",
-          "Activity",
-          "Analytics",
-          "Rules",
+          { label: "Dashboard",              path: "/" },
+          { label: "Customers",              path: "/customers" },
+          { label: "Individual Commissions", path: "/marketers" },
+          { label: "Campaigns",              path: "/campaigns" },
+          { label: "Creative Insights",      path: "/creative" },
+          { label: "Founder Assistant",      path: "/founder-assistant" },
+          { label: "Marketer Assistant",     path: "/marketer-assistant" },
+          { label: "Ledger",                 path: "/ledger" },
+          { label: "Activity",               path: "/activity" },
+          { label: "Analytics",              path: "/analytics" },
         ].map((item) => (
 
           <NavLink
-            key={item}
-            to={`/${item.toLowerCase().replaceAll(" ", "-")}`}
+            key={item.path}
+            to={item.path}
+            end={item.path === "/"}
             className={({ isActive }) =>
               `px-4 py-3 rounded-xl text-sm ${
                 isActive
@@ -58,7 +58,7 @@ export default function Sidebar() {
               }`
             }
           >
-            {item}
+            {item.label}
           </NavLink>
 
         ))}
