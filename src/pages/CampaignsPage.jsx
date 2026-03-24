@@ -97,6 +97,25 @@ export default function CampaignsPage() {
     return cleanRows.filter((r) => (r['Platform'] || '').trim() === platform);
   }, [cleanRows, platform]);
 
+  const stats = useMemo(() => {
+    const num = (v) => {
+      const n = parseFloat(String(v || '0').replace(/[^0-9.]/g, ''));
+      return isFinite(n) ? n : 0;
+    };
+    const fmt = (v) => v > 0 ? `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}` : '—';
+    const totalSpend = filteredRows.reduce((s, r) => s + num(r['Spend']), 0);
+    const totalLeads = filteredRows.reduce((s, r) => s + num(r['Leads']), 0);
+    const totalCustomers = filteredRows.reduce((s, r) => s + num(r['Customers Won']), 0);
+    const cpl = totalLeads > 0 ? totalSpend / totalLeads : 0;
+    const closeRate = totalLeads > 0 ? (totalCustomers / totalLeads) * 100 : 0;
+    return {
+      spend: fmt(totalSpend),
+      leads: totalLeads > 0 ? totalLeads.toLocaleString() : '—',
+      cpl: cpl > 0 ? fmt(cpl) : '—',
+      closeRate: closeRate > 0 ? `${closeRate.toFixed(1)}%` : '—',
+    };
+  }, [filteredRows]);
+
   const handleRowClick = (row) => {
     if (!row) return;
     setSelected(row);
@@ -126,6 +145,27 @@ export default function CampaignsPage() {
 
       {loading && <LoadingSpinner />}
       {error && <ErrorBanner message={error} />}
+
+      {!loading && filteredRows.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Total Spend</div>
+            <div className="mt-1 text-2xl font-semibold text-amber-400">{stats.spend}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Total Leads</div>
+            <div className="mt-1 text-2xl font-semibold text-white">{stats.leads}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Blended CPL</div>
+            <div className="mt-1 text-2xl font-semibold text-cyan-300">{stats.cpl}</div>
+          </div>
+          <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Close Rate</div>
+            <div className="mt-1 text-2xl font-semibold text-emerald-400">{stats.closeRate}</div>
+          </div>
+        </div>
+      )}
 
       {!loading && !error && (
         <DataTable
