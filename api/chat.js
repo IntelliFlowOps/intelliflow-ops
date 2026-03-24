@@ -12,6 +12,7 @@ export default async function handler(req, res) {
       platform,
       niche,
       context,
+      memories,
     } = req.body || {};
 
     const founderPrompt = `
@@ -287,6 +288,52 @@ ${message || ""}`,
         ?.map((item) => item.text)
         ?.join("\n")
         ?.trim() || "No response returned.";
+
+    // Extract and save any memorable facts from this exchange
+    try {
+      const extractPrompt = `You are a memory extractor for IntelliFlow Communications internal assistant.
+Given this conversation exchange, extract ONLY concrete, reusable business facts worth remembering.
+Facts should be specific, actionable, and about IntelliFlow's actual business.
+Examples of good facts: "Best performing niche is HVAC in Q1 2026", "Decision: pause Google Ads until 15 clients", "Plumbing hook: missed calls cost $500/day converts well"
+Examples of bad facts: "User asked about hashtags", "Assistant gave advice"
+Return a JSON array of strings. Return [] if nothing worth remembering. Max 3 facts per exchange.
+USER SAID: ${message || ""}
+ASSISTANT SAID: ${reply.slice(0, 500)}`;
+
+      const extractRes = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 300,
+          messages: [{ role: "user", content: extractPrompt }],
+        }),
+      });
+
+      if (extractRes.ok) {
+        const extractData = await extractRes.json();
+        const extractText = extractData?.content?.[0]?.text?.trim() || "[]";
+        const clean = extractText.replace(/```json|```/g, "").trim();
+        const facts = JSON.parse(clean);
+        if (Array.isArray(facts) && facts.length > 0) {
+          const { Redis } = await import("@upstash/redis");
+          const redis = Redis.fromEnv();
+          const MEMORY_KEY = "intelliflow:memory";
+          const existing = await redis.get(MEMORY_KEY) || [];
+          const updated = [
+            ...facts.map(f => ({ text: String(f), savedAt: new Date().toISOString() })),
+            ...existing,
+          ].slice(0, 100);
+          await redis.set(MEMORY_KEY, updated);
+        }
+      }
+    } catch (_memErr) {
+      // Memory extraction failure is non-blocking
+    }
 
     return res.status(200).json({ reply });
   } catch (error) {

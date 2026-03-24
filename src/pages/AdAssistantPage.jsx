@@ -79,6 +79,14 @@ function AttachmentChip({ attachment, onRemove }) {
 
 export default function AdAssistantPage() {
   const { data } = useSheetData();
+  const [memories, setMemories] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/memory')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.memories)) setMemories(d.memories); })
+      .catch(() => {});
+  }, []);
 
   const [messages, setMessages] = useState([
     {
@@ -210,6 +218,7 @@ export default function AdAssistantPage() {
         },
         body: JSON.stringify({
           assistantType: "founder",
+          memories: memories,
           message: trimmed,
           messages: nextMessages.map((message) => ({
             role: message.role,

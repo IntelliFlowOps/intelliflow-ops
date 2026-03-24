@@ -112,6 +112,14 @@ function buildAttachmentObjects(fileList, existingAttachments) {
 
 export default function MarketerAssistantPage() {
   const { data } = useSheetData();
+  const [memories, setMemories] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/memory')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.memories)) setMemories(d.memories); })
+      .catch(() => {});
+  }, []);
 
   const [chatMessages, setChatMessages] = useState([
     {
@@ -205,6 +213,7 @@ export default function MarketerAssistantPage() {
       },
       body: JSON.stringify({
         assistantType: "marketer",
+        memories: memories,
         marketerMode: mode,
         platform: selectedPlatform,
         message: messageText,
