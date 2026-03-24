@@ -14,7 +14,8 @@ export async function fetchTab(tabKey) {
     const csvText = await response.text();
     if (!csvText || csvText.trim().length === 0) return { data: [], error: null };
 
-    const parsed = Papa.parse(csvText.replace(//g, ''), ''), { header: false, skipEmptyLines: false });
+    const cleaned = csvText.split('').filter(function(c){ return c !== String.fromCharCode(13); }).join('');
+    const parsed = Papa.parse(cleaned, { header: false, skipEmptyLines: false });
     if (parsed.errors?.length > 0) console.warn(`CSV parse warnings for ${tabName}:`, parsed.errors);
 
     const rawRows = parsed.data || [];
