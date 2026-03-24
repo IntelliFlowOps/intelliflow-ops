@@ -102,10 +102,26 @@ function buildSummary(rows, person) {
       amount: commission(r, person),
       plan: plan(r),
       note: explanation(r, person),
+      paid: false,
+      date: r["Date"] || "",
+    }))
+    .filter((r) => r.amount > 0);
+
+  const paidRows = owned
+    .filter((r) => !unpaid(r))
+    .map((r) => ({
+      customer: r["Customer Name"] || "Unknown Customer",
+      amount: commission(r, person),
+      plan: plan(r),
+      note: explanation(r, person),
+      paid: true,
+      date: r["Date"] || "",
+      batch: r["Payout Batch / Month"] || "",
     }))
     .filter((r) => r.amount > 0);
 
   const total = unpaidRows.reduce((a, b) => a + b.amount, 0);
+  const totalPaid = paidRows.reduce((a, b) => a + b.amount, 0);
 
   const grouped = unpaidRows.reduce((acc, r) => {
     if (!acc[r.plan]) {
@@ -116,7 +132,7 @@ function buildSummary(rows, person) {
     return acc;
   }, {});
 
-  return { total, unpaidRows, grouped };
+  return { total, unpaidRows, paidRows, totalPaid, grouped };
 }
 
 function ZeroBreakdown() {
@@ -160,6 +176,7 @@ export default function MarketersPage() {
   });
 
   const [open, setOpen] = useState(null);
+  const [showPaid, setShowPaid] = useState(false);
 
   const sums = useMemo(
     () => ({
@@ -183,6 +200,7 @@ export default function MarketersPage() {
 
   function closeModal() {
     setOpen(null);
+    setShowPaid(false);
     setPins({
       Emma: "",
       Wyatt: "",
@@ -301,22 +319,60 @@ export default function MarketersPage() {
               </div>
 
               <div className="rounded-[28px] border border-white/10 bg-white/[0.06] backdrop-blur-2xl p-6">
-                <div className="text-xs uppercase text-gray-400 mb-3">Calculation Details</div>
-
-                {sums[open].unpaidRows.length === 0 ? (
-                  <EmptyState
-                    title="No unpaid commission rows yet"
-                    description="This drawer opens at zero. When unpaid Commission_Ledger rows exist for this person, their exact calculation breakdown appears here."
-                  />
-                ) : (
-                  sums[open].unpaidRows.map((r, i) => (
-                    <div
-                      key={`${open}-${r.customer}-${i}`}
-                      className="mb-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300"
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-xs uppercase text-gray-400">
+                    {showPaid ? "Paid History" : "Calculation Details"}
+                  </div>
+                  {sums[open].paidRows.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPaid(p => !p)}
+                      className="text-xs text-cyan-400 hover:text-cyan-200 transition"
                     >
-                      {r.note}
+                      {showPaid ? "Show unpaid" : `Show paid history (${sums[open].paidRows.length})`}
+                    </button>
+                  )}
+                </div>
+
+                {showPaid ? (
+                  sums[open].paidRows.length === 0 ? (
+                    <EmptyState title="No paid history yet" description="Paid commissions will appear here after payout." />
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="mb-3 rounded-2xl border border-white/10 bg-black/20 px-4 py-2 flex justify-between text-xs text-gray-400">
+                        <span>Total paid to date</span>
+                        <span className="text-emerald-400 font-semibold">{fmt(sums[open].totalPaid)}</span>
+                      </div>
+                      {sums[open].paidRows.map((r, i) => (
+                        <div
+                          key={`${open}-paid-${r.customer}-${i}`}
+                          className="rounded-2xl border border-white/[0.06] bg-black/10 px-4 py-3 text-sm text-gray-400"
+                        >
+                          <div className="flex justify-between items-start">
+                            <span>{r.note}</span>
+                            <span className="ml-3 shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] text-emerald-400">Paid</span>
+                          </div>
+                          {r.batch && <div className="mt-1 text-[10px] text-gray-500">Batch: {r.batch}</div>}
+                        </div>
+                      ))}
                     </div>
-                  ))
+                  )
+                ) : (
+                  sums[open].unpaidRows.length === 0 ? (
+                    <EmptyState
+                      title="No unpaid commission rows yet"
+                      description="This drawer opens at zero. When unpaid Commission_Ledger rows exist for this person, their exact calculation breakdown appears here."
+                    />
+                  ) : (
+                    sums[open].unpaidRows.map((r, i) => (
+                      <div
+                        key={`${open}-${r.customer}-${i}`}
+                        className="mb-2 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-gray-300"
+                      >
+                        {r.note}
+                      </div>
+                    ))
+                  )
                 )}
               </div>
             </div>
