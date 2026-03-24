@@ -4,20 +4,6 @@ import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.j
 
 const PLATFORMS = ["Meta", "Google Ads", "Google Search"];
 
-const NICHES = [
-  "HVAC",
-  "Chiropractor",
-  "Dentist",
-  "Roofer",
-  "Med Spa",
-  "Plumbing",
-  "Auto Repair",
-  "Construction",
-  "Pest Control",
-  "Lawn Care",
-  "Vet",
-];
-
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
 
@@ -152,7 +138,6 @@ export default function MarketerAssistantPage() {
   const [loadingChat, setLoadingChat] = useState(false);
   const [loadingBuild, setLoadingBuild] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState("Meta");
-  const [selectedNiche, setSelectedNiche] = useState("");
   const [buildAdOpen, setBuildAdOpen] = useState(false);
 
   const [chatAttachments, setChatAttachments] = useState([]);
@@ -222,13 +207,11 @@ export default function MarketerAssistantPage() {
         assistantType: "marketer",
         marketerMode: mode,
         platform: selectedPlatform,
-        niche: selectedNiche,
         message: messageText,
         context: buildMarketerAssistantContext(data, {
           marketerMode: mode,
           platform: selectedPlatform,
-          niche: selectedNiche,
-        }),
+          }),
         messages: nextMessages.map((message) => ({
           role: message.role,
           content: message.content,
@@ -373,41 +356,6 @@ export default function MarketerAssistantPage() {
             <div className="pointer-events-none absolute inset-0 rounded-[40px] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),transparent_16%,transparent_84%,rgba(255,255,255,0.018))]" />
 
             <div className="relative z-10 p-4 md:p-5">
-              <div className="mb-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[24px] bg-white/[0.045] p-3 backdrop-blur-2xl">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Platform
-                  </div>
-                  <select
-                    value={selectedPlatform}
-                    onChange={(e) => setSelectedPlatform(e.target.value)}
-                    className="w-full rounded-[18px] bg-[#071521]/80 px-3 py-2 text-sm text-white outline-none"
-                  >
-                    {PLATFORMS.map((platform) => (
-                      <option key={platform} value={platform} className="bg-[#071521]">
-                        {platform}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="rounded-[24px] bg-white/[0.045] p-3 backdrop-blur-2xl">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.2em] text-slate-400">
-                    Target Niche
-                  </div>
-                  <select
-                    value={selectedNiche}
-                    onChange={(e) => setSelectedNiche(e.target.value)}
-                    className="w-full rounded-[18px] bg-[#071521]/80 px-3 py-2 text-sm text-white outline-none"
-                  >
-                    {NICHES.map((niche) => (
-                      <option key={niche} value={niche} className="bg-[#071521]">
-                        {niche}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
 
               <div
                 ref={buildScrollRef}
@@ -495,7 +443,7 @@ export default function MarketerAssistantPage() {
                         value={buildInput}
                         onChange={(e) => setBuildInput(e.target.value)}
                         rows={3}
-                        placeholder={`Build an ${selectedPlatform} ad for ${selectedNiche}. Give me a rough angle, offer, screenshot, headline idea, or tell me to build it from scratch.`}
+                        placeholder={`Build an ${selectedPlatform} ad. Give me a rough angle, offer, screenshot, headline idea, or tell me to build it from scratch.`}
                         className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>
