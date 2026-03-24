@@ -20,11 +20,15 @@ export default function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#07111f] text-white">
-      <div className="flex min-h-screen w-full">
+    <div className="h-screen bg-[#07111f] text-white flex flex-col overflow-hidden">
+
+      <MobileNav />
+
+      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+
         <aside
           className={[
-            'hidden md:flex md:shrink-0 md:flex-col bg-[#08131f]/72 backdrop-blur-2xl shadow-[inset_-1px_0_0_rgba(255,255,255,0.04)] transition-all duration-300',
+            'hidden md:flex md:shrink-0 md:flex-col bg-[#08131f]/72 backdrop-blur-2xl shadow-[inset_-1px_0_0_rgba(255,255,255,0.04)] transition-all duration-300 overflow-hidden',
             sidebarCollapsed ? 'md:w-[96px]' : 'md:w-[280px]',
           ].join(' ')}
         >
@@ -65,7 +69,7 @@ export default function AppLayout() {
                 aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
-                {sidebarCollapsed ? '→' : '←'}
+                {sidebarCollapsed ? '\u2192' : '\u2190'}
               </button>
             </div>
           </div>
@@ -103,14 +107,13 @@ export default function AppLayout() {
           </nav>
         </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <MobileNav />
-
+        <div className="flex min-w-0 flex-1 flex-col min-h-0 overflow-hidden">
           <PageHeader />
-          <main className="min-w-0 flex-1 overflow-y-auto min-h-0">
+          <main className="flex-1 overflow-y-auto">
             <Outlet />
           </main>
         </div>
+
       </div>
     </div>
   );
