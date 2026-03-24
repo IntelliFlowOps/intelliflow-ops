@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import StatusBadge from './StatusBadge.jsx';
 import { displayValue } from '../utils/format.js';
 
-const STATUS_COLUMNS = ['Status', 'Health Impact', 'Churn Risk'];
+const STATUS_COLUMNS = ['Status', 'Health Impact', 'Churn Risk', 'Attribution', 'Paid Out?'];
 
 export default function DataTable({
   rows = [],
