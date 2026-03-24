@@ -135,18 +135,25 @@ function normalizeMarketers(rawRows) {
 }
 
 function normalizeCommissionLedger(rawRows) {
-  if (!rawRows || rawRows.length < 2) return [];
-  const headers = rawRows[1].map((h) => (h || '').trim());
-  const customerNameIdx = headers.indexOf('Customer Name');
-  return rawRows.slice(2)
-    .filter((row) => {
-      const customerName = customerNameIdx >= 0 ? (row[customerNameIdx] || '').trim() : '';
+  if (!rawRows || rawRows.length < 1) return [];
+  var headerIndex = 0;
+  for (var i = 0; i < Math.min(3, rawRows.length); i++) {
+    if (rawRows[i] && rawRows[i][0] && rawRows[i][0].toString().trim() === 'Date') {
+      headerIndex = i;
+      break;
+    }
+  }
+  var headers = rawRows[headerIndex].map(function(h) { return (h || '').trim(); });
+  var customerNameIdx = headers.indexOf('Customer Name');
+  return rawRows.slice(headerIndex + 1)
+    .filter(function(row) {
+      var customerName = customerNameIdx >= 0 ? (row[customerNameIdx] || '').trim() : '';
       return customerName !== '' && customerName !== '0';
     })
-    .map((row) => {
-      const obj = {};
-      headers.forEach((header, i) => { if (header) obj[header] = (row[i] || '').trim(); });
-      const paidOutRaw = (obj['Paid Out?'] || '').trim().toLowerCase();
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(header, i) { if (header) obj[header] = (row[i] || '').trim(); });
+      var paidOutRaw = (obj['Paid Out?'] || '').trim().toLowerCase();
       obj._isPaidOut = ['yes', 'true', 'paid', 'y', '1'].includes(paidOutRaw);
       return obj;
     });
