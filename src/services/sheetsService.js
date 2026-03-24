@@ -78,7 +78,19 @@ function normalizeWithHeaderRow(rawRows, headerIndex) {
 function normalizeByAnchor(rawRows, anchorValue) {
   if (!rawRows || rawRows.length < 1) return [];
   var headerIndex = findHeaderRow(rawRows, anchorValue);
-  return normalizeWithHeaderRow(rawRows, headerIndex);
+  var headers = (rawRows[headerIndex] || []).map(function(h) { return (h || '').trim(); });
+  var firstColHeader = headers[0] || '';
+  var dataRows = rawRows.slice(headerIndex + 1);
+  return dataRows
+    .filter(function(row) {
+      var firstVal = (row[0] || '').toString().trim();
+      return firstVal !== '' && firstVal !== '0' && firstVal !== '-';
+    })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(header, i) { if (header) obj[header] = (row[i] || '').trim(); });
+      return obj;
+    });
 }
 
 function normalizeDashboard(rawRows) {
