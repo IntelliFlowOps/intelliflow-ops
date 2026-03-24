@@ -40,16 +40,26 @@ function normalizeTab(tabKey, rawRows) {
     case 'DASHBOARD': return normalizeDashboard(rawRows);
     case 'CUSTOMERS': return normalizeCustomers(rawRows);
     case 'MARKETERS': return normalizeMarketers(rawRows);
-    case 'CAMPAIGNS': return normalizeWithHeaderRow(rawRows, 1);
-    case 'CREATIVE_INSIGHTS': return normalizeWithHeaderRow(rawRows, 1);
+    case 'CAMPAIGNS': return normalizeByAnchor(rawRows, 'Date');
+    case 'CREATIVE_INSIGHTS': return normalizeByAnchor(rawRows, 'Date');
     case 'COMMISSION_RULES': return normalizeCommissionRules(rawRows);
     case 'COMMISSION_LEDGER': return normalizeCommissionLedger(rawRows);
-    case 'FOUNDERS_KPIS': return normalizeWithHeaderRow(rawRows, 1);
-    case 'CUSTOMER_ACTIVITY': return normalizeWithHeaderRow(rawRows, 1);
-    case 'DATA_DICTIONARY': return normalizeWithHeaderRow(rawRows, 1);
-    case 'ALL_ANALYTICS': return normalizeWithHeaderRow(rawRows, 0);
+    case 'FOUNDERS_KPIS': return normalizeByAnchor(rawRows, 'Metric');
+    case 'CUSTOMER_ACTIVITY': return normalizeByAnchor(rawRows, 'Date');
+    case 'DATA_DICTIONARY': return normalizeByAnchor(rawRows, 'Sheet');
+    case 'ALL_ANALYTICS': return normalizeByAnchor(rawRows, 'Date');
     default: return rawRows;
   }
+}
+
+function findHeaderRow(rawRows, anchorValue) {
+  for (var i = 0; i < Math.min(5, rawRows.length); i++) {
+    var row = rawRows[i] || [];
+    for (var j = 0; j < row.length; j++) {
+      if ((row[j] || '').toString().trim() === anchorValue) return i;
+    }
+  }
+  return 0;
 }
 
 function normalizeWithHeaderRow(rawRows, headerIndex) {
@@ -63,6 +73,12 @@ function normalizeWithHeaderRow(rawRows, headerIndex) {
       headers.forEach((header, i) => { if (header) obj[header] = (row[i] || '').trim(); });
       return obj;
     });
+}
+
+function normalizeByAnchor(rawRows, anchorValue) {
+  if (!rawRows || rawRows.length < 1) return [];
+  var headerIndex = findHeaderRow(rawRows, anchorValue);
+  return normalizeWithHeaderRow(rawRows, headerIndex);
 }
 
 function normalizeDashboard(rawRows) {
@@ -123,15 +139,7 @@ function normalizeDashboard(rawRows) {
 }
 
 function normalizeMarketers(rawRows) {
-  if (!rawRows || rawRows.length < 2) return [];
-  const headers = rawRows[1].map((h) => (h || '').trim());
-  return rawRows.slice(2)
-    .filter((row) => row.some((cell) => cell && cell.trim() !== ''))
-    .map((row) => {
-      const obj = {};
-      headers.forEach((h, i) => { if (h) obj[h] = (row[i] || '').trim(); });
-      return obj;
-    });
+  return normalizeByAnchor(rawRows, 'Marketer');
 }
 
 function normalizeCommissionLedger(rawRows) {
@@ -160,18 +168,19 @@ function normalizeCommissionLedger(rawRows) {
 }
 
 function normalizeCommissionRules(rawRows) {
-  if (!rawRows || rawRows.length < 2) return { rules: [], notes: [] };
-  const headers = rawRows[1].map((h) => (h || '').trim());
-  const rules = rawRows.slice(2, 6)
-    .filter((row) => row.some((cell) => cell && cell.trim() !== ''))
-    .map((row) => {
-      const obj = {};
-      headers.forEach((h, i) => { if (h) obj[h] = (row[i] || '').trim(); });
+  if (!rawRows || rawRows.length < 1) return { rules: [], notes: [] };
+  var headerIndex = findHeaderRow(rawRows, 'Attribution Type');
+  var headers = (rawRows[headerIndex] || []).map(function(h) { return (h || '').trim(); });
+  var rules = rawRows.slice(headerIndex + 1, headerIndex + 6)
+    .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
+    .map(function(row) {
+      var obj = {};
+      headers.forEach(function(h, i) { if (h) obj[h] = (row[i] || '').trim(); });
       return obj;
     });
-  const notes = rawRows.slice(7)
-    .filter((row) => row[0] && row[0].trim() !== '')
-    .map((row) => ({ label: (row[0] || '').trim(), value: (row[1] || '').trim() }));
+  var notes = rawRows.slice(headerIndex + 6)
+    .filter(function(row) { return row[0] && row[0].trim() !== ''; })
+    .map(function(row) { return { label: (row[0] || '').trim(), value: (row[1] || '').trim() }; });
   return { rules, notes };
 }
 
