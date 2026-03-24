@@ -116,7 +116,7 @@ export default function CustomersPage() {
       {loading && !rows.length && <SkeletonTable rows={6} cards={4} />}
       {error && <ErrorBanner message={error} />}
 
-      {!loading && rows.length > 0 && (
+      {!loading && (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div className="rounded-[18px] bg-white/[0.04] px-4 py-3 backdrop-blur-xl border border-white/[0.04]">
             <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Total Customers</div>
