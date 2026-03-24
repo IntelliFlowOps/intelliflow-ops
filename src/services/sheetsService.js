@@ -105,8 +105,12 @@ function normalizeMarketers(rawRows) {
 function normalizeCommissionLedger(rawRows) {
   if (!rawRows || rawRows.length < 2) return [];
   const headers = rawRows[1].map((h) => (h || '').trim());
+  const customerNameIdx = headers.indexOf('Customer Name');
   return rawRows.slice(2)
-    .filter((row) => row.some((cell) => cell && cell.trim() !== ''))
+    .filter((row) => {
+      const customerName = customerNameIdx >= 0 ? (row[customerNameIdx] || '').trim() : '';
+      return customerName !== '' && customerName !== '0';
+    })
     .map((row) => {
       const obj = {};
       headers.forEach((header, i) => { if (header) obj[header] = (row[i] || '').trim(); });
