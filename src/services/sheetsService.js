@@ -38,7 +38,7 @@ export async function fetchAllTabs() {
 function normalizeTab(tabKey, rawRows) {
   switch (tabKey) {
     case 'DASHBOARD': return normalizeDashboard(rawRows);
-    case 'CUSTOMERS': return normalizeCustomers(rawRows);
+    case 'CUSTOMERS': return normalizeByAnchor(rawRows, 'Customer Name');
     case 'MARKETERS': return normalizeMarketers(rawRows);
     case 'CAMPAIGNS': return normalizeByAnchor(rawRows, 'Date');
     case 'CREATIVE_INSIGHTS': return normalizeByAnchor(rawRows, 'Date');
