@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import KpiCard from '../components/KpiCard.jsx';
 import DataTable from '../components/DataTable.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonKPIs } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
@@ -158,7 +158,7 @@ export default function DashboardPage() {
     },
   ];
 
-  if (loading && !dashboard) return <LoadingSpinner />;
+  if (loading && !dashboard) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonKPIs count={6} /><SkeletonKPIs count={6} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!dashboard || (!safeDashboard.kpis && !safeDashboard.marketing)) {
     return <EmptyState message="Dashboard data not available yet" />;

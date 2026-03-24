@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import DataTable from '../components/DataTable.jsx';
 import KpiCard from '../components/KpiCard.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -10,7 +10,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 export default function AnalyticsPage() {
   const { rows, loading, error } = useTabData('ALL_ANALYTICS');
   const [chartView, setChartView] = useState('spend');
-  if (loading && (!rows || rows.length === 0)) return <LoadingSpinner />;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!rows || rows.length === 0) return <EmptyState message="No analytics data yet. Add rows to the All Analytics tab in Google Sheets to see campaign performance here." />;
 

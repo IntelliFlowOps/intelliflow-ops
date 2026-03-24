@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import DataTable from '../components/DataTable.jsx';
 import DrawerPanel from '../components/DrawerPanel.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useTabData } from '../hooks/useSheetData.jsx';
 
@@ -143,7 +143,7 @@ export default function CampaignsPage() {
         </p>
       </div>
 
-      {loading && <LoadingSpinner />}
+      {loading && !cleanRows.length && <SkeletonTable rows={5} cards={4} />}
       {error && <ErrorBanner message={error} />}
 
       {!loading && filteredRows.length > 0 && (

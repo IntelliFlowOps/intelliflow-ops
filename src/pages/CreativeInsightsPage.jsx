@@ -1,12 +1,12 @@
 import { useTabData } from '../hooks/useSheetData.jsx';
 import DataTable from '../components/DataTable.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
 export default function CreativeInsightsPage() {
   const { rows, loading, error } = useTabData('CREATIVE_INSIGHTS');
-  if (loading && (!rows || rows.length === 0)) return <LoadingSpinner />;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={4} /></div>;
   if (error) return <ErrorBanner message={error} />;
   if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet. Add rows to the Creative_Insights tab in Google Sheets after reviewing ad performance." />;
 

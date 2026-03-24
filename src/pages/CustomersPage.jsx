@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import DataTable from '../components/DataTable.jsx';
 import DrawerPanel from '../components/DrawerPanel.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useTabData } from '../hooks/useSheetData.jsx';
 
@@ -113,7 +113,7 @@ export default function CustomersPage() {
         <p className="text-sm text-zinc-500">Customer records from the Customers sheet. Click any row to open the full customer drawer.</p>
       </div>
 
-      {loading && <LoadingSpinner />}
+      {loading && !rows.length && <SkeletonTable rows={6} cards={4} />}
       {error && <ErrorBanner message={error} />}
 
       {!loading && rows.length > 0 && (

@@ -1,11 +1,11 @@
 import { useTabData } from '../hooks/useSheetData.jsx';
 import DataTable from '../components/DataTable.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 
 export default function ActivityPage() {
   const { rows, loading, error } = useTabData('CUSTOMER_ACTIVITY');
-  if (loading && (!rows || rows.length === 0)) return <LoadingSpinner />;
+  if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} /></div>;
   if (error) return <ErrorBanner message={error} />;
 
   return (

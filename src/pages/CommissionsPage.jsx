@@ -2,14 +2,14 @@ import { useMemo } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import DataTable from '../components/DataTable.jsx';
 import KpiCard from '../components/KpiCard.jsx';
-import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
 export default function CommissionsPage() {
   const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
 
-  if (loading && !ledgerRows.length) return <LoadingSpinner />;
+  if (loading && !ledgerRows.length) return <div className='space-y-6 fade-in px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
 
   const stats = useMemo(() => {
     const activeRows = ledgerRows.filter((row) =>
