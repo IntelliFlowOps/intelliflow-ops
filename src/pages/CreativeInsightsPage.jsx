@@ -8,7 +8,7 @@ export default function CreativeInsightsPage() {
   const { rows, loading, error } = useTabData('CREATIVE_INSIGHTS');
   if (loading && (!rows || rows.length === 0)) return <LoadingSpinner />;
   if (error) return <ErrorBanner message={error} />;
-  if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet" />;
+  if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet. Add rows to the Creative_Insights tab in Google Sheets after reviewing ad performance." />;
 
   return (
     <div className="space-y-4 fade-in">

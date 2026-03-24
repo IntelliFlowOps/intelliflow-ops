@@ -133,7 +133,7 @@ export default function CampaignsPage() {
           columns={columns}
           onRowClick={handleRowClick}
           searchPlaceholder="Search campaigns..."
-          emptyMessage="No campaign rows loaded yet"
+          emptyMessage="No campaigns yet. Add rows to the Campaigns tab in Google Sheets to see performance data here."
         />
       )}
 
