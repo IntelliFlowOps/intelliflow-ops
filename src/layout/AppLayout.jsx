@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import PageHeader from '../components/PageHeader.jsx';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -124,6 +125,7 @@ export default function AppLayout() {
             </div>
           </div>
 
+          <PageHeader />
           <main className="min-w-0 flex-1">
             <Outlet />
           </main>
