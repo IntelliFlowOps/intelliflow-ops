@@ -9,7 +9,7 @@ export default function ActivityPage() {
   if (error) return <ErrorBanner message={error} />;
 
   return (
-    <div className="space-y-4 fade-in">
+    <div className="space-y-6 fade-in px-6 py-6">
       <p className="text-sm text-zinc-400">Customer activity timeline — operational notes, actions, and health signals.</p>
       <DataTable rows={rows} columns={[
         {key:'Date',label:'Date'},{key:'Customer Name',label:'Customer'},{key:'Activity Type',label:'Type'},

@@ -165,7 +165,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-5 fade-in">
+    <div className="space-y-6 fade-in px-6 py-6">
       {lastUpdated && (
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}

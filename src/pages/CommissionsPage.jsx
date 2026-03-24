@@ -87,7 +87,7 @@ export default function CommissionsPage() {
   ];
 
   return (
-    <div className="space-y-8 fade-in">
+    <div className="space-y-6 fade-in px-6 py-6">
       <section>
         <h2 className="section-title mb-3">Ledger</h2>
         <p className="mb-4 text-sm text-zinc-400">

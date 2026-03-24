@@ -108,7 +108,7 @@ export default function CustomersPage() {
   }, [rows]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 fade-in px-6 py-6">
       <div className="space-y-1">
         <p className="text-sm text-zinc-500">Customer records from the Customers sheet. Click any row to open the full customer drawer.</p>
       </div>

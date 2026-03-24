@@ -18,10 +18,10 @@ export default function AnalyticsPage() {
     <div className="space-y-6 fade-in">
       <AnalyticsSummary rows={rows} />
       <AnalyticsChart rows={rows} chartView={chartView} setChartView={setChartView} />
-      <section>
+      <div className="space-y-6 fade-in px-6 py-6">
         <h2 className="section-title mb-3">All Analytics Data</h2>
         <DataTable rows={rows} columns={[{key:'Date',label:'Date'},{key:'Platform',label:'Platform'},{key:'Campaign Name',label:'Campaign'},{key:'Spend',label:'Spend'},{key:'Impressions',label:'Impressions'},{key:'Clicks',label:'Clicks'},{key:'CTR',label:'CTR'},{key:'CPC',label:'CPC'},{key:'Status',label:'Status'}]} searchPlaceholder="Search analytics..." emptyMessage="No analytics data yet. Add rows to the All Analytics tab in Google Sheets to see campaign performance here." />
-      </section>
+      </div>
     </div>
   );
 }

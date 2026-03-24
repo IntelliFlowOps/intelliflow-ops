@@ -107,7 +107,7 @@ export default function AppLayout() {
           <MobileNav />
 
           <PageHeader />
-          <main className="min-w-0 flex-1">
+          <main className="min-w-0 flex-1 overflow-y-auto">
             <Outlet />
           </main>
         </div>
