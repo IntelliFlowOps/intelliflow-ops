@@ -137,19 +137,21 @@ function normalizeCommissionRules(rawRows) {
   return { rules, notes };
 }
 
+
 function normalizeCustomers(rawRows) {
-  if (!rawRows || rawRows.length < 2) return [];
-  var headerIndex = 0;
-  if (rawRows[0] && rawRows[0][0] && rawRows[0][0].indexOf('Customer Master List') !== -1) {
-    headerIndex = 1;
+  if (!rawRows || rawRows.length < 1) return [];
+  var row0 = rawRows[0] || [];
+  var headers = [];
+  if (row0[0] && row0[0].indexOf('Customer Master List') !== -1) {
+    headers[0] = 'Customer Name';
+    for (var i = 1; i < row0.length; i++) { headers[i] = (row0[i] || '').trim(); }
+    return rawRows.slice(1)
+      .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
+      .map(function(row) {
+        var obj = {};
+        headers.forEach(function(header, i) { if (header) obj[header] = (row[i] || '').trim(); });
+        return obj;
+      });
   }
-  if (rawRows.length <= headerIndex) return [];
-  var headers = rawRows[headerIndex].map(function(h) { return (h || '').trim(); });
-  return rawRows.slice(headerIndex + 1)
-    .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
-    .map(function(row) {
-      var obj = {};
-      headers.forEach(function(header, i) { if (header) obj[header] = (row[i] || '').trim(); });
-      return obj;
-    });
+  return normalizeWithHeaderRow(rawRows, 1);
 }
