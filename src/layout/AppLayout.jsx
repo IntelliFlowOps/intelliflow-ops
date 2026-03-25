@@ -14,6 +14,7 @@ const navItems = [
   { to: '/ledger', label: 'Ledger' },
   { to: '/activity', label: 'Activity' },
   { to: '/analytics', label: 'Analytics' },
+  { to: '/payroll', label: 'Payroll' },
 ];
 
 export default function AppLayout() {

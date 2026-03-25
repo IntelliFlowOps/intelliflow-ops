@@ -13,6 +13,7 @@ const PAGE_META = {
   '/ledger': { title: 'Ledger', subtitle: 'Internal operational ledger — commissions hidden' },
   '/activity': { title: 'Activity', subtitle: 'Customer interaction timeline' },
   '/analytics': { title: 'Analytics', subtitle: 'Campaign and ad performance data' },
+  '/payroll': { title: 'Payroll', subtitle: 'Founder access only — contractor payments and tax tracking' },
 };
 
 function timeAgo(timestamp) {

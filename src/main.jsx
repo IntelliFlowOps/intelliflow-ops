@@ -13,6 +13,7 @@ import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
+import PayrollPage from './pages/PayrollPage.jsx';
 import CursorTrail from './components/CursorTrail.jsx';
 import './index.css';
 
@@ -31,6 +32,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="founder-assistant" element={<AdAssistantPage />} />
             <Route path="marketer-assistant" element={<MarketerAssistantPage />} />
             <Route path="ledger" element={<CommissionsPage />} />
+            <Route path="payroll" element={<PayrollPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
           </Route>
