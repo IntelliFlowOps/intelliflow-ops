@@ -276,9 +276,12 @@ export default function MarketersPage() {
       {loading ? <LoadingSpinner label="Loading commissions..." /> : null}
       {error ? <ErrorBanner message="Commission ledger failed to load." /> : null}
 
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-        {PEOPLE.map((p) => {
-          const isSales = p.role === "Sales";
+      {/* Marketers group */}
+      <div>
+        <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-zinc-500">Marketers</div>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {PEOPLE.filter(p => p.role === "Marketer").map((p) => {
+          const isSales = false;
           return (
             <div
               key={p.name}
@@ -300,7 +303,7 @@ export default function MarketersPage() {
                     className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
                     style={{ color: isSales ? "#a5b4fc" : "#67e8f9" }}
                   >
-                    {isSales ? "Sales · 20% months 1–6" : "Marketer · 5% lifetime"}
+                    {isSales ? "Sales" : "Marketer"}
                   </div>
                 </div>
                 <div
@@ -347,7 +350,69 @@ export default function MarketersPage() {
               </button>
             </div>
           );
-        })}
+          })}
+        </div>
+      </div>
+
+      {/* Sales group */}
+      <div>
+        <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-zinc-500">Sales</div>
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {PEOPLE.filter(p => p.role === "Sales").map((p) => {
+          const isSales = true;
+          return (
+            <div
+              key={p.name}
+              className="rounded-[28px] p-5 backdrop-blur-2xl"
+              style={{
+                background: "linear-gradient(145deg, rgba(99,102,241,0.07), rgba(6,182,212,0.04))",
+                border: "1px solid rgba(99,102,241,0.18)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+              }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-base font-semibold text-white">{p.name}</div>
+                  <div
+                    className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
+                    style={{ color: "#a5b4fc" }}
+                  >
+                    Sales
+                  </div>
+                </div>
+                <div
+                  className="flex h-8 w-8 items-center justify-center rounded-xl text-sm"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  🔒
+                </div>
+              </div>
+              <input
+                type="password"
+                value={pins[p.name]}
+                onChange={(e) => setPins((x) => ({ ...x, [p.name]: e.target.value }))}
+                onKeyDown={(e) => { if (e.key === "Enter") unlock(p.name); }}
+                placeholder="Enter PIN"
+                className="w-full rounded-2xl px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600"
+                style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}
+              />
+              {pinErrors[p.name] && (
+                <div className="mt-1.5 text-xs text-red-400">{pinErrors[p.name]}</div>
+              )}
+              <button
+                onClick={() => unlock(p.name)}
+                className="mt-3 w-full rounded-2xl py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+                style={{
+                  background: "linear-gradient(135deg, #4f46e5, #6366f1)",
+                  boxShadow: "0 2px 16px rgba(99,102,241,0.3)",
+                }}
+              >
+                Unlock
+              </button>
+            </div>
+          );
+          })}
+        </div>
       </div>
 
       {open && (
