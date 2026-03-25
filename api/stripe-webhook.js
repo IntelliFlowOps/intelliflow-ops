@@ -28,7 +28,7 @@ async function getAuth() {
 async function getSheetRows(sheets, tabName) {
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SHEET_ID,
-    range: `${tabName}!A:U`,
+    range: `${tabName}!A:AD`,
   });
   return res.data.values || [];
 }
@@ -99,7 +99,7 @@ async function upsertCustomer(sheets, { customerName, stripeCustomerId, plan, cl
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
-    range: `${CUSTOMERS_TAB}!A:W`,
+    range: `${CUSTOMERS_TAB}!A:W`, // 23 columns — ends at Commission Month Count
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: [newRow] },
