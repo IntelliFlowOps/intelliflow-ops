@@ -233,9 +233,14 @@ export default function MarketersPage() {
             key={p.name}
             className="rounded-[28px] border border-white/10 bg-white/[0.07] backdrop-blur-2xl p-6 shadow-[0_12px_40px_rgba(0,0,0,0.28)]"
           >
-            <div className="mb-4">
-              <div className="text-lg font-semibold text-white">{p.name}</div>
-              <div className="text-xs text-gray-400">{p.role} private KPI</div>
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <div className="text-lg font-semibold text-white">{p.name}</div>
+                <div className="text-xs text-gray-400">{p.role} private KPI</div>
+              </div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400">
+                🔒
+              </div>
             </div>
 
             <input

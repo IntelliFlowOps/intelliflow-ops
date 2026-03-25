@@ -587,8 +587,16 @@ export default function MarketerAssistantPage() {
                       <textarea
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (!loadingChat && (chatInput.trim() || chatAttachments.length > 0)) {
+                              handleChatSubmit(e);
+                            }
+                          }
+                        }}
                         rows={3}
-                        placeholder="Ask about social posts, ad strategy, budget allocation, platform mix, hooks, offers, messaging, campaigns, reporting, or any other marketing question."
+                        placeholder="Ask about social posts, ad strategy, hooks, offers, campaigns, or anything marketing. Enter to send, Shift+Enter for new line."
                         className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>

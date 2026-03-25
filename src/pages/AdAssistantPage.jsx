@@ -372,8 +372,16 @@ export default function AdAssistantPage() {
                       <textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            if (!loading && (input.trim() || attachments.length > 0)) {
+                              handleSubmit(e);
+                            }
+                          }
+                        }}
                         rows={3}
-                        placeholder="Ask about growth, delivery, pricing, churn, hiring, sales, ops, objections, or the next move."
+                        placeholder="Ask about growth, delivery, pricing, churn, hiring, sales, ops, objections, or the next move. Enter to send, Shift+Enter for new line."
                         className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>

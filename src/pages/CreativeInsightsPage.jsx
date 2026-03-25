@@ -8,7 +8,7 @@ export default function CreativeInsightsPage() {
   const { rows, loading, error } = useTabData('CREATIVE_INSIGHTS');
   if (loading && (!rows || rows.length === 0)) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={4} /></div>;
   if (error) return <ErrorBanner message={error} />;
-  if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet. Add rows to the Creative_Insights tab in Google Sheets after reviewing ad performance." />;
+  if (!rows || rows.length === 0) return <EmptyState message="No creative insights yet" />;
 
   return (
     <div className="space-y-6 px-6 py-6">

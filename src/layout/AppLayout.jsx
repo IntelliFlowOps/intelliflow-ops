@@ -1,121 +1,119 @@
 import { useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
-import MobileNav from '../components/MobileNav.jsx';
 
 const navItems = [
-  { to: '/', label: 'Dashboard' },
-  { to: '/customers', label: 'Customers' },
-  { to: '/marketers', label: 'Individual Commissions' },
-  { to: '/campaigns', label: 'Campaigns' },
-  { to: '/creative', label: 'Creative Insights' },
-  { to: '/founder-assistant', label: 'Founder Assistant' },
-  { to: '/marketer-assistant', label: 'Marketer Assistant' },
-  { to: '/ledger', label: 'Ledger' },
-  { to: '/activity', label: 'Activity' },
-  { to: '/analytics', label: 'Analytics' },
-  { to: '/payroll', label: 'Payroll' },
+  { to: '/', label: 'Dashboard', icon: '◈' },
+  { to: '/customers', label: 'Customers', icon: '◉' },
+  { to: '/marketers', label: 'Individual Commissions', icon: '◎' },
+  { to: '/campaigns', label: 'Campaigns', icon: '◆' },
+  { to: '/creative', label: 'Creative Insights', icon: '◇' },
+  { to: '/founder-assistant', label: 'Founder Assistant', icon: '⬡' },
+  { to: '/marketer-assistant', label: 'Marketer Assistant', icon: '⬢' },
+  { to: '/ledger', label: 'Ledger', icon: '▤' },
+  { to: '/activity', label: 'Activity', icon: '◌' },
+  { to: '/analytics', label: 'Analytics', icon: '◫' },
+  { to: '/payroll', label: 'Payroll', icon: '◑' },
 ];
 
 export default function AppLayout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [open, setOpen] = useState(false);
+  const location = useLocation();
+  const current = navItems.find(n => n.to === location.pathname || (n.to !== '/' && location.pathname.startsWith(n.to)));
 
   return (
-    <div className="h-screen bg-[#07111f] text-white flex flex-col overflow-hidden">
+    <div className="min-h-screen bg-[#07111f] text-white">
 
-      <MobileNav />
-
-      <div className="flex flex-1 min-h-0 w-full overflow-hidden">
-
-        <aside
-          className={[
-            'hidden md:flex md:shrink-0 md:flex-col bg-[#08131f]/72 backdrop-blur-2xl shadow-[inset_-1px_0_0_rgba(255,255,255,0.04)] transition-all duration-300 overflow-hidden',
-            sidebarCollapsed ? 'md:w-[96px]' : 'md:w-[280px]',
-          ].join(' ')}
+      {/* Top bar — always visible */}
+      <div className="sticky top-0 z-[100] flex items-center gap-4 border-b border-white/[0.04] bg-[#08131f]/80 px-4 py-3 backdrop-blur-2xl">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-slate-300 transition hover:bg-cyan-400/[0.10] hover:text-cyan-100"
+          aria-label="Open menu"
         >
-          <div className="px-4 py-5">
-            <div className="rounded-[24px] bg-white/[0.03] px-4 py-4 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-2xl">
-              <div
-                className={[
-                  'flex items-center transition-all duration-300',
-                  sidebarCollapsed ? 'justify-center' : 'gap-4',
-                ].join(' ')}
-              >
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#0a1a2b]">
-                  <img
-                    src="/logo.png"
-                    alt="IntelliFlow logo"
-                    className="max-h-14 max-w-14 object-contain"
-                  />
-                </div>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M2 4.5h14M2 9h14M2 13.5h9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        </button>
 
-                {!sidebarCollapsed && (
-                  <div className="min-w-0">
-                    <div className="truncate text-[28px] leading-none font-semibold tracking-tight text-white">
-                      IntelliFlow
-                    </div>
-                    <div className="mt-2 text-[11px] uppercase tracking-[0.28em] text-cyan-200/55">
-                      Communications
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-3 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((prev) => !prev)}
-                className="flex h-10 min-w-[44px] items-center justify-center rounded-xl bg-white/[0.04] px-3 text-slate-300 transition hover:bg-cyan-400/[0.10] hover:text-cyan-100"
-                aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              >
-                {sidebarCollapsed ? '\u2192' : '\u2190'}
-              </button>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px] bg-[#0a1a2b]">
+            <img src="/logo.png" alt="IntelliFlow" className="max-h-7 max-w-7 object-contain" />
           </div>
-
-          <nav className="flex-1 space-y-2 overflow-y-auto px-3 pb-4">
-            {navItems.map(({ to, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                end={to === '/'}
-                className={({ isActive }) =>
-                  [
-                    'block rounded-[18px] text-sm transition backdrop-blur-xl',
-                    sidebarCollapsed ? 'px-2 py-3 text-center' : 'px-4 py-3',
-                    isActive
-                      ? 'bg-cyan-400/[0.10] text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.08)]'
-                      : 'bg-white/[0.025] text-slate-300 hover:bg-cyan-400/[0.06] hover:text-white',
-                  ].join(' ')
-                }
-                title={sidebarCollapsed ? label : undefined}
-              >
-                {sidebarCollapsed ? (
-                  <span className="block truncate text-[11px] font-medium">
-                    {label
-                      .split(' ')
-                      .map((word) => word[0])
-                      .join('')
-                      .slice(0, 2)}
-                  </span>
-                ) : (
-                  label
-                )}
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="flex min-w-0 flex-1 flex-col min-h-0 overflow-hidden">
-          <PageHeader />
-          <main className="flex-1 overflow-y-auto">
-            <Outlet />
-          </main>
+          <div className="hidden sm:block">
+            <div className="text-sm font-semibold text-white leading-none">IntelliFlow</div>
+            <div className="text-[10px] tracking-[0.2em] text-cyan-200/50 uppercase mt-0.5">Communications</div>
+          </div>
         </div>
 
+        {current && (
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-slate-500 hidden sm:block">/</span>
+            <span className="text-sm font-medium text-slate-300 hidden sm:block">{current.label}</span>
+          </div>
+        )}
       </div>
+
+      {/* Sidebar overlay */}
+      {open && (
+        <div className="fixed inset-0 z-[200]">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-[300px] bg-[#08131f] shadow-[4px_0_40px_rgba(0,0,0,0.6)] flex flex-col">
+
+            <div className="flex items-center justify-between px-5 py-5 border-b border-white/[0.04]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[14px] bg-[#0a1a2b]">
+                  <img src="/logo.png" alt="IntelliFlow" className="max-h-9 max-w-9 object-contain" />
+                </div>
+                <div>
+                  <div className="text-[15px] font-semibold text-white">IntelliFlow</div>
+                  <div className="text-[10px] tracking-[0.22em] text-cyan-200/60 uppercase">Communications</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04] text-slate-400 hover:text-white transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+              {navItems.map(({ to, label, icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  end={to === '/'}
+                  onClick={() => setOpen(false)}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm transition',
+                      isActive
+                        ? 'bg-cyan-400/[0.10] text-cyan-100 shadow-[0_0_24px_rgba(34,211,238,0.06)]'
+                        : 'text-slate-300 hover:bg-white/[0.04] hover:text-white',
+                    ].join(' ')
+                  }
+                >
+                  <span className="text-[10px] opacity-50">{icon}</span>
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+
+            <div className="px-4 py-4 border-t border-white/[0.04]">
+              <div className="text-[10px] text-slate-600 text-center">intelliflow-ops.vercel.app</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Page header + content */}
+      <PageHeader />
+      <main className="min-w-0">
+        <Outlet />
+      </main>
     </div>
   );
 }
