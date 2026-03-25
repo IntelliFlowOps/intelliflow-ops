@@ -118,14 +118,14 @@ export default function DataTable({
                     key={rowKey}
                     onClick={() => handleRowClick(row, idx)}
                     onDoubleClick={() => handleRowDoubleClick(row, idx)}
-                    className={`transition-colors ${
+                    className={`transition-all duration-150 ${
                       isInteractive ? 'cursor-pointer' : ''
                     } ${
                       isSelected
-                        ? 'bg-surface-600/80'
+                        ? 'bg-cyan-400/[0.06] scale-[1.002]'
                         : isInteractive
-                        ? 'hover:bg-surface-600/60'
-                        : 'hover:bg-surface-600/30'
+                        ? 'hover:bg-white/[0.03] hover:scale-[1.003] hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)]'
+                        : 'hover:bg-white/[0.02]'
                     }`}
                   >
                     {cols.map((col) => (

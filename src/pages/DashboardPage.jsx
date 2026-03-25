@@ -9,6 +9,8 @@ import EmptyState from '../components/EmptyState.jsx';
 export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');
   const [showGoalActions, setShowGoalActions] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const [prevMilestone, setPrevMilestone] = useState(null);
 
   const safeDashboard =
     dashboard && typeof dashboard === 'object' ? dashboard : {};
@@ -170,13 +172,27 @@ export default function DashboardPage() {
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}
 
-      <section className="relative overflow-hidden rounded-[24px] bg-white/[0.035] px-4 py-4 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
+      <section className={`relative overflow-hidden rounded-[24px] px-4 py-4 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.16)] transition-all duration-700 ${
+        goal.isHit
+          ? 'bg-cyan-500/[0.08] shadow-[0_0_40px_rgba(34,211,238,0.15)] ring-1 ring-cyan-400/20'
+          : 'bg-white/[0.035]'
+      }`}>
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_28%)]" />
+
+        {goal.isHit && (
+          <div className="relative z-[1] mb-4 rounded-[18px] bg-cyan-400/[0.08] border border-cyan-400/20 px-4 py-3 text-center">
+            <div className="text-sm font-semibold text-cyan-300">🎯 Milestone Hit — {goal.badge}</div>
+            <div className="text-xs text-cyan-400/70 mt-0.5">Next milestone unlocked. Keep pushing.</div>
+          </div>
+        )}
 
         <div className="relative z-[1] flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <div className="mb-1 text-[10px] uppercase tracking-[0.22em] text-cyan-200/65">
-              Current Goal
+            <div className="mb-1 flex items-center gap-2">
+              <span className="text-[10px] uppercase tracking-[0.22em] text-cyan-200/65">Current Goal</span>
+              {goal.badge && (
+                <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-400">{goal.badge}</span>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <h2 className="text-base font-semibold text-white tracking-tight">
@@ -191,9 +207,13 @@ export default function DashboardPage() {
 
           <div className="flex items-center gap-3">
             <div className="w-full min-w-[150px] xl:w-[220px]">
-              <div className="h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="h-2 overflow-hidden rounded-full bg-white/[0.08]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-700"
+                  className={`h-full rounded-full transition-all duration-700 ${
+                    goal.isHit
+                      ? 'bg-gradient-to-r from-cyan-300 via-cyan-400 to-emerald-400'
+                      : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500'
+                  }`}
                   style={{ width: `${goal.progressPercent}%` }}
                 />
               </div>
