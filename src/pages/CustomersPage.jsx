@@ -8,6 +8,7 @@ import { useTabData } from '../hooks/useSheetData.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 const CLOSERS = ['Emma', 'Wyatt', 'ED', 'Micah', 'Justin', 'Founder'];
+const LEAD_SOURCES = ['Referral', 'Cold Outreach', 'Inbound', 'Paid Ads', 'Social Media', 'Event', 'Partnership', 'Other'];
 
 const columns = [
   { key: 'Customer Name', label: 'Customer', render: (val, row) => {
@@ -105,6 +106,7 @@ export default function CustomersPage() {
   const [selected, setSelected] = useState(null);
   const [assigningCloser, setAssigningCloser] = useState(false);
   const [selectedCloser, setSelectedCloser] = useState('');
+  const [selectedLeadSource, setSelectedLeadSource] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
 
   const isUnassigned = (row) => {
@@ -119,12 +121,12 @@ export default function CustomersPage() {
       const res = await fetch('/api/assign-closer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerName: selected['Customer Name'], closer: selectedCloser }),
+        body: JSON.stringify({ customerName: selected['Customer Name'], closer: selectedCloser, leadSource: selectedLeadSource }),
       });
       if (!res.ok) throw new Error('Failed');
       setSaveStatus('saved');
       showToast(`${selectedCloser} assigned as closer`, 'success');
-      setTimeout(() => { setSaveStatus(''); setAssigningCloser(false); setSelectedCloser(''); }, 1500);
+      setTimeout(() => { setSaveStatus(''); setAssigningCloser(false); setSelectedCloser(''); setSelectedLeadSource(''); }, 1500);
     } catch {
       setSaveStatus('error');
       setTimeout(() => setSaveStatus(''), 2000);
@@ -224,6 +226,15 @@ export default function CustomersPage() {
                       >
                         <option value="">Select closer...</option>
                         {CLOSERS.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <select
+                        value={selectedLeadSource}
+                        onChange={e => setSelectedLeadSource(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none mt-2"
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        <option value="">Lead source (optional)...</option>
+                        {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
                       <div className="flex gap-2">
                         <button
