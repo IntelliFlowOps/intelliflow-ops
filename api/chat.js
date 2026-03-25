@@ -204,20 +204,23 @@ recommended next test variation
         messages: [
           {
             role: "user",
-            content: `INTELLIFLOW CONTEXT
+            content: (() => {
+              const textBlock = {
+                type: "text",
+                text: `INTELLIFLOW CONTEXT
 
 Assistant Type: ${assistantType || "founder"}
 Marketer Mode: ${marketerMode || "n/a"}
 Selected Platform: ${platform || "not specified"}
-Target Niche (audience to speak to): ${niche || "not specified"}
 
 Advertiser = IntelliFlow Communications always.
-You are always writing FOR IntelliFlow Communications.
-The niche is only the TARGET AUDIENCE for IntelliFlow ads and posts.
-Never switch advertiser identity. Never override the user request with the niche.
-If the user asks for plumbing hashtags, return plumbing hashtags styled for IntelliFlow targeting plumbers.
 
-CONTEXT DATA:
+PERSISTENT MEMORY:
+${Array.isArray(memories) && memories.length > 0
+  ? memories.slice(0, 30).map(m => "- " + m.text).join("\n")
+  : "No memories yet."}
+
+LIVE BUSINESS CONTEXT:
 ${JSON.stringify(context || {}, null, 2)}
 
 RECENT CHAT:
@@ -225,6 +228,21 @@ ${historyText || "None"}
 
 USER REQUEST:
 ${message || ""}`,
+              };
+              const imageBlocks = Array.isArray(attachments)
+                ? attachments
+                    .filter(a => a && a.base64 && a.type && a.type.startsWith("image/"))
+                    .map(a => ({
+                      type: "image",
+                      source: {
+                        type: "base64",
+                        media_type: a.type,
+                        data: a.base64,
+                      },
+                    }))
+                : [];
+              return imageBlocks.length > 0 ? [...imageBlocks, textBlock] : textBlock.text;
+            })(),
           },
         ],
       }),
