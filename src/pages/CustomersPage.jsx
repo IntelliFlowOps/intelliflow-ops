@@ -6,8 +6,23 @@ import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx'
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useTabData } from '../hooks/useSheetData.jsx';
 
+const CLOSERS = ['Emma', 'Wyatt', 'ED', 'Micah', 'Justin', 'Founder'];
+
 const columns = [
-  { key: 'Customer Name', label: 'Customer' },
+  { key: 'Customer Name', label: 'Customer', render: (val, row) => {
+    const unassigned = !row['Attribution Type'] || row['Attribution Type'].trim() === 'UNASSIGNED' || row['Attribution Type'].trim() === '';
+    return (
+      <span className="flex items-center gap-2">
+        <span>{val || '—'}</span>
+        {unassigned && (
+          <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+            style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)', color: '#fb923c' }}>
+            Needs Closer
+          </span>
+        )}
+      </span>
+    );
+  }},
   { key: 'MRR / Revenue', label: 'MRR / Revenue' },
   { key: 'Status', label: 'Status' },
   { key: 'Lead Source', label: 'Lead Source' },
@@ -86,6 +101,32 @@ function DetailField({ label, value }) {
 export default function CustomersPage() {
   const { rows, loading, error } = useTabData('CUSTOMERS');
   const [selected, setSelected] = useState(null);
+  const [assigningCloser, setAssigningCloser] = useState(false);
+  const [selectedCloser, setSelectedCloser] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
+
+  const isUnassigned = (row) => {
+    const attr = (row['Attribution Type'] || '').trim();
+    return attr === '' || attr === 'UNASSIGNED';
+  };
+
+  async function saveCloser() {
+    if (!selectedCloser || !selected) return;
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/assign-closer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerName: selected['Customer Name'], closer: selectedCloser }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      setSaveStatus('saved');
+      setTimeout(() => { setSaveStatus(''); setAssigningCloser(false); setSelectedCloser(''); }, 1500);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus(''), 2000);
+    }
+  }
 
   const stats = useMemo(() => {
     const active = rows.filter(r => (r['Status'] || '').trim() === 'Active');
@@ -154,6 +195,55 @@ export default function CustomersPage() {
       >
         {selected && (
           <div className="space-y-8">
+            {isUnassigned(selected) && (
+              <section className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-400">
+                  ⚠ Needs Closer Assignment
+                </h3>
+                <div className="rounded-2xl p-4 space-y-3"
+                  style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                  <p className="text-xs text-zinc-400">This customer has no closer assigned. Select one to activate commission tracking.</p>
+                  {!assigningCloser ? (
+                    <button
+                      onClick={() => setAssigningCloser(true)}
+                      className="w-full rounded-xl py-2.5 text-sm font-medium transition-all"
+                      style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c' }}
+                    >
+                      Assign Closer
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        value={selectedCloser}
+                        onChange={e => setSelectedCloser(e.target.value)}
+                        className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        <option value="">Select closer...</option>
+                        {CLOSERS.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={saveCloser}
+                          disabled={!selectedCloser || saveStatus === 'saving'}
+                          className="flex-1 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                          style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
+                        >
+                          {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Error — retry' : 'Save'}
+                        </button>
+                        <button
+                          onClick={() => { setAssigningCloser(false); setSelectedCloser(''); }}
+                          className="rounded-xl px-4 py-2.5 text-sm text-zinc-500 transition hover:text-zinc-300"
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
             {sections.map((section) => (
               <section key={section.title} className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
