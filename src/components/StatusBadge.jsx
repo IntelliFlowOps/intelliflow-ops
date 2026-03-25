@@ -1,29 +1,100 @@
-const STATUS_STYLES = {
-  'DIRECT': 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
-  'SALES': 'bg-violet-500/15 text-violet-400 border-violet-500/30',
-  'FOUNDER': 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
-  'Yes': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  'No': 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
-  'Open': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  'Closed': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  'Active': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  'Onboarding': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-  'Paused': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  'At Risk': 'bg-orange-500/15 text-orange-400 border-orange-500/30',
-  'Churned': 'bg-red-500/15 text-red-400 border-red-500/30',
-  'Refunded': 'bg-rose-500/15 text-rose-400 border-rose-500/30',
-  'Healthy': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  'Watch': 'bg-amber-500/15 text-amber-400 border-amber-500/30',
-  'Issue': 'bg-red-500/15 text-red-400 border-red-500/30',
-  'Needs Review': 'bg-violet-500/15 text-violet-400 border-violet-500/30',
-  'Positive': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-  'Neutral': 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
-  'Negative': 'bg-red-500/15 text-red-400 border-red-500/30',
+const BADGE_CONFIG = {
+  'DIRECT': {
+    style: 'bg-cyan-500/12 text-cyan-300 border-cyan-400/25 shadow-cyan-500/10',
+    icon: '◈',
+  },
+  'SALES': {
+    style: 'bg-violet-500/12 text-violet-300 border-violet-400/25 shadow-violet-500/10',
+    icon: '◆',
+  },
+  'FOUNDER': {
+    style: 'bg-amber-500/12 text-amber-300 border-amber-400/25 shadow-amber-500/10',
+    icon: '★',
+  },
+  'Yes': {
+    style: 'bg-emerald-500/12 text-emerald-300 border-emerald-400/25',
+    icon: '✓',
+  },
+  'No': {
+    style: 'bg-zinc-500/12 text-zinc-400 border-zinc-500/20',
+    icon: '○',
+  },
+  'Open': {
+    style: 'bg-amber-500/12 text-amber-300 border-amber-400/25',
+    icon: '◉',
+  },
+  'Closed': {
+    style: 'bg-emerald-500/12 text-emerald-300 border-emerald-400/25',
+    icon: '✓',
+  },
+  'Active': {
+    style: 'bg-emerald-500/12 text-emerald-300 border-emerald-400/25',
+    icon: '●',
+  },
+  'Onboarding': {
+    style: 'bg-blue-500/12 text-blue-300 border-blue-400/25',
+    icon: '◐',
+  },
+  'Paused': {
+    style: 'bg-amber-500/12 text-amber-300 border-amber-400/25',
+    icon: '⏸',
+  },
+  'At Risk': {
+    style: 'bg-orange-500/12 text-orange-300 border-orange-400/30 at-risk-pulse',
+    icon: '⚠',
+  },
+  'Churned': {
+    style: 'bg-red-500/12 text-red-400 border-red-500/25',
+    icon: '✕',
+  },
+  'Refunded': {
+    style: 'bg-rose-500/12 text-rose-400 border-rose-500/25',
+    icon: '↩',
+  },
+  'Healthy': {
+    style: 'bg-emerald-500/12 text-emerald-300 border-emerald-400/25',
+    icon: '●',
+  },
+  'Watch': {
+    style: 'bg-amber-500/12 text-amber-300 border-amber-400/25',
+    icon: '◉',
+  },
+  'Issue': {
+    style: 'bg-red-500/12 text-red-400 border-red-500/25',
+    icon: '✕',
+  },
+  'Needs Review': {
+    style: 'bg-violet-500/12 text-violet-300 border-violet-400/25',
+    icon: '?',
+  },
+  'Positive': {
+    style: 'bg-emerald-500/12 text-emerald-300 border-emerald-400/25',
+    icon: '↑',
+  },
+  'Neutral': {
+    style: 'bg-zinc-500/12 text-zinc-400 border-zinc-500/20',
+    icon: '→',
+  },
+  'Negative': {
+    style: 'bg-red-500/12 text-red-400 border-red-500/25',
+    icon: '↓',
+  },
 };
-const DEFAULT_STYLE = 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30';
+
+const DEFAULT_CONFIG = {
+  style: 'bg-zinc-500/12 text-zinc-400 border-zinc-500/20',
+  icon: '·',
+};
 
 export default function StatusBadge({ status }) {
   if (!status || status === '-' || status === '') return null;
-  const style = STATUS_STYLES[status] || DEFAULT_STYLE;
-  return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${style}`}>{status}</span>;
+  const config = BADGE_CONFIG[status] || DEFAULT_CONFIG;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border shadow-sm ${config.style}`}
+    >
+      <span className="text-[10px] leading-none opacity-80">{config.icon}</span>
+      {status}
+    </span>
+  );
 }

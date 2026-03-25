@@ -15,10 +15,11 @@
     min-height: 100vh;
     overflow-x: hidden;
     background:
-      radial-gradient(circle at 15% 15%, rgba(59,130,246,0.22), transparent 24%),
-      radial-gradient(circle at 85% 12%, rgba(99,102,241,0.18), transparent 24%),
-      radial-gradient(circle at 50% 85%, rgba(14,165,233,0.14), transparent 30%),
-      linear-gradient(180deg, #030712 0%, #050b16 25%, #071426 55%, #030813 100%);
+      radial-gradient(ellipse at 12% 8%, rgba(6,182,212,0.18), transparent 30%),
+      radial-gradient(ellipse at 88% 6%, rgba(56,189,248,0.12), transparent 28%),
+      radial-gradient(ellipse at 55% 90%, rgba(6,182,212,0.10), transparent 35%),
+      radial-gradient(ellipse at 50% 50%, rgba(2,132,199,0.06), transparent 60%),
+      linear-gradient(180deg, #020608 0%, #03080f 20%, #040c18 50%, #030a14 80%, #020608 100%);
     color: #f8fafc;
   }
 
@@ -38,12 +39,12 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(99, 102, 241, 0.45) transparent;
+    scrollbar-color: rgba(6,182,212,0.4) transparent;
   }
 
   *::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
   }
 
   *::-webkit-scrollbar-track {
@@ -51,16 +52,16 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.35);
+    background: rgba(6,182,212,0.3);
     border-radius: 999px;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.55);
+    background: rgba(6,182,212,0.55);
   }
 
   ::selection {
-    background: rgba(129, 140, 248, 0.35);
+    background: rgba(6,182,212,0.3);
     color: #fff;
   }
 }
@@ -75,10 +76,28 @@
   }
 
   .kpi-card {
-    @apply card p-5 flex flex-col gap-1.5 relative overflow-hidden;
+    @apply p-5 flex flex-col gap-1.5 relative overflow-hidden;
+    border-radius: 24px;
     background:
-      radial-gradient(circle at top right, rgba(56,189,248,0.14), transparent 28%),
-      linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+      radial-gradient(circle at top right, rgba(6,182,212,0.12), transparent 40%),
+      radial-gradient(circle at bottom left, rgba(2,132,199,0.06), transparent 40%),
+      linear-gradient(145deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    box-shadow:
+      0 0 0 1px rgba(6,182,212,0.18),
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      0 8px 32px rgba(0,0,0,0.35);
+    backdrop-filter: blur(20px);
+    transition: box-shadow 0.25s ease, transform 0.2s ease;
+  }
+
+  .kpi-card:hover {
+    box-shadow:
+      0 0 0 1px rgba(6,182,212,0.35),
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      0 12px 40px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
   }
 
   .table-container {
@@ -93,10 +112,16 @@
 
   .btn-primary {
     @apply inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-white text-sm font-medium
-           bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500
-           hover:from-cyan-400 hover:via-blue-400 hover:to-indigo-400
-           transition-all duration-200 shadow-lg shadow-cyan-500/20
+           transition-all duration-200
            disabled:opacity-40 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 50%, #164e63 100%);
+    box-shadow: 0 2px 16px rgba(6,182,212,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+    box-shadow: 0 4px 20px rgba(6,182,212,0.35), inset 0 1px 0 rgba(255,255,255,0.12);
+    transform: translateY(-1px);
   }
 
   .btn-ghost {
@@ -158,5 +183,19 @@
   @keyframes typingBounce {
     0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
     40% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  @keyframes badgePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(249,115,22,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(249,115,22,0); }
+  }
+
+  @keyframes goalFill {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .at-risk-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
   }
 }
