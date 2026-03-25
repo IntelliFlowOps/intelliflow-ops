@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
+import ChatHistoryDrawer from "../components/ChatHistoryDrawer.jsx";
 import { buildFounderAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const MAX_ATTACHMENTS = 4;
@@ -79,6 +80,7 @@ function AttachmentChip({ attachment, onRemove }) {
 
 export default function AdAssistantPage() {
   const { data } = useSheetData();
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [memories, setMemories] = useState([]);
 
   useEffect(() => {
@@ -399,6 +401,7 @@ export default function AdAssistantPage() {
           </div>
         </div>
       </div>
+    <ChatHistoryDrawer open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
+import ChatHistoryDrawer from "../components/ChatHistoryDrawer.jsx";
 import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.js";
 
 const PLATFORMS = ["Meta", "Google Ads", "Google Search"];
@@ -113,6 +114,7 @@ function buildAttachmentObjects(fileList, existingAttachments) {
 export default function MarketerAssistantPage() {
   const { data } = useSheetData();
   const [memories, setMemories] = useState([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/memory')
@@ -350,8 +352,17 @@ export default function MarketerAssistantPage() {
 
       <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 shadow-[0_12px_30px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
-            Marketer Assistant
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 shadow-[0_12px_30px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
+              Marketer Assistant
+            </div>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen(true)}
+              className="rounded-full bg-white/[0.04] px-3 py-2 text-[11px] text-slate-400 hover:text-white hover:bg-white/[0.08] transition backdrop-blur-2xl"
+            >
+              History
+            </button>
           </div>
 
           <button
@@ -608,6 +619,7 @@ export default function MarketerAssistantPage() {
           </div>
         </div>
       </div>
+    <ChatHistoryDrawer open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </div>
   );
 }
