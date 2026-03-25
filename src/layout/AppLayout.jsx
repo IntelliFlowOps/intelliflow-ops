@@ -59,7 +59,7 @@ export default function AppLayout() {
       {open && (
         <div className="fixed inset-0 z-[200]">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-[300px] bg-[#08131f] shadow-[4px_0_40px_rgba(0,0,0,0.6)] flex flex-col">
+          <div className="absolute left-0 top-0 bottom-0 w-[300px] flex flex-col" style={{background: "linear-gradient(180deg, rgba(4,8,14,0.98) 0%, rgba(2,5,10,0.99) 100%)", backdropFilter: "blur(60px) saturate(200%)", WebkitBackdropFilter: "blur(60px) saturate(200%)", boxShadow: "8px 0 80px rgba(0,0,0,0.8), 32px 0 80px rgba(0,0,0,0.4), inset -1px 0 0 rgba(255,255,255,0.04)"}}>
 
             <div className="flex items-center justify-between px-5 py-5 border-b border-white/[0.04]">
               <div className="flex items-center gap-3">

@@ -285,15 +285,13 @@ export default function MarketersPage() {
           return (
             <div
               key={p.name}
-              className="rounded-[28px] p-5 backdrop-blur-2xl"
+              className="rounded-[24px] p-7 backdrop-blur-2xl"
               style={{
-                background: isSales
-                  ? "linear-gradient(145deg, rgba(99,102,241,0.07), rgba(6,182,212,0.04))"
-                  : "linear-gradient(145deg, rgba(6,182,212,0.07), rgba(2,132,199,0.04))",
-                border: isSales
-                  ? "1px solid rgba(99,102,241,0.18)"
-                  : "1px solid rgba(6,182,212,0.18)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+                background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                backdropFilter: "blur(40px) saturate(180%)",
+                WebkitBackdropFilter: "blur(40px) saturate(180%)",
+                boxShadow: "0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
               }}
             >
               <div className="mb-4 flex items-center justify-between">
@@ -336,15 +334,15 @@ export default function MarketersPage() {
 
               <button
                 onClick={() => unlock(p.name)}
-                className="mt-3 w-full rounded-2xl py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+                className="mt-3 w-full rounded-2xl py-2.5 text-sm font-medium transition-all duration-200"
                 style={{
-                  background: isSales
-                    ? "linear-gradient(135deg, #4f46e5, #6366f1)"
-                    : "linear-gradient(135deg, #0891b2, #06b6d4)",
-                  boxShadow: isSales
-                    ? "0 2px 16px rgba(99,102,241,0.3)"
-                    : "0 2px 16px rgba(6,182,212,0.3)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(6,182,212,0.2)",
+                  color: "rgba(6,182,212,0.9)",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.35)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; }}
               >
                 Unlock
               </button>
@@ -363,11 +361,13 @@ export default function MarketersPage() {
           return (
             <div
               key={p.name}
-              className="rounded-[28px] p-5 backdrop-blur-2xl"
+              className="rounded-[24px] p-7 backdrop-blur-2xl"
               style={{
-                background: "linear-gradient(145deg, rgba(99,102,241,0.07), rgba(6,182,212,0.04))",
-                border: "1px solid rgba(99,102,241,0.18)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+                background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                backdropFilter: "blur(40px) saturate(180%)",
+                WebkitBackdropFilter: "blur(40px) saturate(180%)",
+                boxShadow: "0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
               }}
             >
               <div className="mb-4 flex items-center justify-between">
@@ -401,11 +401,15 @@ export default function MarketersPage() {
               )}
               <button
                 onClick={() => unlock(p.name)}
-                className="mt-3 w-full rounded-2xl py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
+                className="mt-3 w-full rounded-2xl py-2.5 text-sm font-medium transition-all duration-200"
                 style={{
-                  background: "linear-gradient(135deg, #4f46e5, #6366f1)",
-                  boxShadow: "0 2px 16px rgba(99,102,241,0.3)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(6,182,212,0.2)",
+                  color: "rgba(6,182,212,0.9)",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(6,182,212,0.08)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.35)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.borderColor = "rgba(6,182,212,0.2)"; }}
               >
                 Unlock
               </button>
@@ -418,10 +422,13 @@ export default function MarketersPage() {
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div
-            className="relative w-full max-w-2xl rounded-[32px] p-6 shadow-[0_32px_100px_rgba(0,0,0,0.6)]"
+            className="relative w-full max-w-2xl rounded-[28px] p-7"
             style={{
-              background: "linear-gradient(145deg, #06101a, #080f1c)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              background: "linear-gradient(160deg, rgba(10,14,20,0.97) 0%, rgba(6,10,16,0.98) 100%)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              backdropFilter: "blur(60px) saturate(200%)",
+              WebkitBackdropFilter: "blur(60px) saturate(200%)",
+              boxShadow: "0 48px 100px rgba(0,0,0,0.7), 0 16px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)",
               maxHeight: "90vh",
               overflowY: "auto",
             }}
