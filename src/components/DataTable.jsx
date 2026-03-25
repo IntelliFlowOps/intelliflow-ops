@@ -118,21 +118,24 @@ export default function DataTable({
                     key={rowKey}
                     onClick={() => handleRowClick(row, idx)}
                     onDoubleClick={() => handleRowDoubleClick(row, idx)}
-                    className={`transition-all duration-150 ${
+                    className={`group/row relative transition-all duration-150 ${
                       isInteractive ? 'cursor-pointer' : ''
                     } ${
                       isSelected
-                        ? 'bg-cyan-400/[0.06] scale-[1.002]'
+                        ? 'bg-cyan-400/[0.07]'
                         : isInteractive
-                        ? 'hover:bg-white/[0.03] hover:scale-[1.003] hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)]'
-                        : 'hover:bg-white/[0.02]'
+                        ? 'hover:bg-white/[0.025]'
+                        : 'hover:bg-white/[0.015]'
                     }`}
                   >
                     {cols.map((col) => (
                       <td
                         key={col.key}
-                        className="px-4 py-3 text-zinc-300 whitespace-nowrap"
+                        className={`px-4 py-3 whitespace-nowrap transition-colors duration-150 ${col.key === cols[0].key ? 'relative' : ''} ${isSelected ? 'text-zinc-100' : 'text-zinc-300 group-hover/row:text-zinc-100'}`}
                       >
+                        {col.key === cols[0].key && (
+                          <span className={`pointer-events-none absolute left-0 top-[10%] h-[80%] w-[2px] rounded-r-full bg-gradient-to-b from-cyan-400 to-cyan-600 transition-opacity duration-150 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}`} />
+                        )}
                         {STATUS_COLUMNS.includes(col.label || col.key) ? (
                           <StatusBadge status={row[col.key]} />
                         ) : col.render ? (

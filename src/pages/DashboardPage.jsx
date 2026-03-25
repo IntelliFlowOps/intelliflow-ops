@@ -9,8 +9,7 @@ import EmptyState from '../components/EmptyState.jsx';
 export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');
   const [showGoalActions, setShowGoalActions] = useState(false);
-  const [celebrating, setCelebrating] = useState(false);
-  const [prevMilestone, setPrevMilestone] = useState(null);
+  const [goalDismissed, setGoalDismissed] = useState(false);
 
   const safeDashboard =
     dashboard && typeof dashboard === 'object' ? dashboard : {};
@@ -172,17 +171,37 @@ export default function DashboardPage() {
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}
 
-      <section className={`relative overflow-hidden rounded-[24px] px-4 py-4 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.16)] transition-all duration-700 ${
-        goal.isHit
-          ? 'bg-cyan-500/[0.08] shadow-[0_0_40px_rgba(34,211,238,0.15)] ring-1 ring-cyan-400/20'
+      <section className={`relative overflow-hidden rounded-[24px] px-4 py-4 backdrop-blur-2xl transition-all duration-700 ${
+        goal.isHit && !goalDismissed
+          ? 'ring-1 ring-cyan-400/30'
           : 'bg-white/[0.035]'
-      }`}>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.08),transparent_28%)]" />
+      }`}
+        style={goal.isHit && !goalDismissed ? {
+          background: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(2,132,199,0.08), rgba(16,185,129,0.06))",
+          boxShadow: "0 0 60px rgba(6,182,212,0.12), 0 10px 30px rgba(0,0,0,0.2)"
+        } : {boxShadow: "0 10px 30px rgba(0,0,0,0.16)"}}>
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.07),transparent_28%)]" />
 
-        {goal.isHit && (
-          <div className="relative z-[1] mb-4 rounded-[18px] bg-cyan-400/[0.08] border border-cyan-400/20 px-4 py-3 text-center">
-            <div className="text-sm font-semibold text-cyan-300">🎯 Milestone Hit — {goal.badge}</div>
-            <div className="text-xs text-cyan-400/70 mt-0.5">Next milestone unlocked. Keep pushing.</div>
+        {goal.isHit && !goalDismissed && (
+          <div className="relative z-[1] mb-4 rounded-[18px] px-4 py-4 flex items-center justify-between gap-4"
+            style={{background: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(16,185,129,0.1))", border: "1px solid rgba(6,182,212,0.25)"}}>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
+                style={{background: "linear-gradient(135deg, #0891b2, #10b981)", boxShadow: "0 0 20px rgba(6,182,212,0.3)"}}>
+                ✓
+              </div>
+              <div>
+                <div className="text-sm font-semibold text-white">Milestone Reached</div>
+                <div className="text-xs text-cyan-300/80 mt-0.5">Next target is now unlocked. Keep pushing.</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setGoalDismissed(true)}
+              className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:opacity-80"
+              style={{background: "linear-gradient(135deg, #0891b2, #0e7490)", boxShadow: "0 2px 12px rgba(6,182,212,0.3)"}}>
+              Move to Next Goal →
+            </button>
           </div>
         )}
 
