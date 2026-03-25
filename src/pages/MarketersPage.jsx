@@ -9,6 +9,7 @@ const PEOPLE = [
   { name: "Wyatt", role: "Marketer" },
   { name: "ED", role: "Sales" },
   { name: "Micah", role: "Sales" },
+  { name: "Justin", role: "Sales" },
 ];
 
 const PIN_MAP = {
@@ -16,6 +17,7 @@ const PIN_MAP = {
   Wyatt: "2654",
   ED: "1876",
   Micah: "9789",
+  Justin: "4535",
 };
 
 const money = (v) =>
@@ -32,7 +34,7 @@ function belongs(row, person) {
     return String(row["Direct Marketer"] || "").trim() === person;
   }
 
-  if (person === "ED" || person === "Micah") {
+  if (person === "ED" || person === "Micah" || person === "Justin") {
     return String(row["Sales Rep"] || "").trim() === person;
   }
 
@@ -48,7 +50,7 @@ function unpaid(row) {
 function commission(row, person) {
   if (person === "Emma") return money(row["Emma Commission"]);
   if (person === "Wyatt") return money(row["Wyatt Commission"]);
-  if (person === "ED" || person === "Micah") return money(row["Sales Commission"]);
+  if (person === "ED" || person === "Micah" || person === "Justin") return money(row["Sales Commission"]);
   return 0;
 }
 
@@ -57,7 +59,7 @@ function base(row) {
 }
 
 function rate(row, person) {
-  if (person === "ED" || person === "Micah") {
+  if (person === "ED" || person === "Micah" || person === "Justin") {
     const r = money(row["Sales Rep Rate"]);
     return r <= 1 ? r * 100 : r;
   }
@@ -81,7 +83,7 @@ function explanation(row, person) {
     row["Months Active / Paid Month"] ||
     "—";
 
-  if (person === "ED" || person === "Micah") {
+  if (person === "ED" || person === "Micah" || person === "Justin") {
     return `${customer} → ${fmt(base(row))} × ${rate(row, person)}% = ${fmt(
       commission(row, person)
     )} (paid month ${month} of 6)`;
@@ -166,6 +168,7 @@ export default function MarketersPage() {
     Wyatt: "",
     ED: "",
     Micah: "",
+    Justin: "",
   });
 
   const [pinErrors, setPinErrors] = useState({
@@ -173,6 +176,7 @@ export default function MarketersPage() {
     Wyatt: "",
     ED: "",
     Micah: "",
+    Justin: "",
   });
 
   const [open, setOpen] = useState(null);
@@ -184,6 +188,7 @@ export default function MarketersPage() {
       Wyatt: buildSummary(ledger, "Wyatt"),
       ED: buildSummary(ledger, "ED"),
       Micah: buildSummary(ledger, "Micah"),
+      Justin: buildSummary(ledger, "Justin"),
     }),
     [ledger]
   );
@@ -206,12 +211,14 @@ export default function MarketersPage() {
       Wyatt: "",
       ED: "",
       Micah: "",
+      Justin: "",
     });
     setPinErrors({
       Emma: "",
       Wyatt: "",
       ED: "",
       Micah: "",
+      Justin: "",
     });
   }
 
