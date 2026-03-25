@@ -120,27 +120,24 @@ export default function AdAssistantPage() {
   function normalizeFiles(fileList) {
     const incoming = Array.from(fileList || []);
     const remainingSlots = MAX_ATTACHMENTS - attachments.length;
-
     if (remainingSlots <= 0) return;
-
-    const nextFiles = incoming.slice(0, remainingSlots).reduce((acc, file) => {
-      const tooLarge = file.size > MAX_FILE_SIZE_MB * 1024 * 1024;
-      if (tooLarge) return acc;
-
-      acc.push({
-        id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
-        name: file.name,
-        type: file.type || "application/octet-stream",
-        file,
-        previewUrl: file.type?.startsWith("image/") ? URL.createObjectURL(file) : "",
+    incoming.slice(0, remainingSlots)
+      .filter(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024)
+      .forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result.split(",")[1];
+          setAttachments((prev) => [...prev, {
+            id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+            name: file.name,
+            type: file.type || "application/octet-stream",
+            file,
+            previewUrl: file.type?.startsWith("image/") ? URL.createObjectURL(file) : "",
+            base64: file.type?.startsWith("image/") ? base64 : null,
+          }]);
+        };
+        reader.readAsDataURL(file);
       });
-
-      return acc;
-    }, []);
-
-    if (nextFiles.length) {
-      setAttachments((prev) => [...prev, ...nextFiles]);
-    }
   }
 
   function removeAttachment(id) {
@@ -227,6 +224,7 @@ export default function AdAssistantPage() {
           attachments: attachments.map((attachment) => ({
             name: attachment.name,
             type: attachment.type,
+            base64: attachment.base64 || null,
           })),
           context: buildFounderAssistantContext(data),
         }),
