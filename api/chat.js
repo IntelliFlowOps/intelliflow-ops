@@ -200,7 +200,7 @@ recommended next test variation
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1400 : 250) : 400,
+        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1400 : 600) : 800,
         system: systemPrompt,
         messages: [
           {
