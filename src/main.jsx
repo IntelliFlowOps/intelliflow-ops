@@ -11,6 +11,7 @@ import CreativeInsightsPage from './pages/CreativeInsightsPage.jsx';
 import CommissionsPage from './pages/CommissionsPage.jsx';
 import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
+import BusinessHealthPage from './pages/BusinessHealthPage.jsx';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
 import PayrollPage from './pages/PayrollPage.jsx';
@@ -37,6 +38,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="payroll" element={<PayrollPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="health" element={<BusinessHealthPage />} />
           </Route>
         </Routes>
         </ToastProvider>

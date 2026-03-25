@@ -14,6 +14,7 @@ const navItems = [
   { to: '/activity', label: 'Activity', icon: '◌' },
   { to: '/analytics', label: 'Analytics', icon: '◫' },
   { to: '/payroll', label: 'Payroll', icon: '◑' },
+  { to: '/health', label: 'Business Health', icon: '◎' },
 ];
 
 export default function AppLayout() {

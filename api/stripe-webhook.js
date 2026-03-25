@@ -82,9 +82,20 @@ async function upsertCustomer(sheets, { customerName, stripeCustomerId, plan, cl
   const statusCol = headers.findIndex(h => h.trim() === 'Status');
   const closeDateCol = headers.findIndex(h => h.trim() === 'Close Date');
   const planCol = headers.findIndex(h => h.trim() === 'MRR / Revenue');
-  if (statusCol >= 0) newRow[statusCol] = 'Onboarding';
+  const onboardDateCol = headers.findIndex(h => h.trim() === 'Onboard Date');
+  const leadSourceCol = headers.findIndex(h => h.trim() === 'Lead Source');
+  const nextRenewalCol = headers.findIndex(h => h.trim() === 'Next Renewal Date');
+  const commEligibleCol = headers.findIndex(h => h.trim() === 'Commission Eligible?');
+  if (statusCol >= 0) newRow[statusCol] = 'Active';
   if (closeDateCol >= 0) newRow[closeDateCol] = closeDate;
+  if (onboardDateCol >= 0) newRow[onboardDateCol] = closeDate;
   if (planCol >= 0) newRow[planCol] = plan === 'Starter' ? 299 : plan === 'Pro' ? 499 : 999;
+  if (commEligibleCol >= 0) newRow[commEligibleCol] = 'Yes';
+  if (nextRenewalCol >= 0) {
+    const renewal = new Date(closeDate);
+    renewal.setMonth(renewal.getMonth() + 1);
+    newRow[nextRenewalCol] = renewal.toISOString().split('T')[0];
+  }
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SHEET_ID,
@@ -93,6 +104,40 @@ async function upsertCustomer(sheets, { customerName, stripeCustomerId, plan, cl
     insertDataOption: 'INSERT_ROWS',
     requestBody: { values: [newRow] },
   });
+}
+
+async function updateCustomerByStripeId(sheets, stripeCustomerId, updates) {
+  const rows = await getSheetRows(sheets, CUSTOMERS_TAB);
+  const headerIdx = await findHeaderRow(rows, 'Customer Name');
+  const headers = rows[headerIdx] || [];
+  const stripeCol = headers.findIndex(h => h.trim() === 'Stripe Customer ID');
+  if (stripeCol < 0) return;
+
+  const rowIdx = rows.findIndex((r, i) =>
+    i > headerIdx && (r[stripeCol] || '').trim() === stripeCustomerId
+  );
+  if (rowIdx < 0) return;
+
+  const sheetRowNum = rowIdx + 1;
+  const batchUpdates = [];
+  for (const [colName, value] of Object.entries(updates)) {
+    const colIdx = headers.findIndex(h => h.trim() === colName);
+    if (colIdx < 0) continue;
+    const col = colToLetter(colIdx);
+    batchUpdates.push({ range: `${CUSTOMERS_TAB}!${col}${sheetRowNum}`, values: [[value]] });
+  }
+  if (batchUpdates.length > 0) {
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: { valueInputOption: 'USER_ENTERED', data: batchUpdates },
+    });
+  }
+}
+
+function colToLetter(colIdx) {
+  let l = '', n = colIdx + 1;
+  while (n > 0) { const r = (n-1)%26; l = String.fromCharCode(65+r)+l; n = Math.floor((n-1)/26); }
+  return l;
 }
 
 export const config = { api: { bodyParser: false } };
@@ -125,8 +170,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: `Webhook error: ${err.message}` });
   }
 
-  if (event.type !== 'invoice.payment_succeeded') {
+  const HANDLED_EVENTS = ['invoice.payment_succeeded', 'customer.subscription.deleted', 'invoice.paid'];
+  if (!HANDLED_EVENTS.includes(event.type)) {
     return res.status(200).json({ received: true, skipped: true });
+  }
+
+  // ── Handle subscription cancellation ──────────────────────────────────────
+  if (event.type === 'customer.subscription.deleted') {
+    try {
+      const sub = event.data.object;
+      const stripeCustomerId = sub.customer;
+      const cancelDate = new Date(sub.canceled_at * 1000).toISOString().split('T')[0];
+      const auth = await getAuth();
+      const sheets = google.sheets({ version: 'v4', auth });
+      await updateCustomerByStripeId(sheets, stripeCustomerId, {
+        'Status': 'Churned',
+        'Last Payment Date': cancelDate,
+      });
+      console.log(`Marked customer ${stripeCustomerId} as Churned`);
+      return res.status(200).json({ received: true, event: 'cancellation_processed' });
+    } catch (err) {
+      console.error('Cancellation handler error:', err);
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   try {
@@ -223,6 +289,15 @@ export default async function handler(req, res) {
 
     await appendLedgerRows(sheets, rowsToWrite);
     await upsertCustomer(sheets, { customerName, stripeCustomerId, plan: priceInfo?.plan || 'Unknown', closeDate: invoiceDate });
+
+    // Update Last Payment Date + Next Renewal Date on existing customer rows
+    const nextRenewal = new Date(invoiceDate);
+    nextRenewal.setMonth(nextRenewal.getMonth() + (interval === 'year' ? 12 : 1));
+    await updateCustomerByStripeId(sheets, stripeCustomerId, {
+      'Last Payment Date': invoiceDate,
+      'Next Renewal Date': nextRenewal.toISOString().split('T')[0],
+      'Status': 'Active',
+    });
 
     console.log(`Wrote ${rowsToWrite.length} row(s) for invoice ${invoiceId}`);
     return res.status(200).json({ received: true, rows: rowsToWrite.length });
