@@ -270,14 +270,20 @@ export default function AdAssistantPage() {
         dataResponse?.content ||
         "I couldn’t generate a response. Check the chat route and response shape.";
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: reply,
-          attachments: [],
-        },
-      ]);
+      const finalMessages = [...nextMessages, { role: "assistant", content: reply, attachments: [] }];
+      setMessages(finalMessages);
+      try {
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assistantType: "founder",
+            title: (trimmed || "Conversation").slice(0, 60),
+            messages: finalMessages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "[attachment]" })),
+            savedAt: new Date().toISOString(),
+          }),
+        });
+      } catch (_) {}
     } catch (error) {
       setMessages((prev) => [
         ...prev,

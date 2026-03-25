@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTabData } from "../hooks/useSheetData.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import { useToast } from "../components/Toast.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
 const FOUNDER_PIN = "2343";
@@ -199,11 +200,41 @@ export default function PayrollPage() {
   }
 
   function handlePayout(person) {
-    setPayoutConfirm(person);
+    validatePayout(person);
   }
 
   const [payoutProcessing, setPayoutProcessing] = useState(false);
   const [payoutResult, setPayoutResult] = useState(null);
+  const [validationWarnings, setValidationWarnings] = useState([]);
+  const [validationPerson, setValidationPerson] = useState(null);
+  const showToast = useToast();
+
+  function validatePayout(person) {
+    const isSales = ["ED", "Micah", "Justin"].includes(person);
+    const isMarketer = ["Emma", "Wyatt"].includes(person);
+    const warnings = [];
+    const unpaidLedger = isMarketer
+      ? ledgerRows.filter(r => r["Direct Marketer"] === person && !r["_isPaidOut"])
+      : ledgerRows.filter(r => r["Sales Rep"] === person && !r["_isPaidOut"]);
+    unpaidLedger.forEach(r => {
+      const attr = (r["Attribution Type"] || "").trim();
+      const comm = parseFloat(String(
+        person === "Emma" ? r["Emma Commission"] :
+        person === "Wyatt" ? r["Wyatt Commission"] :
+        r["Sales Commission"] || "0"
+      ).replace(/[^0-9.-]/g, "")) || 0;
+      const month = parseInt(String(r["Sales Rep Paid Month Count"] || "0").replace(/[^0-9]/g, "")) || 0;
+      const customer = r["Customer Name"] || "Unknown";
+      if (attr === "UNASSIGNED" || attr === "") warnings.push({ type: "error", msg: customer + " — no closer assigned yet" });
+      if (comm === 0) warnings.push({ type: "warning", msg: customer + " — commission is $0.00" });
+      if (isSales && month > 6) warnings.push({ type: "error", msg: customer + " — month " + month + " exceeds 6-month SALES window" });
+    });
+    const ids = unpaidLedger.map(r => (r["Invoice ID"] || "").trim()).filter(Boolean);
+    const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+    if (dupes.length > 0) warnings.push({ type: "error", msg: "Duplicate Invoice IDs: " + [...new Set(dupes)].join(", ") });
+    if (warnings.length > 0) { setValidationWarnings(warnings); setValidationPerson(person); }
+    else setPayoutConfirm(person);
+  }
 
   async function confirmPayout(person) {
     setPayoutProcessing(true);
@@ -217,8 +248,12 @@ export default function PayrollPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payout failed");
       setPayoutResult({ success: true, person, message: data.message, batchId: data.batchId });
+      showToast(person + " payout complete", "success");
+      showToast(`Payout complete — ${data.batchId}`, 'success');
     } catch (err) {
       setPayoutResult({ success: false, person, message: err.message });
+      showToast("Payout failed — check logs", "error");
+      showToast('Payout failed — check sheet permissions', 'error');
     } finally {
       setPayoutProcessing(false);
     }
@@ -302,6 +337,40 @@ export default function PayrollPage() {
           ))}
         </div>
       </div>
+
+      {validationWarnings.length > 0 && validationPerson && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[28px] p-6 space-y-4"
+            style={{background:"linear-gradient(160deg,rgba(10,14,20,0.97),rgba(6,10,16,0.98))",border:"1px solid rgba(255,255,255,0.07)",backdropFilter:"blur(60px)",boxShadow:"0 48px 100px rgba(0,0,0,0.7)"}}>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Review Before Paying {validationPerson}</h2>
+              <p className="text-xs text-zinc-500 mt-1">These issues were found. Fix them first or proceed anyway.</p>
+            </div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {validationWarnings.map((w, i) => (
+                <div key={i} className="rounded-xl px-3 py-2.5 text-xs flex items-start gap-2"
+                  style={{background:w.type==="error"?"rgba(239,68,68,0.08)":"rgba(245,158,11,0.08)",border:w.type==="error"?"1px solid rgba(239,68,68,0.2)":"1px solid rgba(245,158,11,0.2)",color:w.type==="error"?"#fca5a5":"#fcd34d"}}>
+                  <span className="shrink-0">{w.type === "error" ? "✕" : "⚠"}</span>
+                  <span>{w.msg}</span>
+                </div>
+              ))}
+            </div>
+            <p className="text-[10px] text-zinc-600">Rows with errors may calculate incorrectly if you proceed.</p>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => { setValidationWarnings([]); setValidationPerson(null); }}
+                className="flex-1 rounded-2xl py-2.5 text-sm text-zinc-300 transition hover:text-white"
+                style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)"}}>
+                Fix Issues First
+              </button>
+              <button type="button" onClick={() => { setValidationWarnings([]); setPayoutConfirm(validationPerson); setValidationPerson(null); }}
+                className="flex-1 rounded-2xl py-2.5 text-sm font-medium transition"
+                style={{background:"rgba(245,158,11,0.12)",border:"1px solid rgba(245,158,11,0.25)",color:"#fcd34d"}}>
+                Pay Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {payoutProcessing && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4">

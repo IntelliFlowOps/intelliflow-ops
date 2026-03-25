@@ -5,6 +5,7 @@ import ErrorBanner from '../components/ErrorBanner.jsx';
 import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { useTabData } from '../hooks/useSheetData.jsx';
+import { useToast } from '../components/Toast.jsx';
 
 const CLOSERS = ['Emma', 'Wyatt', 'ED', 'Micah', 'Justin', 'Founder'];
 
@@ -100,6 +101,7 @@ function DetailField({ label, value }) {
 
 export default function CustomersPage() {
   const { rows, loading, error } = useTabData('CUSTOMERS');
+  const showToast = useToast();
   const [selected, setSelected] = useState(null);
   const [assigningCloser, setAssigningCloser] = useState(false);
   const [selectedCloser, setSelectedCloser] = useState('');
@@ -121,6 +123,7 @@ export default function CustomersPage() {
       });
       if (!res.ok) throw new Error('Failed');
       setSaveStatus('saved');
+      showToast(`${selectedCloser} assigned as closer`, 'success');
       setTimeout(() => { setSaveStatus(''); setAssigningCloser(false); setSelectedCloser(''); }, 1500);
     } catch {
       setSaveStatus('error');

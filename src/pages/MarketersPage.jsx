@@ -79,6 +79,15 @@ function salesMonth(row) {
   return Math.max(1, Math.min(6, m || 1));
 }
 
+function buildRetainerSummary(retainerRows, person) {
+  const unpaid = retainerRows.filter(r =>
+    (r["Person"] || "").trim() === person &&
+    (!r["Paid Out?"] || r["Paid Out?"].trim().toLowerCase() !== "yes")
+  );
+  const total = unpaid.reduce((s, r) => s + (parseFloat(String(r["Amount"] || "0").replace(/[^0-9.-]/g, "")) || 0), 0);
+  return { total, rows: unpaid };
+}
+
 function buildSummary(rows, person) {
   const isSales = ["ED", "Micah", "Justin"].includes(person);
   const owned = rows.filter((r) => belongs(r, person));
@@ -232,11 +241,28 @@ function DirectClientCard({ row }) {
 
 export default function MarketersPage() {
   const { rows: ledger = [], loading, error } = useTabData("COMMISSION_LEDGER");
+  const { rows: retainer = [] } = useTabData("RETAINER_LEDGER");
 
   const [pins, setPins] = useState({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
   const [pinErrors, setPinErrors] = useState({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
   const [open, setOpen] = useState(null);
   const [showPaid, setShowPaid] = useState(false);
+
+  const retainerUnpaid = useMemo(() => {
+    const unpaidByPerson = {};
+    retainer.forEach(r => {
+      const person = (r["Person"] || "").trim();
+      const paid = (r["Paid Out?"] || "").trim().toLowerCase();
+      const batch = (r["Payout Batch"] || "").trim();
+      if (!paid || paid === "" || paid === "no") {
+        if (!batch) {
+          const amt = parseFloat(String(r["Amount"] || "0").replace(/[^0-9.-]/g, "")) || 0;
+          unpaidByPerson[person] = (unpaidByPerson[person] || 0) + amt;
+        }
+      }
+    });
+    return unpaidByPerson;
+  }, [retainer]);
 
   const sums = useMemo(() => ({
     Emma: buildSummary(ledger, "Emma"),
@@ -485,13 +511,25 @@ export default function MarketersPage() {
               <div
                 className="text-4xl font-bold tracking-tight"
                 style={{
-                  color: sums[open].total > 0
+                  color: (sums[open].total + (retainerUnpaid[open] || 0)) > 0
                     ? isSalesOpen ? "#a5b4fc" : "#67e8f9"
                     : "#3f3f46",
                 }}
               >
-                {fmt(sums[open].total)}
+                {fmt(sums[open].total + (retainerUnpaid[open] || 0))}
               </div>
+              {!isSalesOpen && retainerUnpaid[open] > 0 && (
+                <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2" style={{background:"rgba(6,182,212,0.06)",border:"1px solid rgba(6,182,212,0.12)"}}>
+                  <span className="text-xs text-zinc-500">Retainer</span>
+                  <span className="text-xs font-medium text-cyan-300">{fmt(retainerUnpaid[open])}</span>
+                </div>
+              )}
+              {!isSalesOpen && (
+                <div className="mt-1 flex items-center justify-between rounded-xl px-3 py-2" style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)"}}>
+                  <span className="text-xs text-zinc-500">Commission</span>
+                  <span className="text-xs font-medium text-zinc-300">{fmt(sums[open].total)}</span>
+                </div>
+              )}
               {sums[open].unpaidRows.length > 0 && (
                 <div className="mt-1 text-xs text-zinc-500">
                   {sums[open].unpaidRows.length} unpaid {sums[open].unpaidRows.length === 1 ? "entry" : "entries"}

@@ -15,6 +15,7 @@ import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
 import PayrollPage from './pages/PayrollPage.jsx';
 import CursorTrail from './components/CursorTrail.jsx';
+import { ToastProvider } from './components/Toast.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <DataProvider>
         <CursorTrail />
+        <ToastProvider>
         <Routes>
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
@@ -37,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="analytics" element={<AnalyticsPage />} />
           </Route>
         </Routes>
+        </ToastProvider>
       </DataProvider>
     </BrowserRouter>
   </React.StrictMode>

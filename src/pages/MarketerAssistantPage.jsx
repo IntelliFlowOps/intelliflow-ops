@@ -275,10 +275,21 @@ export default function MarketerAssistantPage() {
         nextMessages,
       });
 
-      setChatMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: reply, attachments: [], badge: "Chat" },
-      ]);
+      const newChatMsg = { role: "assistant", content: reply, attachments: [], badge: "Chat" };
+      setChatMessages((prev) => [...prev, newChatMsg]);
+      try {
+        const allMsgs = [...chatMessages, { role: "user", content: chatInput }, newChatMsg];
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assistantType: "marketer",
+            title: (chatInput || "Conversation").slice(0, 60),
+            messages: allMsgs.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "[attachment]" })),
+            savedAt: new Date().toISOString(),
+          }),
+        });
+      } catch (_) {}
     } catch {
       setChatMessages((prev) => [
         ...prev,
@@ -322,10 +333,21 @@ export default function MarketerAssistantPage() {
         nextMessages,
       });
 
-      setBuilderMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: reply, attachments: [], badge: "Build Ad" },
-      ]);
+      const newBuildMsg = { role: "assistant", content: reply, attachments: [], badge: "Build Ad" };
+      setBuilderMessages((prev) => [...prev, newBuildMsg]);
+      try {
+        const allMsgs = [...builderMessages, { role: "user", content: buildInput }, newBuildMsg];
+        await fetch("/api/history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assistantType: "marketer",
+            title: (buildInput || "Build Ad").slice(0, 60),
+            messages: allMsgs.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "[attachment]" })),
+            savedAt: new Date().toISOString(),
+          }),
+        });
+      } catch (_) {}
     } catch {
       setBuilderMessages((prev) => [
         ...prev,
