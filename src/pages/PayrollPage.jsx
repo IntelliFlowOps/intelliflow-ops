@@ -202,11 +202,65 @@ export default function PayrollPage() {
     setPayoutConfirm(person);
   }
 
+  const [payoutInstructions, setPayoutInstructions] = useState(null);
+  const [copied, setCopied] = useState(false);
+
   function confirmPayout(person) {
     const month = currentMonthLabel();
+    const next = nextMonthLabel();
+    const isMarketer = person === "Emma" || person === "Wyatt";
     const batchId = "PAY-" + new Date().toISOString().slice(0, 7) + "-" + person.toUpperCase();
-    alert("Mark " + person + " as paid out for " + month + ".\n\nBatch ID: " + batchId + "\n\nTell your agent:\n1. In RETAINER_LEDGER, set Paid Out? = Yes and Payout Batch = " + batchId + " for all unpaid " + person + " rows.\n2. In Commission_Ledger, set Paid Out? = Yes and Payout Batch / Month = " + batchId + " for all unpaid " + person + " rows.\n3. Add a new " + person + " retainer row for " + nextMonthLabel() + " in RETAINER_LEDGER.");
+    const d = new Date();
+    const nextFirst = new Date(d.getFullYear(), d.getMonth() + 1, 1).toISOString().slice(0, 10);
+
+    let instructions = "Process payout for " + person + " — Batch ID: " + batchId + "\n\n";
+
+    if (isMarketer) {
+      instructions += "STEP 1 — RETAINER_LEDGER\n";
+      instructions += "Find all rows where Person = " + person + " and Paid Out? is blank.\n";
+      instructions += "Set Paid Out? = Yes\n";
+      instructions += "Set Payout Batch = " + batchId + "\n\n";
+      instructions += "Then append a new retainer row:\n";
+      instructions += "Date: " + nextFirst + "\n";
+      instructions += "Person: " + person + "\n";
+      instructions += "Amount: 200\n";
+      instructions += "Month: " + next + "\n";
+      instructions += "Payment Type: Retainer\n";
+      instructions += "Payment Method: Check\n";
+      instructions += "Paid Out?: (blank)\n";
+      instructions += "Notes: Contract Labor – Marketer Retainer\n\n";
+    }
+
+    instructions += (isMarketer ? "STEP 2" : "STEP 1") + " — COMMISSION_LEDGER\n";
+    if (isMarketer) {
+      instructions += "Find all rows where Direct Marketer = " + person + " and Paid Out? is blank.\n";
+    } else {
+      instructions += "Find all rows where Sales Rep = " + person + " and Paid Out? is blank.\n";
+    }
+    instructions += "Set Paid Out? = Yes\n";
+    instructions += "Set Payout Batch / Month = " + batchId + "\n\n";
+
+    instructions += (isMarketer ? "STEP 3" : "STEP 2") + " — PAYOUT_BATCHES\n";
+    instructions += "Append one row:\n";
+    instructions += "Batch ID: " + batchId + "\n";
+    instructions += "Person: " + person + "\n";
+    instructions += "Role: " + (isMarketer ? "Marketer" : "Sales") + "\n";
+    instructions += "Paid Date: " + new Date().toISOString().slice(0, 10) + "\n";
+    instructions += "Method: Check\n";
+    instructions += "Notes: " + month + " payout\n\n";
+    instructions += "Complete all steps in one session. Confirm when done.";
+
+    setPayoutInstructions({ person, batchId, month, text: instructions });
     setPayoutConfirm(null);
+  }
+
+  function copyInstructions() {
+    if (payoutInstructions) {
+      navigator.clipboard.writeText(payoutInstructions.text).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
   }
 
   if (!unlocked) {
@@ -293,27 +347,37 @@ export default function PayrollPage() {
           <div className="w-full max-w-sm rounded-[28px] border border-white/10 bg-[#0b0b0f]/95 p-6 space-y-4">
             <h2 className="text-lg font-semibold text-white">Confirm Payout</h2>
             <p className="text-sm text-slate-400">
-              This will mark all unpaid commissions and retainer for <strong className="text-white">{payoutConfirm}</strong> as paid for {currentMonthLabel()}.
+              Mark all unpaid amounts for <strong className="text-white">{payoutConfirm}</strong> as paid for {currentMonthLabel()}.
             </p>
             <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-              After confirming, follow the instructions shown to update your Google Sheet via your agent.
+              After confirming, copy the agent instructions and paste them to your sheet agent.
             </p>
             <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setPayoutConfirm(null)}
-                className="flex-1 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => confirmPayout(payoutConfirm)}
-                className="flex-1 rounded-2xl bg-cyan-400/15 border border-cyan-400/30 px-4 py-2.5 text-sm font-medium text-cyan-100 hover:bg-cyan-400/25 transition"
-              >
-                Confirm Pay Out
-              </button>
+              <button type="button" onClick={() => setPayoutConfirm(null)} className="flex-1 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition">Cancel</button>
+              <button type="button" onClick={() => confirmPayout(payoutConfirm)} className="flex-1 rounded-2xl bg-cyan-400/15 border border-cyan-400/30 px-4 py-2.5 text-sm font-medium text-cyan-100 hover:bg-cyan-400/25 transition">Generate Instructions</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {payoutInstructions && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-lg rounded-[28px] border border-white/10 bg-[#0b0b0f]/95 p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Agent Instructions — {payoutInstructions.person}</h2>
+              <button type="button" onClick={() => setPayoutInstructions(null)} className="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+            <p className="text-xs text-slate-400">Copy everything below and paste it to your sheet agent exactly as written.</p>
+            <div className="rounded-xl bg-black/40 border border-white/10 p-4 max-h-64 overflow-y-auto">
+              <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono">{payoutInstructions.text}</pre>
+            </div>
+            <button
+              type="button"
+              onClick={copyInstructions}
+              className="w-full rounded-2xl bg-cyan-400/15 border border-cyan-400/30 px-4 py-3 text-sm font-medium text-cyan-100 hover:bg-cyan-400/25 transition"
+            >
+              {copied ? "Copied!" : "Copy to Clipboard"}
+            </button>
           </div>
         </div>
       )}
