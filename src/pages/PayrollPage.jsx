@@ -44,7 +44,7 @@ function getUnpaidCommissions(ledgerRows, person) {
       r["Direct Marketer"] === person && !r["_isPaidOut"]
     );
   }
-  if (person === "ED" || person === "Micah") {
+  if (person === "ED" || person === "Micah" || person === "Justin") {
     return ledgerRows.filter(r =>
       r["Sales Rep"] === person && !r["_isPaidOut"]
     );
@@ -244,7 +244,7 @@ export default function PayrollPage() {
           <button
             type="button"
             onClick={unlock}
-            className="w-full rounded-2xl bg-white text-black py-3 font-semibold transition hover:opacity-90"
+            className="w-full rounded-2xl py-3 text-sm font-medium transition-all duration-200" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(6,182,212,0.2)",color:"rgba(6,182,212,0.9)"}}
           >
             Unlock
           </button>
@@ -289,7 +289,7 @@ export default function PayrollPage() {
       <div>
         <div className="text-xs uppercase tracking-[0.18em] text-slate-500 mb-3">Sales</div>
         <div className="grid gap-4 md:grid-cols-2">
-          {["ED", "Micah"].map(person => (
+          {["ED", "Micah", "Justin"].map(person => (
             <PersonCard
               key={person}
               person={person}
