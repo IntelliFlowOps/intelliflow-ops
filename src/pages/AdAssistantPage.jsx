@@ -124,19 +124,37 @@ export default function AdAssistantPage() {
     incoming.slice(0, remainingSlots)
       .filter(file => file.size <= MAX_FILE_SIZE_MB * 1024 * 1024)
       .forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const base64 = e.target.result.split(",")[1];
-          setAttachments((prev) => [...prev, {
-            id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
-            name: file.name,
-            type: file.type || "application/octet-stream",
-            file,
-            previewUrl: file.type?.startsWith("image/") ? URL.createObjectURL(file) : "",
-            base64: file.type?.startsWith("image/") ? base64 : null,
-          }]);
-        };
-        reader.readAsDataURL(file);
+        if (file.type?.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              const MAX_DIM = 1024;
+              let w = img.width;
+              let h = img.height;
+              if (w > MAX_DIM || h > MAX_DIM) {
+                if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+                else { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+              }
+              canvas.width = w;
+              canvas.height = h;
+              canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+              const compressed = canvas.toDataURL("image/jpeg", 0.7);
+              const base64 = compressed.split(",")[1];
+              setAttachments((prev) => [...prev, {
+                id: `${file.name}-${file.size}-${Date.now()}-${Math.random()}`,
+                name: file.name,
+                type: "image/jpeg",
+                file,
+                previewUrl: URL.createObjectURL(file),
+                base64,
+              }]);
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
       });
   }
 
