@@ -13,6 +13,7 @@ export default async function handler(req, res) {
       niche,
       context,
       memories,
+      attachments,
     } = req.body || {};
 
     const founderPrompt = `
