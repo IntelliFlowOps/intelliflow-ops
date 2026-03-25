@@ -10,65 +10,54 @@ const MAX_FILE_SIZE_MB = 8;
 
 function MessageBubble({ role, content, attachments = [], badge }) {
   const isUser = role === "user";
-
   return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"}`}>
+    <div className={["flex w-full items-end gap-2 message-enter", isUser ? "justify-end" : "justify-start"].join(" ")}>
+      {!isUser && (
+        <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300"
+          style={{background:"linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))",border:"1px solid rgba(6,182,212,0.25)"}}>
+          IF
+        </div>
+      )}
       <div
-        className={`relative max-w-[84%] overflow-hidden rounded-[34px] px-5 py-4 text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200 ${
-          isUser
-            ? "bg-white/[0.05] text-white shadow-[0_24px_70px_rgba(0,0,0,0.35)]"
-            : "bg-cyan-300/[0.06] text-slate-100 shadow-[0_26px_90px_rgba(34,211,238,0.10)]"
-        }`}
+        className={["relative max-w-[78%] text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200", isUser ? "rounded-[28px] rounded-br-[8px] px-5 py-3.5 text-white" : "rounded-[28px] rounded-bl-[8px] px-5 py-3.5 text-slate-100"].join(" ")}
+        style={isUser ? {
+          background: "linear-gradient(135deg,#0e7490,#0891b2)",
+          boxShadow: "0 4px 24px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.1)"
+        } : {
+          background: "linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))",
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.04)"
+        }}
       >
-        <div className="pointer-events-none absolute inset-0 rounded-[34px] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),transparent_35%,rgba(34,211,238,0.05))]" />
-        <div className="pointer-events-none absolute inset-[1px] rounded-[33px] bg-[linear-gradient(180deg,rgba(255,255,255,0.025),transparent_26%,transparent_72%,rgba(255,255,255,0.018))]" />
-
-        {!isUser && (
-          <>
-            <div className="pointer-events-none absolute -left-8 top-0 h-20 w-20 rounded-full bg-cyan-300/10 blur-2xl" />
-            <div className="pointer-events-none absolute bottom-0 right-0 h-16 w-16 rounded-full bg-sky-300/8 blur-2xl" />
-          </>
-        )}
-
         <div className="relative z-10">
           {badge && !isUser && (
             <div className="mb-2">
-              <span className="rounded-full bg-cyan-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-100/80">
-                {badge}
-              </span>
+              <span className="rounded-full bg-cyan-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-cyan-100/80">{badge}</span>
             </div>
           )}
-
           {attachments.length > 0 && (
             <div className="mb-3 grid grid-cols-2 gap-2">
               {attachments.map((attachment) => (
-                <div
-                  key={attachment.id}
-                  className="overflow-hidden rounded-2xl bg-white/[0.05] shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl"
-                >
+                <div key={attachment.id} className="overflow-hidden rounded-2xl bg-white/[0.05] shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl">
                   {attachment.previewUrl && attachment.type?.startsWith("image/") ? (
-                    <img
-                      src={attachment.previewUrl}
-                      alt={attachment.name}
-                      className="h-28 w-full object-cover"
-                    />
+                    <img src={attachment.previewUrl} alt={attachment.name} className="h-28 w-full object-cover" />
                   ) : (
-                    <div className="flex h-28 items-center justify-center px-3 text-center text-xs text-slate-300">
-                      {attachment.name}
-                    </div>
+                    <div className="flex h-28 items-center justify-center px-3 text-center text-xs text-slate-300">{attachment.name}</div>
                   )}
-
-                  <div className="px-2 py-1 text-[11px] text-slate-300 truncate">
-                    {attachment.name}
-                  </div>
+                  <div className="px-2 py-1 text-[11px] text-slate-300 truncate">{attachment.name}</div>
                 </div>
               ))}
             </div>
           )}
-
           <div>{content}</div>
         </div>
       </div>
+      {isUser && (
+        <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-white"
+          style={{background:"linear-gradient(135deg,#0e7490,#0891b2)",border:"1px solid rgba(6,182,212,0.4)"}}>
+          U
+        </div>
+      )}
     </div>
   );
 }
