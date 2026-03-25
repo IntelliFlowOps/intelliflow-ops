@@ -108,8 +108,7 @@ export default function CommissionsPage() {
 
       <section>
         <div className="card p-4 text-sm text-zinc-400">
-          This page is for internal ledger operations only. Emma, Wyatt, ED, and Micah should only see
-          their own payout math inside Individual Commissions after PIN unlock.
+          This page is for internal ledger operations only. Each team member views only their own commission math inside Individual Commissions after PIN unlock.
         </div>
       </section>
 

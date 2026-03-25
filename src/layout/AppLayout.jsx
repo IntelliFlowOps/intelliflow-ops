@@ -25,7 +25,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-[#07111f] text-white">
 
       {/* Top bar — always visible */}
-      <div className="sticky top-0 z-[100] flex items-center gap-4 border-b border-white/[0.04] bg-[#08131f]/80 px-4 py-3 backdrop-blur-2xl">
+      <div className="sticky top-0 z-[100] flex items-center gap-4 px-4 py-3 backdrop-blur-2xl" style={{borderBottom: "1px solid rgba(255,255,255,0.04)", background: "rgba(2,6,12,0.85)"}}>
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -38,12 +38,12 @@ export default function AppLayout() {
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px] bg-[#0a1a2b]">
-            <img src="/logo.png" alt="IntelliFlow" className="max-h-7 max-w-7 object-contain" />
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px]" style={{background: "linear-gradient(135deg, #020c18, #040f1e)", border: "1px solid rgba(6,182,212,0.2)", boxShadow: "0 0 12px rgba(6,182,212,0.1)"}}>
+            <img src="/logo.png" alt="IntelliFlow" className="max-h-7 max-w-7 object-contain" onError={(e) => { e.target.style.display="none"; e.target.parentNode.innerHTML='<span style="font-size:11px;font-weight:700;color:#06b6d4;letter-spacing:-0.5px">IF</span>'; }} />
           </div>
           <div className="hidden sm:block">
-            <div className="text-sm font-semibold text-white leading-none">IntelliFlow</div>
-            <div className="text-[10px] tracking-[0.2em] text-cyan-200/50 uppercase mt-0.5">Communications</div>
+            <div className="text-sm font-semibold text-white leading-none tracking-tight">IntelliFlow</div>
+            <div className="text-[10px] tracking-[0.22em] uppercase mt-0.5" style={{color: "rgba(6,182,212,0.5)"}}>Communications</div>
           </div>
         </div>
 
