@@ -180,13 +180,15 @@ export default function MarketerAssistantPage() {
   }, [chatAttachments, buildAttachments]);
 
   function addChatFiles(fileList) {
-    const nextFiles = buildAttachmentObjects(fileList, chatAttachments);
-    if (nextFiles.length) setChatAttachments((prev) => [...prev, ...nextFiles]);
+    buildAttachmentObjects(fileList, chatAttachments, (file) => {
+      setChatAttachments((prev) => [...prev, file]);
+    });
   }
 
   function addBuildFiles(fileList) {
-    const nextFiles = buildAttachmentObjects(fileList, buildAttachments);
-    if (nextFiles.length) setBuildAttachments((prev) => [...prev, ...nextFiles]);
+    buildAttachmentObjects(fileList, buildAttachments, (file) => {
+      setBuildAttachments((prev) => [...prev, file]);
+    });
   }
 
   function removeChatAttachment(id) {
@@ -228,6 +230,7 @@ export default function MarketerAssistantPage() {
         attachments: attachments.map((attachment) => ({
           name: attachment.name,
           type: attachment.type,
+          base64: attachment.base64 || null,
         })),
       }),
     });
