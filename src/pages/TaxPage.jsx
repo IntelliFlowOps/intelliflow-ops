@@ -74,6 +74,43 @@ export default function TaxPage() {
     setFirstYearChecks(updated);
     try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
   }
+  const [taxChat, setTaxChat] = useState([{ role: 'assistant', content: 'Ask me anything about legally minimizing your tax bill — deductions you might be missing, S-Corp timing, retirement accounts, write-off strategies, or anything else. I know your business specifically.' }]);
+  const [taxInput, setTaxInput] = useState('');
+  const [taxLoading, setTaxLoading] = useState(false);
+  const [taxChatOpen, setTaxChatOpen] = useState(false);
+
+  async function sendTaxMessage() {
+    if (!taxInput.trim() || taxLoading) return;
+    const msg = taxInput.trim();
+    setTaxInput('');
+    const next = [...taxChat, { role: 'user', content: msg }];
+    setTaxChat(next);
+    setTaxLoading(true);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assistantType: 'tax',
+          message: msg,
+          messages: next,
+          context: {
+            revenue: taxData.revenue,
+            expenses: taxData.expenseTotal,
+            netProfit: taxData.netProfit,
+            eachShare: taxData.eachShare,
+            contractors: taxData.contractors,
+            year: selectedYear,
+          },
+        }),
+      });
+      const d = await res.json();
+      setTaxChat(prev => [...prev, { role: 'assistant', content: d.reply || 'No response.' }]);
+    } catch {
+      setTaxChat(prev => [...prev, { role: 'assistant', content: 'Connection error — try again.' }]);
+    } finally { setTaxLoading(false); }
+  }
+
   const [expenseModal, setExpenseModal] = useState(false);
   const [distModal, setDistModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -145,17 +182,40 @@ export default function TaxPage() {
     const netProfit = revenue - expenseTotal - contractorTotal;
     const eachShare = netProfit * 0.5;
 
-    // Tax estimates (cash basis LLC, Indiana)
+    // Tax estimates — 2026 accurate rates
     // Self-employment tax: 15.3% on 92.35% of net SE income
     const seTax = eachShare > 0 ? eachShare * 0.9235 * 0.153 : 0;
-    const seDeduction = seTax / 2; // above-the-line deduction
-    const federalTaxableIncome = eachShare - seDeduction;
-    // Federal income tax estimate — 22% bracket for under $50k (simplified)
-    const federalRate = federalTaxableIncome < 41775 ? 0.12 : 0.22;
-    const federalTax = federalTaxableIncome > 0 ? federalTaxableIncome * federalRate : 0;
-    // Indiana flat 3.05%
-    const stateTax = eachShare > 0 ? eachShare * 0.0305 : 0;
-    const totalPersonalTax = seTax + federalTax + stateTax;
+    const seDeduction = seTax / 2; // 50% SE deduction above-the-line
+
+    // QBI deduction: 20% of qualified business income (LLC pass-through qualifies)
+    const qbiDeduction = eachShare > 0 ? eachShare * 0.20 : 0;
+
+    // Standard deduction 2026 (single filer)
+    const standardDeduction = 16100;
+
+    // Federal taxable income after all deductions
+    const federalAGI = eachShare - seDeduction;
+    const federalTaxableIncome = Math.max(0, federalAGI - qbiDeduction - standardDeduction);
+
+    // 2026 federal brackets (single filer) — progressive calculation
+    function calcFederalTax(income) {
+      if (income <= 0) return 0;
+      let tax = 0;
+      if (income > 105700) { tax += (income - 105700) * 0.24; income = 105700; }
+      if (income > 50400)  { tax += (income - 50400)  * 0.22; income = 50400; }
+      if (income > 12400)  { tax += (income - 12400)  * 0.12; income = 12400; }
+      tax += income * 0.10;
+      return tax;
+    }
+    const federalTax = calcFederalTax(federalTaxableIncome);
+
+    // Indiana state tax 2026: 3.0% flat
+    const stateTax = eachShare > 0 ? eachShare * 0.030 : 0;
+
+    // Allen County local income tax: 1.59%
+    const countyTax = eachShare > 0 ? eachShare * 0.0159 : 0;
+
+    const totalPersonalTax = seTax + federalTax + stateTax + countyTax;
     const quarterlyPayment = totalPersonalTax / 4;
 
     return {
@@ -699,9 +759,9 @@ export default function TaxPage() {
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Self-Employment Tax', value: fmt(taxData.seTax), note: '15.3% on 92.35% of share' },
-                { label: 'Federal Income Tax', value: fmt(taxData.federalTax), note: '12% bracket estimate' },
-                { label: 'Indiana State Tax', value: fmt(taxData.stateTax), note: '3.05% flat rate' },
-                { label: 'Quarterly Payment', value: fmt(taxData.quarterlyPayment), note: 'Pay 4x per year' },
+                { label: 'Federal Income Tax', value: fmt(taxData.federalTax), note: 'Progressive brackets + QBI deduction' },
+                { label: 'Indiana + County Tax', value: fmt((taxData.stateTax || 0) + (taxData.countyTax || 0)), note: '3.0% state + 1.59% Allen County' },
+                { label: 'Quarterly Payment', value: fmt(taxData.quarterlyPayment), note: 'Pay 4x per year each' },
               ].map(k => (
                 <div key={k.label} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
                   <div className="text-[10px] text-zinc-500">{k.label}</div>
@@ -770,6 +830,78 @@ export default function TaxPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Tax Advisor Chat */}
+      {activeTab === 'overview' && (
+        <div style={glassCard}>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">Tax Strategy Advisor</div>
+              <div className="text-xs text-zinc-600 mt-0.5">Ask about deductions, write-offs, S-Corp timing, retirement accounts</div>
+            </div>
+            <button onClick={() => setTaxChatOpen(p => !p)}
+              className="rounded-xl px-3 py-1.5 text-xs font-medium transition"
+              style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)', color: '#67e8f9' }}>
+              {taxChatOpen ? 'Hide' : 'Ask a question'}
+            </button>
+          </div>
+          {taxChatOpen && (
+            <div className="space-y-3">
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {taxChat.map((m, i) => (
+                  <div key={i} className={['flex', m.role === 'user' ? 'justify-end' : 'justify-start'].join(' ')}>
+                    <div className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-6"
+                      style={m.role === 'user' ? {
+                        background: 'linear-gradient(135deg,#0e7490,#0891b2)',
+                        color: '#fff',
+                      } : {
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: '#d4d4d8',
+                      }}>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+                {taxLoading && (
+                  <div className="flex justify-start">
+                    <div className="rounded-2xl px-4 py-2.5 text-sm flex gap-1"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <span className="animate-pulse text-cyan-400">●</span>
+                      <span className="animate-pulse text-cyan-400 [animation-delay:150ms]">●</span>
+                      <span className="animate-pulse text-cyan-400 [animation-delay:300ms]">●</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={taxInput}
+                  onChange={e => setTaxInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTaxMessage(); }}}
+                  placeholder="What can I write off? When should we elect S-Corp? How do I reduce SE tax?"
+                  className="flex-1 rounded-xl px-3 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600"
+                  style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                />
+                <button onClick={sendTaxMessage} disabled={!taxInput.trim() || taxLoading}
+                  className="rounded-xl px-4 py-2.5 text-sm font-medium transition disabled:opacity-40"
+                  style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}>
+                  Ask
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {['What can we write off?', 'When should we elect S-Corp?', 'How do retirement accounts reduce taxes?', 'What expenses are we missing?'].map(q => (
+                  <button key={q} onClick={() => { setTaxInput(q); }}
+                    className="rounded-full px-3 py-1 text-[10px] transition"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#71717a' }}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
