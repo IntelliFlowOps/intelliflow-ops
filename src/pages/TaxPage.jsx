@@ -222,7 +222,7 @@ export default function TaxPage() {
       revenue, expenseTotal, byCategory, yearExpenses,
       contractorTotal, contractors, needs1099,
       kyleDist, brennanDist, netProfit, eachShare,
-      seTax, federalTax, stateTax, totalPersonalTax, quarterlyPayment,
+      seTax, federalTax, stateTax, countyTax, totalPersonalTax, quarterlyPayment,
     };
   }, [selectedYear, expenses, distributions, ledger, retainer]);
 
