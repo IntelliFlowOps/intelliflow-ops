@@ -329,7 +329,7 @@ export default function MarketersPage() {
                   <div className="text-base font-semibold text-white">{p.name}</div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
                     style={{ color: isSales ? "#a5b4fc" : "#67e8f9" }}>
-                    {isSales ? "Sales · 20% commission" : "Marketer · 5% lifetime + retainer"}
+                    {isSales ? "Sales" : "Marketer"}
                   </div>
                 </div>
               </div>
@@ -397,7 +397,7 @@ export default function MarketersPage() {
                 <div>
                   <div className="text-base font-semibold text-white">{p.name}</div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium" style={{ color: "#a5b4fc" }}>
-                    Sales · 20% commission
+                    Sales
                   </div>
                 </div>
               </div>
