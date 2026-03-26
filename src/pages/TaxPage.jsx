@@ -102,8 +102,6 @@ export default function TaxPage() {
   const { rows: retainer = [] } = useTabData('RETAINER_LEDGER');
   const { data } = useSheetData();
   const showToast = useToast();
-  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
-
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [activeTab, setActiveTab] = useState('overview');
@@ -111,27 +109,22 @@ export default function TaxPage() {
   const [firstYearChecks, setFirstYearChecks] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('intelliflow_firstyear') || '{}');
-      // Pre-check items already completed
       const defaults = { ein: true, bank: true, operating: true, agent: true };
       return { ...defaults, ...saved };
     } catch { return { ein: true, bank: true, operating: true, agent: true }; }
   });
-
-  function toggleCheck(id) {
-    const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
-    setFirstYearChecks(updated);
-    try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
-  }
-
-  function toggleCheck(id) {
-    const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
-    setFirstYearChecks(updated);
-    try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
-  }
   const [taxChat, setTaxChat] = useState([{ role: 'assistant', content: 'Ask me anything about legally minimizing your tax bill — deductions you might be missing, S-Corp timing, retirement accounts, write-off strategies, or anything else. I know your business specifically.' }]);
   const [taxInput, setTaxInput] = useState('');
   const [taxLoading, setTaxLoading] = useState(false);
   const [taxChatOpen, setTaxChatOpen] = useState(false);
+
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
+
+  function toggleCheck(id) {
+    const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
+    setFirstYearChecks(updated);
+    try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
+  }
 
   async function sendTaxMessage() {
     if (!taxInput.trim() || taxLoading) return;

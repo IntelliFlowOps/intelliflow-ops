@@ -51,10 +51,6 @@ function PinLock({ onUnlock }) {
 export default function CommissionsPage() {
   const [unlocked, setUnlocked] = useState(false);
   const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
-  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
-
-  if (loading && !ledgerRows.length) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
-
   const stats = useMemo(() => {
     const activeRows = ledgerRows.filter((row) =>
       Object.values(row || {}).some((value) => String(value || '').trim() !== '')
@@ -83,6 +79,9 @@ export default function CommissionsPage() {
       uniqueCustomers,
     };
   }, [ledgerRows]);
+
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
+  if (loading && !ledgerRows.length) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
 
   const columns = [
     { key: 'Date', label: 'Date' },
