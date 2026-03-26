@@ -118,8 +118,6 @@ export default function TaxPage() {
   const [taxLoading, setTaxLoading] = useState(false);
   const [taxChatOpen, setTaxChatOpen] = useState(false);
 
-  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
-
   function toggleCheck(id) {
     const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
     setFirstYearChecks(updated);
@@ -615,6 +613,8 @@ export default function TaxPage() {
     borderRadius: 20,
     padding: 20,
   };
+
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
 
   return (
     <div className="space-y-6 px-6 py-6">
