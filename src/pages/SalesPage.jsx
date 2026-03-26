@@ -6,7 +6,7 @@ const FOUNDER_PIN = '2343';
 
 const STARTER_PROMPTS_V1 = [
   'Research [business name] and write me a personalized pitch for them',
-  'Role-play a cold call — you be the skeptical HVAC owner, I'll pitch',
+  "Role-play a cold call — you be the skeptical HVAC owner, I'll pitch",
   'They said "we already have someone for that" — what do I say?',
   'Write a 60-second pitch for a plumbing company that runs Google Ads',
   'What makes us better than Podium? Give me talking points',
