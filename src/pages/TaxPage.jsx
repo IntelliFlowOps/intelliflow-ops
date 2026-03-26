@@ -327,11 +327,14 @@ export default function TaxPage() {
     };
 
     const drawDivider = (y) => {
+      y = checkPage(y);
       doc.setDrawColor(180, 190, 200);
       doc.line(15, y, pageW - 15, y);
+      return y;
     };
 
     const drawSection = (title, y) => {
+      y = checkPage(y, 16);
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(15, 80, 120);
@@ -339,7 +342,18 @@ export default function TaxPage() {
       return y + 6;
     };
 
+    const pageH = doc.internal.pageSize.getHeight();
+
+    const checkPage = (y, needed = 10) => {
+      if (y + needed > pageH - 20) {
+        doc.addPage();
+        return 20;
+      }
+      return y;
+    };
+
     const drawRow = (label, value, y, highlight = false) => {
+      y = checkPage(y);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(highlight ? 10 : 60, highlight ? 10 : 60, highlight ? 10 : 60);
@@ -367,7 +381,7 @@ export default function TaxPage() {
       doc.text(fmt(td.netProfit), pageW - 22, y + 20, { align: 'right' });
       y += 36;
 
-      drawDivider(y); y += 8;
+      y = drawDivider(y); y += 8;
       y = drawSection('Revenue', y); y += 2;
       y = drawRow('Total Revenue Collected (Cash Basis)', fmt(td.revenue), y);
       y = drawRow('Each Owner\'s Share (50%)', fmt(td.revenue * 0.5), y);
@@ -549,7 +563,7 @@ export default function TaxPage() {
       doc.setTextColor(180,100,10); doc.text(fmt(td.quarterlyPayment), pageW - 22, y + 20, { align: 'right' });
       y += 36;
 
-      drawDivider(y); y += 8;
+      y = drawDivider(y); y += 8;
       y = drawSection('Income from LLC (Pass-Through)', y); y += 2;
       y = drawRow('Business Net Profit', fmt(td.netProfit), y);
       y = drawRow(`${owner}'s 50% Share`, fmt(td.eachShare), y, true);
