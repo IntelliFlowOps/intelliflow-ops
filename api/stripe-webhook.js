@@ -290,13 +290,14 @@ export default async function handler(req, res) {
     await appendLedgerRows(sheets, rowsToWrite);
     await upsertCustomer(sheets, { customerName, stripeCustomerId, plan: priceInfo?.plan || 'Unknown', closeDate: invoiceDate });
 
-    // Update Last Payment Date + Next Renewal Date on existing customer rows
+    // Update Last Payment Date + Next Renewal Date + MRR on existing customer rows
     const nextRenewal = new Date(invoiceDate);
     nextRenewal.setMonth(nextRenewal.getMonth() + (interval === 'year' ? 12 : 1));
     await updateCustomerByStripeId(sheets, stripeCustomerId, {
       'Last Payment Date': invoiceDate,
       'Next Renewal Date': nextRenewal.toISOString().split('T')[0],
       'Status': 'Active',
+      'MRR / Revenue': base, // updates if they upgraded or downgraded
     });
 
     console.log(`Wrote ${rowsToWrite.length} row(s) for invoice ${invoiceId}`);
