@@ -135,6 +135,15 @@ export default async function handler(req, res) {
       });
     }
 
+    await logActivity(sheets, {
+      customerName,
+      activityType: 'Closer Assigned',
+      owner: 'System',
+      summary: `${closer} assigned as closer${leadSource ? ` — Lead source: ${leadSource}` : ''}`,
+      nextStep: 'Begin onboarding outreach',
+      healthImpact: 'Positive',
+    });
+
     return res.status(200).json({ success: true, closer, attribution: attrValue, updatedRows: updates.length });
   } catch (err) {
     console.error('assign-closer error:', err);
