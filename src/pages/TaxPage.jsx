@@ -29,6 +29,16 @@ function fmt(v) {
   return '$' + Number(v || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const FIRST_YEAR_CHECKLIST = [
+  { id: 'ein', label: 'EIN obtained from IRS', detail: 'Your Employer Identification Number — needed for taxes, banking, and 1099s.' },
+  { id: 'bank', label: 'Business bank account opened', detail: 'Keep business and personal money completely separate. Mixing them can pierce your LLC liability protection.' },
+  { id: 'operating', label: 'Operating agreement signed', detail: 'Documents your 50/50 ownership split, how decisions are made, and what happens if one partner leaves.' },
+  { id: 'agent', label: 'Indiana registered agent confirmed', detail: 'Your LLC must have a registered agent in Indiana. Verify yours is current at inbiz.in.gov' },
+  { id: 'bier', label: 'Indiana Business Entity Report scheduled', detail: 'Due every 2 years from your formation date. Fee is $32. File at inbiz.in.gov — missing it can result in administrative dissolution.' },
+  { id: 'scorp', label: 'S-Corp election timeline decided', detail: 'Once you hit ~$40k+ in profit per owner, an S-Corp election can save significant self-employment tax. Election must be filed by Mar 15. Plan ahead with your CPA.' },
+  { id: 'cpa', label: 'CPA or tax professional identified', detail: 'Find a CPA familiar with Indiana LLCs and pass-through taxation before your first filing.' },
+];
+
 function getUpcomingDeadlines() {
   const today = new Date();
   const in60 = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
