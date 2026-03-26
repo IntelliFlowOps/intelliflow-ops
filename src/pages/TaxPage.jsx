@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useTabData } from '../hooks/useSheetData.jsx';
-import { useSheetData } from '../hooks/useSheetData.jsx';
+import { useTabData, useSheetData } from '../hooks/useSheetData.jsx';
+import { buildTaxAssistantContext } from '../lib/assistantContextBuilders.js';
 import { useToast } from '../components/Toast.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
@@ -101,6 +101,7 @@ export default function TaxPage() {
   const { rows: ledger = [] } = useTabData('COMMISSION_LEDGER');
   const { rows: retainer = [] } = useTabData('RETAINER_LEDGER');
   const { data } = useSheetData();
+  const taxContext = useMemo(() => data ? buildTaxAssistantContext(data) : null, [data]);
   const showToast = useToast();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());

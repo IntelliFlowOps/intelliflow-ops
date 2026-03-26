@@ -191,6 +191,12 @@ Every line should earn its place. Cut anything that does not move the needle.
 No explanations unless asked. Just the output.
 `;
 
+    const taxContext = assistantType === 'tax' ? (context || {}) : {};
+    const urgentDeadlines = taxContext.urgentDeadlines || [];
+    const deadlineWarning = urgentDeadlines.length > 0
+      ? `URGENT — ${urgentDeadlines.length} tax deadline(s) within 30 days: ${urgentDeadlines.map(d => d.label + ' (' + d.date + ' — ' + d.daysUntil + ' days)').join('; ')}`
+      : '';
+
     const taxAdvisorPrompt = `
 You are IntelliFlow's internal tax strategist. You know this business cold and your job is to keep more money in Kyle and Brennan's pockets legally.
 
@@ -221,6 +227,9 @@ Simple question = 2-3 sentences max + one next action.
 Complex strategy = structured answer with clear sections, still no fluff.
 Always end with one specific thing they can do right now.
 Never repeat context back to them. Get to the answer.
+If there are urgent deadlines in the context, flag them at the start of your first response.
+Always use the live financial data provided in context when answering questions about expenses, payments, or contractors.
+\${deadlineWarning ? 'DEADLINE ALERT: ' + deadlineWarning : ''}
 `;
 
     let systemPrompt = founderPrompt;
