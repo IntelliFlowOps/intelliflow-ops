@@ -1,6 +1,6 @@
 import React from 'react';
 import { useMemo, useState } from 'react';
-import { useTabData } from '../hooks/useSheetData.jsx';
+import { useTabData, useSheetData } from '../hooks/useSheetData.jsx';
 import KpiCard from '../components/KpiCard.jsx';
 import DataTable from '../components/DataTable.jsx';
 import LoadingSpinner, { SkeletonKPIs } from '../components/LoadingSpinner.jsx';
@@ -55,6 +55,63 @@ export default function DashboardPage() {
 
   const lastUpdated = safeDashboard.lastUpdated || null;
 
+  const { rows: ledgerRows = [] } = useTabData('COMMISSION_LEDGER');
+  const { rows: customerRows = [] } = useTabData('CUSTOMERS');
+  const { rows: campaignRows = [] } = useTabData('CAMPAIGNS');
+
+  const monthlyTrends = useMemo(() => {
+    const now = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+    }
+    const rev = {}, comm = {}, cust = {}, spend = {};
+    ledgerRows.forEach(row => {
+      const mo = String(row['Date'] || '').slice(0, 7);
+      if (!mo) return;
+      const r = parseFloat(String(row['Revenue Collected'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+      const co = (parseFloat(String(row['Emma Commission'] || '0').replace(/[^0-9.-]/g, '')) || 0)
+               + (parseFloat(String(row['Wyatt Commission'] || '0').replace(/[^0-9.-]/g, '')) || 0)
+               + (parseFloat(String(row['Sales Commission'] || '0').replace(/[^0-9.-]/g, '')) || 0);
+      rev[mo] = (rev[mo] || 0) + r;
+      comm[mo] = (comm[mo] || 0) + co;
+    });
+    customerRows.forEach(row => {
+      const mo = String(row['Close Date'] || row['Onboard Date'] || '').slice(0, 7);
+      if (mo) cust[mo] = (cust[mo] || 0) + 1;
+    });
+    campaignRows.forEach(row => {
+      const mo = String(row['Date'] || '').slice(0, 7);
+      if (!mo) return;
+      const s = parseFloat(String(row['Spend'] || '0').replace(/[^0-9.-]/g, '')) || 0;
+      spend[mo] = (spend[mo] || 0) + s;
+    });
+    return {
+      revenue: months.map(m => rev[m] || 0),
+      commissions: months.map(m => comm[m] || 0),
+      customers: months.map(m => cust[m] || 0),
+      adSpend: months.map(m => spend[m] || 0),
+    };
+  }, [ledgerRows, customerRows, campaignRows]);
+
+  const trendPct = useMemo(() => {
+    const pct = arr => {
+      const v = arr.filter(x => x > 0);
+      if (v.length < 2) return null;
+      const p = v[v.length - 2], cur = v[v.length - 1];
+      return p === 0 ? null : Math.round(((cur - p) / p) * 100);
+    };
+    return {
+      revenue: pct(monthlyTrends.revenue),
+      commissions: pct(monthlyTrends.commissions),
+      customers: pct(monthlyTrends.customers),
+      adSpend: pct(monthlyTrends.adSpend),
+    };
+  }, [monthlyTrends]);
+
+  const trendLabel = (pct) => pct === null ? null : (pct >= 0 ? '+' + pct + '% vs last month' : pct + '% vs last month');
+
   const activeCustomers = safeNumber(kpis['Active Customers']);
   const revenue = safeCurrency(kpis['Total Revenue']);
   const mrr = safeCurrency(kpis['MRR']);
@@ -99,6 +156,8 @@ export default function DashboardPage() {
       label: 'Total Revenue',
       value: kpis['Total Revenue'],
       color: 'accent',
+      sparkData: monthlyTrends.revenue,
+      subtitle: trendLabel(trendPct.revenue),
       info:
         'What it means: total revenue shown on the Dashboard tab.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },
@@ -106,6 +165,8 @@ export default function DashboardPage() {
       label: 'Active Customers',
       value: kpis['Active Customers'],
       color: 'info',
+      sparkData: monthlyTrends.customers,
+      subtitle: trendLabel(trendPct.customers),
       info:
         'What it means: current active paying clients.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },
@@ -113,6 +174,8 @@ export default function DashboardPage() {
       label: 'MRR',
       value: kpis['MRR'],
       color: 'accent',
+      sparkData: monthlyTrends.revenue,
+      subtitle: trendLabel(trendPct.revenue),
       info:
         'What it means: monthly recurring revenue.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },
@@ -120,6 +183,8 @@ export default function DashboardPage() {
       label: 'Ad Spend (MTD)',
       value: kpis['Ad Spend (MTD)'],
       color: 'warning',
+      sparkData: monthlyTrends.adSpend,
+      subtitle: trendLabel(trendPct.adSpend),
       info:
         'What it means: month-to-date ad spend.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },
@@ -127,6 +192,8 @@ export default function DashboardPage() {
       label: 'Commissions (MTD)',
       value: kpis['Total Commissions (MTD)'],
       color: 'zinc',
+      sparkData: monthlyTrends.commissions,
+      subtitle: trendLabel(trendPct.commissions),
       info:
         'What it means: total commissions for the current month.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },
@@ -134,6 +201,8 @@ export default function DashboardPage() {
       label: 'Net Profit (MTD)',
       value: kpis['Net Profit (MTD)'],
       color: 'success',
+      sparkData: monthlyTrends.revenue.map((r,i) => r - (monthlyTrends.adSpend[i]||0) - (monthlyTrends.commissions[i]||0)),
+      subtitle: trendLabel(trendPct.revenue),
       info:
         'What it means: month-to-date net profit.\nHow it is calculated: mirrored directly from Google Sheets.\nSource: Dashboard tab → Founder KPIs section.',
     },

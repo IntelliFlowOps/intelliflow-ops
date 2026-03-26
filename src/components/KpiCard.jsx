@@ -38,6 +38,10 @@ function Sparkline({ data = [], color = '#06b6d4', width = 80, height = 28 }) {
 }
 
 export default function KpiCard({ label, value, subtitle, icon, color = 'accent', info, sparkData }) {
+  const isUp = subtitle && subtitle.startsWith('+');
+  const isDown = subtitle && /^-\d/.test(subtitle);
+  const trendColor = isUp ? '#10b981' : isDown ? '#ef4444' : '#71717a';
+  const trendArrow = isUp ? '↑ ' : isDown ? '↓ ' : '';
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 320 });
   const buttonRef = useRef(null);
@@ -190,7 +194,7 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
         </div>
       )}
       {subtitle && (
-        <span className="text-xs text-zinc-500">{subtitle}</span>
+        <span className="text-xs" style={{ color: trendColor }}>{trendArrow}{subtitle}</span>
       )}
     </div>
   );
