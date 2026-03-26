@@ -13,6 +13,7 @@ import ActivityPage from './pages/ActivityPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import BusinessHealthPage from './pages/BusinessHealthPage.jsx';
 import TaxPage from './pages/TaxPage.jsx';
+import SalesPage from './pages/SalesPage.jsx';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
 import PayrollPage from './pages/PayrollPage.jsx';
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="health" element={<BusinessHealthPage />} />
             <Route path="tax" element={<TaxPage />} />
+            <Route path="sales" element={<SalesPage />} />
           </Route>
         </Routes>
         </ToastProvider>
