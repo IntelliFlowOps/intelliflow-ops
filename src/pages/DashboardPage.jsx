@@ -357,111 +357,114 @@ export default function DashboardPage() {
 }
 
 function buildMonthlyGoal({
-  activeCustomers,
-  revenue,
-  mrr,
-  adSpend,
-  leads,
-  customersWon,
-  cac,
-  costPerLead,
-  blendedCtr,
-  blendedCloseRate,
-  watchlist,
+  activeCustomers, revenue, mrr, adSpend, leads, customersWon,
+  cac, costPerLead, blendedCtr, blendedCloseRate, watchlist,
 }) {
-  const baseTarget = 25;
-  let target = baseTarget;
-
-  if (activeCustomers >= baseTarget) {
-    target = Math.ceil((activeCustomers + 5) / 5) * 5;
-  }
-
+  const MILESTONES = [10, 25, 50, 100, 150, 200];
+  const avgMRRPerClient = activeCustomers > 0 && mrr > 0 ? Math.round(mrr / activeCustomers) : 399;
+  const target = MILESTONES.find(m => m > activeCustomers) ||
+    MILESTONES[MILESTONES.length - 1] + Math.ceil((activeCustomers - MILESTONES[MILESTONES.length - 1]) / 50) * 50;
   const progressPercent = clampPercent((activeCustomers / Math.max(target, 1)) * 100);
   const remainingClients = Math.max(target - activeCustomers, 0);
+  const mrrAtTarget = target * avgMRRPerClient;
+  const currentMRR = mrr || (activeCustomers * avgMRRPerClient);
+  const mrrGap = Math.max(0, mrrAtTarget - currentMRR);
+
+  const milestoneCtx = {
+    10:  { badge: 'Early Traction',    subtitle: 'First 10 paying clients — proof of concept' },
+    25:  { badge: 'Product-Market Fit', subtitle: 'Consistent revenue — $10k+ MRR territory' },
+    50:  { badge: 'Growth Mode',        subtitle: 'Scaling operations — hire or automate' },
+    100: { badge: 'Real Business',      subtitle: 'Six-figure ARR — S-Corp election time' },
+    150: { badge: 'Market Leader',      subtitle: 'Dominant presence in your niche' },
+    200: { badge: 'Scale',              subtitle: 'Enterprise-grade client base' },
+  };
+  const ctx = milestoneCtx[target] || { badge: 'Next Level', subtitle: `${target} active clients` };
 
   const actions = [];
 
+  // Action 1 — client count with real dollar impact
   if (remainingClients > 0) {
+    const dailyTarget = Math.ceil(remainingClients / 30);
     actions.push({
-      title: `Close the next ${remainingClients}`,
-      text: `Everything should point at paying clients, not just more traffic. Use your best current angle and strongest offer to move from ${activeCustomers} to ${target} active clients.`,
+      title: `Close ${remainingClients} more client${remainingClients === 1 ? '' : 's'}`,
+      text: `You need ${remainingClients} more to hit ${target} active clients${mrrGap > 0 ? ` — worth ~$${mrrGap.toLocaleString()}/mo in new MRR` : ''}. That is roughly ${dailyTarget} new client${dailyTarget === 1 ? '' : 's'} per day this month.`,
     });
   } else {
+    const nextMilestone = MILESTONES.find(m => m > activeCustomers) || target + 50;
     actions.push({
-      title: 'Raise the target immediately',
-      text: `This goal is already hit. The next milestone is ${target}. Keep pressure on profitable client acquisition instead of coasting.`,
+      title: `${target} hit — push to ${nextMilestone}`,
+      text: `You have reached ${target} active clients. The next milestone is ${nextMilestone} — worth $${(nextMilestone * avgMRRPerClient).toLocaleString()}/mo MRR. Do not coast.`,
     });
   }
 
+  // Action 2 — based on real lead and conversion data
+  const closeRateNum = parseFloat(String(blendedCloseRate || '0').replace(/[^0-9.]/g, ''));
   if (customersWon > 0 && leads > 0) {
+    const efficiency = ((customersWon / leads) * 100).toFixed(1);
     actions.push({
-      title: 'Lean into what is already converting',
-      text: `${customersWon} customers have been won from ${leads} leads this month. Double down on the campaigns, niches, and offers already producing closes instead of spreading budget evenly.`,
+      title: 'Double down on what is converting',
+      text: `${customersWon} client${customersWon === 1 ? '' : 's'} closed from ${leads} leads this month — ${efficiency}% close rate. Find the campaigns producing these closes and shift more budget there.`,
     });
   } else if (leads > 0) {
+    const leadsNeeded = closeRateNum > 0 ? Math.ceil(remainingClients / (closeRateNum / 100)) : null;
     actions.push({
-      title: 'Turn leads into paying clients',
-      text: `You have lead flow but not enough closed customers yet. Tighten follow-up speed, qualification, and landing page clarity so leads become paying clients faster.`,
+      title: 'Convert your existing lead flow',
+      text: `${leads} leads in the pipeline but not enough closes yet.${leadsNeeded ? ` At a 10% close rate you need ~${leadsNeeded} leads to hit ${target}.` : ''} Tighten follow-up speed and offer clarity before adding more spend.`,
     });
   } else {
     actions.push({
-      title: 'Increase qualified lead flow',
-      text: `Lead volume is still thin. Focus on stronger hooks, clearer pain points, and service-business specific offers to generate better inbound demand.`,
+      title: 'Build your lead engine first',
+      text: `No lead data yet. Focus entirely on generating consistent inbound — strong hooks targeting missed calls, clear pain, specific niche. Once leads flow, close rate becomes the lever.`,
     });
   }
 
-  if (isLowRate(blendedCloseRate)) {
+  // Action 3 — watchlist, efficiency, or stage-specific advice
+  const urgentItem = Array.isArray(watchlist)
+    ? watchlist.find(i => ['Issue', 'Watch', 'At Risk', 'Needs Review'].includes(String(i.Status || '').trim()))
+    : null;
+
+  if (urgentItem) {
     actions.push({
-      title: 'Fix close rate before adding more spend',
-      text: `Close rate looks weak relative to the goal. Improve offer clarity, lead quality, and sales follow-up before scaling ad spend harder.`,
+      title: 'Clear the active blocker first',
+      text: `Your watchlist flags an issue with ${urgentItem.Entity || 'a key item'}. Unresolved operational problems compound as you scale — fix this before it slows client growth.`,
     });
-  } else if (isLowRate(blendedCtr)) {
+  } else if (adSpend > 0 && activeCustomers === 0) {
     actions.push({
-      title: 'Improve click-through rate',
-      text: `CTR looks soft. Refresh hooks, call out missed-call pain harder, and make the ad angle more specific to the niche you’re targeting.`,
+      title: 'Get your first paying client',
+      text: `You are spending on ads but have no active clients yet. Pause optimization — focus entirely on closing one client. Everything else is secondary until you have proof the offer converts.`,
     });
-  } else if (looksHighMoney(cac)) {
+  } else if (adSpend > currentMRR && activeCustomers < 25) {
     actions.push({
-      title: 'Protect acquisition efficiency',
-      text: `CAC appears expensive. Move spend toward the campaigns with the best lead quality and fastest path to real paying clients.`,
+      title: 'Spend is outpacing revenue',
+      text: `You are spending more on ads than you collect in MRR. Normal at this stage but it should compress fast. Close more clients before increasing budget further.`,
     });
-  } else if (looksHighMoney(costPerLead)) {
+  } else if (activeCustomers >= 10) {
     actions.push({
-      title: 'Lower cost per lead',
-      text: `Cost per lead looks heavy. Tighten targeting and sharpen creatives before adding more budget.`,
+      title: 'Retention is now as important as acquisition',
+      text: `With ${activeCustomers} active clients, churn starts to matter. One churned client cancels one new close. Make sure every client is getting results and hearing from you regularly.`,
     });
   } else {
     actions.push({
-      title: 'Scale what is efficient',
-      text: `Your current metrics do not show a major red flag. Put more budget behind what is already producing qualified leads and customers, not unproven experiments.`,
+      title: 'Speed is your only advantage right now',
+      text: `At this stage the founder who moves fastest wins. Follow up within minutes, close on the first call when possible, and treat every lead like it is your last.`,
     });
-  }
-
-  if (Array.isArray(watchlist) && watchlist.length > 0) {
-    const urgent = watchlist.find(
-      (item) =>
-        ['Issue', 'Watch', 'At Risk', 'Needs Review'].includes(String(item.Status || '').trim())
-    );
-    if (urgent) {
-      actions[2] = {
-        title: 'Clear the main blocker',
-        text: `Your watchlist shows a live issue around ${urgent.Entity || 'an important item'}. Fix that first so it does not slow progress toward ${target} active clients.`,
-      };
-    }
   }
 
   return {
     title: `Reach ${target} Active Clients`,
+    badge: ctx.badge,
+    subtitle: ctx.subtitle,
     currentLabel: `${activeCustomers}`,
     targetLabel: `${target}`,
     progressPercent,
-    progressText:
-      remainingClients > 0
-        ? `${remainingClients} clients to go`
-        : 'Goal reached — next target unlocked',
+    isHit: activeCustomers >= target,
+    progressText: remainingClients > 0
+      ? `${remainingClients} to go · ~$${mrrGap.toLocaleString()}/mo MRR unlocked`
+      : 'Milestone hit — next target unlocked',
     actions: actions.slice(0, 3),
   };
 }
+
 
 function safeNumber(value) {
   const raw = String(value ?? '').replace(/[^0-9.-]/g, '');
