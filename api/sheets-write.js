@@ -2,6 +2,19 @@ import { google } from 'googleapis';
 
 const SHEET_ID = '1TK0c4BxhqSVL09SlC8SnweddOFvP9frEmYIKqdl2jqc';
 
+async function logActivity(sheets, { customerName, activityType, owner, summary, nextStep, healthImpact }) {
+  const date = new Date().toISOString().split('T')[0];
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: 'Customer_Activity!A:H',
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: { values: [[date, customerName || 'All', activityType, owner, summary, nextStep || '', healthImpact || 'Neutral', '']] },
+    });
+  } catch (e) { console.error('logActivity error:', e.message); }
+}
+
 async function getAuth() {
   const auth = new google.auth.GoogleAuth({
     credentials: {

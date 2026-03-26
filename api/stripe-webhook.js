@@ -106,6 +106,17 @@ async function upsertCustomer(sheets, { customerName, stripeCustomerId, plan, cl
   });
 }
 
+async function logActivity(sheets, { customerName, activityType, owner, summary, nextStep, healthImpact }) {
+  const date = new Date().toISOString().split('T')[0];
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: SHEET_ID,
+    range: 'Customer_Activity!A:H',
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: { values: [[date, customerName, activityType, owner, summary, nextStep || '', healthImpact || 'Neutral', '']] },
+  });
+}
+
 async function updateCustomerByStripeId(sheets, stripeCustomerId, updates) {
   const rows = await getSheetRows(sheets, CUSTOMERS_TAB);
   const headerIdx = await findHeaderRow(rows, 'Customer Name');
@@ -183,10 +194,29 @@ export default async function handler(req, res) {
       const cancelDate = new Date(sub.canceled_at * 1000).toISOString().split('T')[0];
       const auth = await getAuth();
       const sheets = google.sheets({ version: 'v4', auth });
+      // Get customer name for activity log
+      const custRows = await getSheetRows(sheets, CUSTOMERS_TAB);
+      const custHeaderIdx = await findHeaderRow(custRows, 'Customer Name');
+      const custHeaders = custRows[custHeaderIdx] || [];
+      const stripeCol = custHeaders.findIndex(h => h.trim() === 'Stripe Customer ID');
+      const nameCol = custHeaders.findIndex(h => h.trim() === 'Customer Name');
+      const cancelledRow = custRows.find((r, i) => i > custHeaderIdx && stripeCol >= 0 && (r[stripeCol] || '').trim() === stripeCustomerId);
+      const cancelledName = cancelledRow && nameCol >= 0 ? cancelledRow[nameCol] : stripeCustomerId;
+
       await updateCustomerByStripeId(sheets, stripeCustomerId, {
         'Status': 'Churned',
         'Last Payment Date': cancelDate,
       });
+
+      await logActivity(sheets, {
+        customerName: cancelledName,
+        activityType: 'Churn',
+        owner: 'System',
+        summary: `Subscription cancelled — customer churned on ${cancelDate}`,
+        nextStep: 'Reach out to understand why they cancelled',
+        healthImpact: 'Negative',
+      });
+
       console.log(`Marked customer ${stripeCustomerId} as Churned`);
       return res.status(200).json({ received: true, event: 'cancellation_processed' });
     } catch (err) {
@@ -298,6 +328,17 @@ export default async function handler(req, res) {
       'Next Renewal Date': nextRenewal.toISOString().split('T')[0],
       'Status': 'Active',
       'MRR / Revenue': base, // updates if they upgraded or downgraded
+    });
+
+    // Auto-log payment activity
+    const isFirstPayment = interval === 'month' ? true : false;
+    await logActivity(sheets, {
+      customerName,
+      activityType: isFirstPayment ? 'Payment' : 'Renewal',
+      owner: 'System',
+      summary: `${interval === 'year' ? 'Annual' : 'Monthly'} payment received — ${priceInfo?.plan || 'Unknown'} plan — $${amountPaid.toFixed(2)}`,
+      nextStep: 'Assign closer if not already assigned',
+      healthImpact: 'Positive',
     });
 
     console.log(`Wrote ${rowsToWrite.length} row(s) for invoice ${invoiceId}`);
