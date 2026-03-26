@@ -39,12 +39,13 @@ const FIRST_YEAR_CHECKLIST = [
   { id: 'cpa', label: 'CPA or tax professional identified', detail: 'Find a CPA familiar with Indiana LLCs and pass-through taxation before your first filing.' },
 ];
 
-function getUpcomingDeadlines() {
+function getUpcomingDeadlines(hasProfit = false) {
   const today = new Date();
-  const in60 = new Date(today.getTime() + 60 * 24 * 60 * 60 * 1000);
   return TAX_DEADLINES.filter(d => {
     const dt = new Date(d.date);
-    return dt >= today;
+    if (dt < today) return false;
+    if (d.type === 'quarterly' && !hasProfit) return false;
+    return true;
   }).map(d => ({
     ...d,
     daysAway: Math.ceil((new Date(d.date) - today) / (1000 * 60 * 60 * 24)),
@@ -568,7 +569,7 @@ export default function TaxPage() {
     }
   }
 
-  const deadlines = getUpcomingDeadlines();
+  const deadlines = getUpcomingDeadlines(taxData.netProfit > 0);
 
   const glassCard = {
     background: 'linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)',
@@ -587,6 +588,7 @@ export default function TaxPage() {
         const actionBanners = TAX_DEADLINES.filter(d => {
           const dt = new Date(d.date);
           const days = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+          if (d.type === 'quarterly' && taxData.netProfit <= 0) return false;
           return days >= 0 && days <= 14;
         });
         if (actionBanners.length === 0) return null;
