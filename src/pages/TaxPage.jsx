@@ -511,6 +511,64 @@ export default function TaxPage() {
 
   return (
     <div className="space-y-6 px-6 py-6">
+          {/* Pre-deadline action banners — show 14 days before major deadlines */}
+      {(() => {
+        const today = new Date();
+        const actionBanners = TAX_DEADLINES.filter(d => {
+          const dt = new Date(d.date);
+          const days = Math.ceil((dt - today) / (1000 * 60 * 60 * 24));
+          return days >= 0 && days <= 14;
+        });
+        if (actionBanners.length === 0) return null;
+        return actionBanners.map(d => {
+          const days = Math.ceil((new Date(d.date) - today) / (1000 * 60 * 60 * 24));
+          const buttons = {
+            quarterly: [
+              { label: "Kyle's Payment Summary", type: 'kyle' },
+              { label: "Brennan's Payment Summary", type: 'brennan' },
+            ],
+            filing: [
+              { label: 'CPA Summary PDF', type: 'cpa' },
+              { label: 'Business Summary PDF', type: 'business' },
+            ],
+            '1099': [
+              { label: 'Business Summary PDF', type: 'business' },
+            ],
+            scorp: [],
+          };
+          const btns = buttons[d.type] || [];
+          return (
+            <div key={d.date} className="rounded-[18px] px-4 py-4 space-y-3"
+              style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.25)' }}>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">
+                    {days === 0 ? '🚨 Due Today' : `⏰ ${days} day${days === 1 ? '' : 's'} away`} — {d.label}
+                  </div>
+                  <div className="text-xs text-zinc-400 mt-0.5">Your reports are ready to download and file.</div>
+                </div>
+              </div>
+              {btns.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {btns.map(btn => (
+                    <button key={btn.type} onClick={() => generatePDF(btn.type)}
+                      className="rounded-xl px-4 py-2 text-xs font-medium transition"
+                      style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}>
+                      ↓ {btn.label}
+                    </button>
+                  ))}
+                  <button onClick={() => setGuidanceModal(d.type)}
+                    className="rounded-xl px-4 py-2 text-xs font-medium transition"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#a1a1aa' }}>
+                    How to file →
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        });
+      })()}
+
       {/* Deadline banner */}
       {deadlines.some(d => d.urgent) && (
         <div className="rounded-[18px] px-4 py-3 flex items-start gap-3"
