@@ -654,10 +654,6 @@ export default function TaxPage() {
                 border: d.urgent ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.05)',
               }}>
               <div className="flex items-center justify-between px-3 py-2.5">
-              style={{
-                background: d.urgent ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)',
-                border: d.urgent ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.05)',
-              }}>
               <div>
                 <div className="text-sm text-white">{d.label}</div>
                 <div className="text-[10px] text-zinc-500">{new Date(d.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
