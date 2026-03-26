@@ -53,6 +53,27 @@ export default function TaxPage() {
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());
   const [activeTab, setActiveTab] = useState('overview');
+  const [guidanceModal, setGuidanceModal] = useState(null);
+  const [firstYearChecks, setFirstYearChecks] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('intelliflow_firstyear') || '{}');
+      // Pre-check items already completed
+      const defaults = { ein: true, bank: true, operating: true, agent: true };
+      return { ...defaults, ...saved };
+    } catch { return { ein: true, bank: true, operating: true, agent: true }; }
+  });
+
+  function toggleCheck(id) {
+    const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
+    setFirstYearChecks(updated);
+    try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
+  }
+
+  function toggleCheck(id) {
+    const updated = { ...firstYearChecks, [id]: !firstYearChecks[id] };
+    setFirstYearChecks(updated);
+    try { localStorage.setItem('intelliflow_firstyear', JSON.stringify(updated)); } catch {}
+  }
   const [expenseModal, setExpenseModal] = useState(false);
   const [distModal, setDistModal] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -287,6 +308,124 @@ export default function TaxPage() {
       showToast('Business tax summary downloaded', 'success');
     }
 
+    if (type === 'cpa') {
+      drawHeader(`CPA Summary — Tax Year ${yr}`, 'IntelliFlow Communications LLC · Prepared for tax professional');
+      let y = 45;
+      y = drawSection('Entity Information', y); y += 2;
+      y = drawRow('Business Name', 'IntelliFlow Communications LLC', y);
+      y = drawRow('Entity Type', 'Multi-Member LLC (Partnership)', y);
+      y = drawRow('Tax Year', yr, y);
+      y = drawRow('Accounting Method', 'Cash Basis', y);
+      y = drawRow('State', 'Indiana', y);
+      y = drawRow('Owners', 'Kyle Kirkham (50%) + Brennan Balka (50%)', y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Revenue', y); y += 2;
+      y = drawRow('Total Revenue Collected', fmt(td.revenue), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Business Expenses', y); y += 2;
+      Object.entries(td.byCategory).forEach(([cat, amt]) => { y = drawRow(cat, fmt(amt), y); });
+      y = drawRow('Total Expenses', fmt(td.expenseTotal), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Contractor Payments (1099-NEC)', y); y += 2;
+      Object.entries(td.contractors).forEach(([name, amt]) => {
+        y = drawRow(name + (amt >= 600 ? ' *1099 required' : ''), fmt(amt), y, amt >= 600);
+      });
+      y = drawRow('Total Contractor Payments', fmt(td.contractorTotal), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Net Profit / Loss', y); y += 2;
+      y = drawRow('Net Profit (Revenue - Expenses - Contractors)', fmt(td.netProfit), y, true);
+      y = drawRow("Each Owner's 50% Share", fmt(td.eachShare), y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Owner Distributions', y); y += 2;
+      y = drawRow('Kyle Kirkham', fmt(td.kyleDist), y);
+      y = drawRow('Brennan Balka', fmt(td.brennanDist), y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Notes for CPA', y); y += 2;
+      const notes = [
+        'All figures are cash basis — recorded when money moved.',
+        'Contractor payments include both retainer and commission payouts.',
+        'Ad spend pulled from campaign tracking system.',
+        'Owners are 50/50 members — K-1 split should be equal.',
+        'No payroll was run — owners took distributions only.',
+        'Company is considering S-Corp election — please advise on timing.',
+      ];
+      notes.forEach(note => {
+        doc.setFontSize(8); doc.setTextColor(160,160,160); doc.setFont('helvetica','normal');
+        const lines = doc.splitTextToSize('• ' + note, pageW - 35);
+        doc.text(lines, 20, y);
+        y += lines.length * 5 + 2;
+      });
+
+      doc.save(`intelliflow-cpa-summary-${yr}.pdf`);
+      showToast('CPA summary downloaded', 'success');
+      return;
+    }
+
+    if (type === 'cpa') {
+      drawHeader(`CPA Summary — Tax Year ${yr}`, 'IntelliFlow Communications LLC · Prepared for tax professional');
+      let y = 45;
+      y = drawSection('Entity Information', y); y += 2;
+      y = drawRow('Business Name', 'IntelliFlow Communications LLC', y);
+      y = drawRow('Entity Type', 'Multi-Member LLC (Partnership)', y);
+      y = drawRow('Tax Year', yr, y);
+      y = drawRow('Accounting Method', 'Cash Basis', y);
+      y = drawRow('State', 'Indiana', y);
+      y = drawRow('Owners', 'Kyle Kirkham (50%) + Brennan Balka (50%)', y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Revenue', y); y += 2;
+      y = drawRow('Total Revenue Collected', fmt(td.revenue), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Business Expenses', y); y += 2;
+      Object.entries(td.byCategory).forEach(([cat, amt]) => { y = drawRow(cat, fmt(amt), y); });
+      y = drawRow('Total Expenses', fmt(td.expenseTotal), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Contractor Payments (1099-NEC)', y); y += 2;
+      Object.entries(td.contractors).forEach(([name, amt]) => {
+        y = drawRow(name + (amt >= 600 ? ' *1099 required' : ''), fmt(amt), y, amt >= 600);
+      });
+      y = drawRow('Total Contractor Payments', fmt(td.contractorTotal), y, true);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Net Profit / Loss', y); y += 2;
+      y = drawRow('Net Profit (Revenue - Expenses - Contractors)', fmt(td.netProfit), y, true);
+      y = drawRow("Each Owner's 50% Share", fmt(td.eachShare), y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Owner Distributions', y); y += 2;
+      y = drawRow('Kyle Kirkham', fmt(td.kyleDist), y);
+      y = drawRow('Brennan Balka', fmt(td.brennanDist), y);
+      y += 4; drawDivider(y); y += 8;
+
+      y = drawSection('Notes for CPA', y); y += 2;
+      const notes = [
+        'All figures are cash basis — recorded when money moved.',
+        'Contractor payments include both retainer and commission payouts.',
+        'Ad spend pulled from campaign tracking system.',
+        'Owners are 50/50 members — K-1 split should be equal.',
+        'No payroll was run — owners took distributions only.',
+        'Company is considering S-Corp election — please advise on timing.',
+      ];
+      notes.forEach(note => {
+        doc.setFontSize(8); doc.setTextColor(160,160,160); doc.setFont('helvetica','normal');
+        const lines = doc.splitTextToSize('• ' + note, pageW - 35);
+        doc.text(lines, 20, y);
+        y += lines.length * 5 + 2;
+      });
+
+      doc.save(`intelliflow-cpa-summary-${yr}.pdf`);
+      showToast('CPA summary downloaded', 'success');
+      return;
+    }
+
     if (type === 'kyle' || type === 'brennan') {
       const owner = type === 'kyle' ? 'Kyle' : 'Brennan';
       const ownerDist = type === 'kyle' ? td.kyleDist : td.brennanDist;
@@ -391,7 +530,12 @@ export default function TaxPage() {
         <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 mb-3">Upcoming Tax Deadlines</div>
         <div className="space-y-2">
           {deadlines.map(d => (
-            <div key={d.date} className="flex items-center justify-between rounded-xl px-3 py-2.5"
+            <div key={d.date} className="rounded-xl overflow-hidden"
+              style={{
+                background: d.urgent ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)',
+                border: d.urgent ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.05)',
+              }}>
+              <div className="flex items-center justify-between px-3 py-2.5">
               style={{
                 background: d.urgent ? 'rgba(245,158,11,0.06)' : 'rgba(255,255,255,0.02)',
                 border: d.urgent ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.05)',
@@ -400,9 +544,15 @@ export default function TaxPage() {
                 <div className="text-sm text-white">{d.label}</div>
                 <div className="text-[10px] text-zinc-500">{new Date(d.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
               </div>
-              <div className="text-xs font-medium shrink-0 ml-3"
-                style={{ color: d.urgent ? '#fcd34d' : '#71717a' }}>
-                {d.daysAway}d
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                  <span className="text-xs font-medium" style={{ color: d.urgent ? '#fcd34d' : '#71717a' }}>{d.daysAway}d</span>
+                  <button
+                    onClick={() => setGuidanceModal(d.type)}
+                    className="rounded-lg px-2.5 py-1 text-[10px] font-medium transition"
+                    style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)', color: '#67e8f9' }}>
+                    How to file →
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -507,28 +657,59 @@ export default function TaxPage() {
           {/* Generate PDFs */}
           <div style={glassCard}>
             <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500 mb-4">Generate Tax Reports — {selectedYear}</div>
-            <div className="grid gap-3 md:grid-cols-3">
-              <button onClick={() => generatePDF('business')}
-                className="rounded-xl p-4 text-left transition hover:opacity-80"
-                style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
-                <div className="text-2xl mb-2">🏢</div>
-                <div className="text-sm font-semibold text-white">Business Summary</div>
-                <div className="text-xs text-zinc-500 mt-1">Revenue, expenses, contractor payments, 1099 flags</div>
-              </button>
-              <button onClick={() => generatePDF('kyle')}
-                className="rounded-xl p-4 text-left transition hover:opacity-80"
-                style={{ background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.2)' }}>
-                <div className="text-2xl mb-2">👤</div>
-                <div className="text-sm font-semibold text-white">Kyle's Personal Summary</div>
-                <div className="text-xs text-zinc-500 mt-1">SE tax, federal + Indiana estimates, quarterly schedule</div>
-              </button>
-              <button onClick={() => generatePDF('brennan')}
-                className="rounded-xl p-4 text-left transition hover:opacity-80"
-                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                <div className="text-2xl mb-2">👤</div>
-                <div className="text-sm font-semibold text-white">Brennan's Personal Summary</div>
-                <div className="text-xs text-zinc-500 mt-1">SE tax, federal + Indiana estimates, quarterly schedule</div>
-              </button>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { type: 'business', icon: '🏢', label: 'Business Summary', desc: 'Revenue, expenses, contractors, 1099 flags', color: 'rgba(6,182,212,' },
+                { type: 'cpa', icon: '📋', label: 'CPA Summary', desc: 'Everything your CPA needs — hand this to them', color: 'rgba(16,185,129,' },
+                { type: 'kyle', icon: '👤', label: "Kyle's Personal", desc: 'SE tax, federal + Indiana estimates', color: 'rgba(99,102,241,' },
+                { type: 'brennan', icon: '👤', label: "Brennan's Personal", desc: 'SE tax, federal + Indiana estimates', color: 'rgba(245,158,11,' },
+              ].map(btn => (
+                <button key={btn.type} onClick={() => generatePDF(btn.type)}
+                  className="rounded-xl p-4 text-left transition hover:opacity-80"
+                  style={{ background: btn.color + '0.08)', border: '1px solid ' + btn.color + '0.2)' }}>
+                  <div className="text-2xl mb-2">{btn.icon}</div>
+                  <div className="text-sm font-semibold text-white">{btn.label}</div>
+                  <div className="text-xs text-zinc-500 mt-1">{btn.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* First Year LLC Checklist */}
+          <div style={glassCard}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-zinc-500">First Year LLC Checklist</div>
+              <span className="text-xs text-zinc-500">
+                {FIRST_YEAR_CHECKLIST.filter(i => firstYearChecks[i.id]).length}/{FIRST_YEAR_CHECKLIST.length} complete
+              </span>
+            </div>
+            <div className="space-y-2">
+              {FIRST_YEAR_CHECKLIST.map(item => (
+                <div key={item.id}
+                  className="rounded-xl px-4 py-3 cursor-pointer transition"
+                  style={{
+                    background: firstYearChecks[item.id] ? 'rgba(16,185,129,0.06)' : 'rgba(255,255,255,0.02)',
+                    border: firstYearChecks[item.id] ? '1px solid rgba(16,185,129,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                  }}
+                  onClick={() => toggleCheck(item.id)}>
+                  <div className="flex items-start gap-3">
+                    <div className="shrink-0 mt-0.5 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
+                      style={{
+                        background: firstYearChecks[item.id] ? 'rgba(16,185,129,0.2)' : 'rgba(255,255,255,0.05)',
+                        border: firstYearChecks[item.id] ? '1px solid rgba(16,185,129,0.4)' : '1px solid rgba(255,255,255,0.1)',
+                        color: firstYearChecks[item.id] ? '#10b981' : '#71717a',
+                      }}>
+                      {firstYearChecks[item.id] ? '✓' : ''}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium" style={{ color: firstYearChecks[item.id] ? '#10b981' : '#ffffff' }}>
+                        {item.label}
+                      </div>
+                      <div className="text-xs text-zinc-500 mt-0.5 leading-5">{item.detail}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -689,6 +870,53 @@ export default function TaxPage() {
           </div>
         </div>
       )}
+
+      {/* Guidance Modal */}
+      {guidanceModal && (() => {
+        const guide = getGuidance(guidanceModal, taxData);
+        if (!guide) return null;
+        return (
+          <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-lg rounded-[28px] p-6 space-y-4"
+              style={{ background: 'linear-gradient(160deg,rgba(10,14,20,0.97),rgba(6,10,16,0.98))', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(60px)', boxShadow: '0 48px 100px rgba(0,0,0,0.7)', maxHeight: '85vh', overflowY: 'auto' }}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">{guide.title}</h2>
+                <button onClick={() => setGuidanceModal(null)} className="text-zinc-500 hover:text-white text-xl shrink-0 ml-3">✕</button>
+              </div>
+              <p className="text-sm text-zinc-400 leading-6">{guide.intro}</p>
+              <div className="space-y-3">
+                {guide.steps.map((step, i) => (
+                  <div key={i} className="rounded-xl p-4"
+                    style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start gap-3">
+                      <div className="shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold text-white"
+                        style={{ background: 'rgba(6,182,212,0.2)', border: '1px solid rgba(6,182,212,0.3)' }}>
+                        {i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-white mb-1">{step.label}</div>
+                        <div className="text-xs text-zinc-400 leading-5">{step.detail}</div>
+                        {step.link && (
+                          <a href={step.link} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 rounded-lg px-3 py-1.5 text-xs font-medium transition"
+                            style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.25)', color: '#67e8f9' }}>
+                            {step.linkLabel} ↗
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => setGuidanceModal(null)}
+                className="w-full rounded-2xl py-2.5 text-sm text-zinc-400 transition hover:text-white"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                Close
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Distribution Modal */}
       {distModal && (
