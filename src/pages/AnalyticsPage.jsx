@@ -28,7 +28,7 @@ export default function AnalyticsPage() {
         <div className="rounded-[18px] px-4 py-3 text-sm flex items-center gap-3"
           style={{ background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.15)' }}>
           <span className="text-cyan-400">◈</span>
-          <span className="text-zinc-400">Analytics data will appear here once Pipedream pulls from Meta and Google Ads. Layout shown below is live when data arrives.</span>
+          <span className="text-zinc-400">No analytics data yet. Once your Pipedream workflow runs at 6am or 12pm, Meta campaign data will populate here automatically.</span>
         </div>
       )}
 

@@ -4,16 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 
 const PAGE_META = {
   '/': { title: 'Dashboard', subtitle: 'Live operations overview' },
-  '/customers': { title: 'Customers', subtitle: 'One record per active customer' },
-  '/marketers': { title: 'Individual Commissions', subtitle: 'Private payout access — PIN required' },
-  '/campaigns': { title: 'Campaigns', subtitle: 'Ad performance and spend tracking' },
+  '/customers': { title: 'Clients', subtitle: 'One record per active client' },
+  '/marketers': { title: 'My Pay', subtitle: 'Private payout access — PIN required' },
+  '/campaigns': { title: 'Ad Campaigns', subtitle: 'Ad performance and spend tracking' },
   '/creative': { title: 'Creative Insights', subtitle: 'What is working and what to test next' },
   '/founder-assistant': { title: 'Founder Assistant', subtitle: 'Operator-level decisions and growth analysis' },
-  '/marketer-assistant': { title: 'Marketer Assistant', subtitle: 'Campaign help, hooks, and ad builds' },
-  '/ledger': { title: 'Ledger', subtitle: 'Internal operational ledger — commissions hidden' },
-  '/activity': { title: 'Activity', subtitle: 'Customer interaction timeline' },
-  '/analytics': { title: 'Analytics', subtitle: 'Campaign and ad performance data' },
+  '/marketer-assistant': { title: 'Marketer AI', subtitle: 'Campaign help, hooks, and ad builds' },
+  '/ledger': { title: 'Ledger', subtitle: 'Full commission ledger — PIN required' },
+  '/activity': { title: 'Client Activity', subtitle: 'Customer interaction timeline' },
+  '/analytics': { title: 'Performance', subtitle: 'Campaign and ad performance data' },
   '/payroll': { title: 'Payroll', subtitle: 'Founder access only — contractor payments and tax tracking' },
+  '/health': { title: 'Business Health', subtitle: 'Long-term metrics and retention indicators' },
+  '/tax': { title: 'Tax Center', subtitle: 'Expenses, distributions, and tax reports — PIN required' },
 };
 
 function timeAgo(timestamp) {

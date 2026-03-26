@@ -65,7 +65,7 @@ export default function ActivityPage() {
         {key:'Date',label:'Date'},{key:'Customer Name',label:'Customer'},{key:'Activity Type',label:'Type'},
         {key:'Owner',label:'Owner'},{key:'Summary',label:'Summary'},{key:'Next Step',label:'Next Step'},
         {key:'Health Impact',label:'Health Impact'},{key:'Link / Reference',label:'Reference'},
-      ]} searchPlaceholder="Search activity..." emptyMessage="No activity logged yet" />
+      ]} searchPlaceholder="Search activity..." emptyMessage="No activity logged yet — use the Log Activity button above to record your first client interaction." />
 
       {modalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">

@@ -67,6 +67,15 @@ function displayValue(value) {
 function DetailField({ label, value }) {
   const showBadge = label === 'Status';
 
+  const stats = useMemo(() => {
+    const money = v => parseFloat(String(v||'0').replace(/[^0-9.-]/g,''))||0;
+    const spend = rows.reduce((s,r) => s + money(r['Spend']), 0);
+    const leads = rows.reduce((s,r) => s + money(r['Leads']), 0);
+    const won = rows.reduce((s,r) => s + money(r['Customers Won']), 0);
+    const rev = rows.reduce((s,r) => s + money(r['Revenue Won']), 0);
+    return { spend, leads, won, rev };
+  }, [rows]);
+
   return (
     <div className="grid grid-cols-[180px_1fr] gap-3 border-b border-white/5 py-3 last:border-b-0">
       <div className="text-sm text-zinc-500">{label}</div>
@@ -123,6 +132,22 @@ export default function CampaignsPage() {
 
   return (
     <div className="space-y-6 px-6 py-6">
+      {rows.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: 'Total Spend', value: '$' + stats.spend.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}), color: '#f87171' },
+            { label: 'Total Leads', value: Math.round(stats.leads).toLocaleString(), color: '#67e8f9' },
+            { label: 'Customers Won', value: Math.round(stats.won).toLocaleString(), color: '#10b981' },
+            { label: 'Revenue Won', value: '$' + stats.rev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}), color: '#a5b4fc' },
+          ].map(k => (
+            <div key={k.label} className="rounded-[18px] p-4"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="text-[10px] uppercase tracking-wider text-zinc-500">{k.label}</div>
+              <div className="mt-1 text-xl font-bold" style={{ color: k.color }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="flex flex-wrap items-end gap-4">
         <div className="space-y-2">
           <label className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Platform</label>
