@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useState } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import DataTable from '../components/DataTable.jsx';
 import KpiCard from '../components/KpiCard.jsx';
@@ -6,7 +7,50 @@ import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx'
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 
+
+const FOUNDER_PIN = "2343";
+
+function PinLock({ onUnlock }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState('');
+  function attempt() {
+    if (pin === FOUNDER_PIN) { onUnlock(); }
+    else { setError('Incorrect PIN'); setPin(''); }
+  }
+  return (
+    <div className="flex items-center justify-center min-h-[60vh] px-6">
+      <div className="w-full max-w-sm rounded-[28px] p-8 space-y-5 text-center"
+        style={{ background: 'linear-gradient(160deg,rgba(10,14,20,0.97),rgba(6,10,16,0.98))', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(60px)', boxShadow: '0 48px 100px rgba(0,0,0,0.7)' }}>
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl mx-auto text-2xl"
+          style={{ background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.2)' }}>🔒</div>
+        <div>
+          <div className="text-lg font-semibold text-white">Founder Access Only</div>
+          <div className="text-xs text-zinc-500 mt-1">Enter your PIN to continue</div>
+        </div>
+        <input
+          type="password"
+          value={pin}
+          onChange={e => { setPin(e.target.value); setError(''); }}
+          onKeyDown={e => { if (e.key === 'Enter') attempt(); }}
+          placeholder="PIN"
+          className="w-full rounded-2xl px-4 py-3 text-center text-lg text-white outline-none tracking-[0.4em]"
+          style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+          autoFocus
+        />
+        {error && <div className="text-xs text-red-400">{error}</div>}
+        <button onClick={attempt}
+          className="w-full rounded-2xl py-3 text-sm font-medium transition"
+          style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}>
+          Unlock
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function CommissionsPage() {
+  const [unlocked, setUnlocked] = useState(false);
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
   const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
 
   if (loading && !ledgerRows.length) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
