@@ -77,14 +77,24 @@ export default function TaxPage() {
     const revenue = ledger.filter(r => (r['Date'] || '').startsWith(yr))
       .reduce((s, r) => s + money(r['Revenue Collected']), 0);
 
-    // Expenses
+    // Expenses — manual entries
     const yearExpenses = expenses.filter(e => (e['Tax Year'] || e['Date'] || '').includes(yr));
-    const expenseTotal = yearExpenses.reduce((s, e) => s + money(e['Amount']), 0);
+    const manualExpenseTotal = yearExpenses.reduce((s, e) => s + money(e['Amount']), 0);
     const byCategory = yearExpenses.reduce((acc, e) => {
       const cat = e['Category'] || 'Other';
       acc[cat] = (acc[cat] || 0) + money(e['Amount']);
       return acc;
     }, {});
+
+    // Auto-pull ad spend from Campaigns tab
+    const campaigns = data?.CAMPAIGNS || [];
+    const adSpend = campaigns
+      .filter(r => (r['Date'] || '').startsWith(yr))
+      .reduce((s, r) => s + money(r['Spend']), 0);
+    if (adSpend > 0) {
+      byCategory['Advertising'] = (byCategory['Advertising'] || 0) + adSpend;
+    }
+    const expenseTotal = manualExpenseTotal + adSpend;
 
     // Contractor payments from RETAINER_LEDGER + Commission_Ledger
     const contractors = {};
