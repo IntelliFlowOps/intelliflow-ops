@@ -1,3 +1,4 @@
+import React from 'react';
 import { useMemo, useState } from 'react';
 import { useTabData } from '../hooks/useSheetData.jsx';
 import KpiCard from '../components/KpiCard.jsx';
@@ -5,6 +6,30 @@ import DataTable from '../components/DataTable.jsx';
 import LoadingSpinner, { SkeletonKPIs } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+
+function useCountUp(target, duration = 1200) {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    if (!target || isNaN(parseFloat(target))) return;
+    const num = parseFloat(String(target).replace(/[^0-9.-]/g, ''));
+    if (!isFinite(num) || num === 0) { setValue(target); return; }
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = num * eased;
+      if (progress < 1) {
+        setValue(String(target).includes('$') ? '$' + current.toFixed(2) : String(target).includes('%') ? current.toFixed(1) + '%' : Math.round(current));
+        requestAnimationFrame(tick);
+      } else {
+        setValue(target);
+      }
+    };
+    requestAnimationFrame(tick);
+  }, [target]);
+  return value || target;
+}
 
 export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');

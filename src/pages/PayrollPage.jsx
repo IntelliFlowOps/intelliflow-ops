@@ -6,6 +6,30 @@ import LoadingSpinner from "../components/LoadingSpinner.jsx";
 
 const FOUNDER_PIN = "2343";
 
+const AVATAR_COLORS = {
+  Emma:    { bg: 'linear-gradient(135deg,#0891b2,#06b6d4)', shadow: 'rgba(6,182,212,0.4)' },
+  Wyatt:   { bg: 'linear-gradient(135deg,#0e7490,#0891b2)', shadow: 'rgba(6,182,212,0.3)' },
+  ED:      { bg: 'linear-gradient(135deg,#4f46e5,#6366f1)', shadow: 'rgba(99,102,241,0.4)' },
+  Micah:   { bg: 'linear-gradient(135deg,#6d28d9,#7c3aed)', shadow: 'rgba(124,58,237,0.4)' },
+  Justin:  { bg: 'linear-gradient(135deg,#5b21b6,#6d28d9)', shadow: 'rgba(109,40,217,0.4)' },
+  Founder: { bg: 'linear-gradient(135deg,#374151,#4b5563)', shadow: 'rgba(75,85,99,0.3)' },
+};
+
+function PersonAvatar({ name, size = 10 }) {
+  const col = AVATAR_COLORS[name] || AVATAR_COLORS.Founder;
+  return (
+    <div className={"flex shrink-0 items-center justify-center rounded-2xl font-bold text-white"}
+      style={{
+        width: size * 4, height: size * 4,
+        background: col.bg,
+        boxShadow: "0 0 16px " + col.shadow,
+        fontSize: size * 1.5,
+      }}>
+      {name[0]}
+    </div>
+  );
+}
+
 const MONTH_NAMES = [
   "January","February","March","April","May","June",
   "July","August","September","October","November","December"
