@@ -16,6 +16,7 @@ const PAGE_META = {
   '/payroll': { title: 'Payroll', subtitle: 'Founder access only — contractor payments and tax tracking' },
   '/health': { title: 'Business Health', subtitle: 'Long-term metrics and retention indicators' },
   '/tax': { title: 'Tax Center', subtitle: 'Expenses, distributions, and tax reports — PIN required' },
+  '/sales': { title: 'Sales Intelligence', subtitle: 'Your IntelliFlow sales expert — scripts, objections, pitches, strategy' },
 };
 
 function timeAgo(timestamp) {

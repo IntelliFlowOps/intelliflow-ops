@@ -8,6 +8,7 @@ export default async function handler(req, res) {
       message,
       messages,
       assistantType,
+      systemPrompt: customSystemPrompt,
       marketerMode,
       platform,
       niche,
@@ -206,7 +207,9 @@ Always end with one specific next action they can take.
 `;
 
     let systemPrompt = founderPrompt;
-    if (assistantType === "tax") {
+    if (assistantType === "sales" && customSystemPrompt) {
+      systemPrompt = customSystemPrompt;
+    } else if (assistantType === "tax") {
       systemPrompt = taxAdvisorPrompt;
     } else if (assistantType === "marketer") {
       systemPrompt =
@@ -231,7 +234,7 @@ Always end with one specific next action they can take.
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1400 : 600) : 800,
+        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1400 : 600) : assistantType === "sales" ? 1200 : 800,
         system: systemPrompt,
         messages: [
           {
