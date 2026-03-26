@@ -48,6 +48,8 @@ function normalizeTab(tabKey, rawRows) {
     case 'CUSTOMER_ACTIVITY': return normalizeByAnchor(rawRows, 'Date');
     case 'DATA_DICTIONARY': return normalizeByAnchor(rawRows, 'Sheet');
     case 'ALL_ANALYTICS': return normalizeByAnchor(rawRows, 'Date');
+    case 'EXPENSES': return normalizeByAnchor(rawRows, 'Date');
+    case 'DISTRIBUTIONS': return normalizeByAnchor(rawRows, 'Date');
     case 'RETAINER_LEDGER': return normalizeByAnchor(rawRows, 'Date');
     case 'PAYROLL_PEOPLE': return normalizeByAnchor(rawRows, 'Person');
     default: return rawRows;

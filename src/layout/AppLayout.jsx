@@ -15,6 +15,7 @@ const navItems = [
   { to: '/analytics', label: 'Analytics', icon: '◫' },
   { to: '/payroll', label: 'Payroll', icon: '◑' },
   { to: '/health', label: 'Business Health', icon: '◎' },
+  { to: '/tax', label: 'Tax Center', icon: '◑' },
 ];
 
 export default function AppLayout() {

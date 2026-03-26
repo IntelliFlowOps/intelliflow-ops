@@ -15,6 +15,8 @@ export const TABS = {
   CUSTOMER_ACTIVITY: 'Customer_Activity',
   DATA_DICTIONARY: 'Data_Dictionary',
   ALL_ANALYTICS: 'All Analytics',
+  EXPENSES: 'EXPENSES',
+  DISTRIBUTIONS: 'DISTRIBUTIONS',
 };
 
 export function buildCsvUrl(tabName) {
