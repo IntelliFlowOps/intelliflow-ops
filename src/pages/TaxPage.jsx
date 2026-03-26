@@ -96,13 +96,13 @@ function PinLock({ onUnlock }) {
 
 export default function TaxPage() {
   const [unlocked, setUnlocked] = useState(false);
-  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
   const { rows: expenses = [] } = useTabData('EXPENSES');
   const { rows: distributions = [] } = useTabData('DISTRIBUTIONS');
   const { rows: ledger = [] } = useTabData('COMMISSION_LEDGER');
   const { rows: retainer = [] } = useTabData('RETAINER_LEDGER');
   const { data } = useSheetData();
   const showToast = useToast();
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
 
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear.toString());

@@ -50,8 +50,8 @@ function PinLock({ onUnlock }) {
 
 export default function CommissionsPage() {
   const [unlocked, setUnlocked] = useState(false);
-  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
   const { rows: ledgerRows = [], loading, error } = useTabData('COMMISSION_LEDGER');
+  if (!unlocked) return <PinLock onUnlock={() => setUnlocked(true)} />;
 
   if (loading && !ledgerRows.length) return <div className='space-y-6 px-6 py-6'><SkeletonTable rows={5} cards={4} /></div>;
 
