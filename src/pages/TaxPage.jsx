@@ -318,23 +318,23 @@ export default function TaxPage() {
       doc.setFont('helvetica', 'bold');
       doc.text('IntelliFlow Communications', 15, 14);
       doc.setFontSize(11);
-      doc.setTextColor(200, 200, 200);
+      doc.setTextColor(240, 240, 240);
       doc.text(title, 15, 22);
       doc.setFontSize(9);
-      doc.setTextColor(120, 120, 120);
+      doc.setTextColor(180, 200, 210);
       doc.text(subtitle, 15, 29);
       doc.text(`Generated ${new Date().toLocaleDateString()}`, pageW - 15, 29, { align: 'right' });
     };
 
     const drawDivider = (y) => {
-      doc.setDrawColor(30, 40, 60);
+      doc.setDrawColor(180, 190, 200);
       doc.line(15, y, pageW - 15, y);
     };
 
     const drawSection = (title, y) => {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.setTextColor(6, 182, 212);
+      doc.setTextColor(15, 80, 120);
       doc.text(title.toUpperCase(), 15, y);
       return y + 6;
     };
@@ -342,10 +342,10 @@ export default function TaxPage() {
     const drawRow = (label, value, y, highlight = false) => {
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(highlight ? 255 : 180, highlight ? 255 : 180, highlight ? 255 : 180);
+      doc.setTextColor(highlight ? 10 : 60, highlight ? 10 : 60, highlight ? 10 : 60);
       doc.text(label, 20, y);
       doc.setFont('helvetica', highlight ? 'bold' : 'normal');
-      doc.setTextColor(highlight ? 6 : 220, highlight ? 182 : 220, highlight ? 212 : 220);
+      doc.setTextColor(highlight ? 6 : 30, highlight ? 120 : 30, highlight ? 180 : 30);
       doc.text(value, pageW - 15, y, { align: 'right' });
       return y + 6;
     };
@@ -354,16 +354,16 @@ export default function TaxPage() {
       drawHeader(`Tax Year ${yr} — Business Summary`, 'IntelliFlow Communications LLC · EIN on file · Partnership Return (Form 1065)');
       let y = 45;
 
-      doc.setFillColor(8, 14, 24);
+      doc.setFillColor(240, 245, 250);
       doc.roundedRect(15, y, pageW - 30, 28, 3, 3, 'F');
-      doc.setFontSize(9); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+      doc.setFontSize(9); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal');
       doc.text('GROSS REVENUE', 22, y + 9);
       doc.text('TOTAL EXPENSES', pageW/2, y + 9, { align: 'center' });
       doc.text('NET PROFIT', pageW - 22, y + 9, { align: 'right' });
       doc.setFontSize(14); doc.setFont('helvetica','bold');
-      doc.setTextColor(6,182,212); doc.text(fmt(td.revenue), 22, y + 20);
-      doc.setTextColor(239,68,68); doc.text(fmt(td.expenseTotal + td.contractorTotal), pageW/2, y + 20, { align: 'center' });
-      doc.setTextColor(td.netProfit >= 0 ? 16 : 239, td.netProfit >= 0 ? 185 : 68, td.netProfit >= 0 ? 129 : 68);
+      doc.setTextColor(6,120,180); doc.text(fmt(td.revenue), 22, y + 20);
+      doc.setTextColor(180,40,40); doc.text(fmt(td.expenseTotal + td.contractorTotal), pageW/2, y + 20, { align: 'center' });
+      doc.setTextColor(td.netProfit >= 0 ? 16 : 180, td.netProfit >= 0 ? 140 : 40, td.netProfit >= 0 ? 80 : 40);
       doc.text(fmt(td.netProfit), pageW - 22, y + 20, { align: 'right' });
       y += 36;
 
@@ -404,7 +404,7 @@ export default function TaxPage() {
       y = drawRow('Brennan', fmt(td.brennanDist), y);
       y += 4; drawDivider(y); y += 8;
 
-      doc.setFontSize(8); doc.setTextColor(80,80,80); doc.setFont('helvetica','italic');
+      doc.setFontSize(8); doc.setTextColor(60,60,60); doc.setFont('helvetica','italic');
       const disclaimer = 'This report is generated from your IntelliFlow Operations data and is intended as a financial reference tool. It is not tax advice. Please consult a licensed CPA or tax professional before filing.';
       const lines = doc.splitTextToSize(disclaimer, pageW - 30);
       doc.text(lines, 15, y);
@@ -461,7 +461,7 @@ export default function TaxPage() {
         'Company is considering S-Corp election — please advise on timing.',
       ];
       notes.forEach(note => {
-        doc.setFontSize(8); doc.setTextColor(160,160,160); doc.setFont('helvetica','normal');
+        doc.setFontSize(8); doc.setTextColor(50,50,50); doc.setFont('helvetica','normal');
         const lines = doc.splitTextToSize('• ' + note, pageW - 35);
         doc.text(lines, 20, y);
         y += lines.length * 5 + 2;
@@ -520,7 +520,7 @@ export default function TaxPage() {
         'Company is considering S-Corp election — please advise on timing.',
       ];
       notes.forEach(note => {
-        doc.setFontSize(8); doc.setTextColor(160,160,160); doc.setFont('helvetica','normal');
+        doc.setFontSize(8); doc.setTextColor(50,50,50); doc.setFont('helvetica','normal');
         const lines = doc.splitTextToSize('• ' + note, pageW - 35);
         doc.text(lines, 20, y);
         y += lines.length * 5 + 2;
@@ -537,16 +537,16 @@ export default function TaxPage() {
       drawHeader(`Tax Year ${yr} — ${owner}'s Personal Tax Summary`, `50% Owner · IntelliFlow Communications LLC · Indiana Resident`);
       let y = 45;
 
-      doc.setFillColor(8, 14, 24);
+      doc.setFillColor(240, 245, 250);
       doc.roundedRect(15, y, pageW - 30, 28, 3, 3, 'F');
-      doc.setFontSize(9); doc.setTextColor(120,120,120); doc.setFont('helvetica','normal');
+      doc.setFontSize(9); doc.setTextColor(80,80,80); doc.setFont('helvetica','normal');
       doc.text('SHARE OF PROFIT', 22, y + 9);
       doc.text('EST. TOTAL TAX', pageW/2, y + 9, { align: 'center' });
       doc.text('QUARTERLY PAYMENT', pageW - 22, y + 9, { align: 'right' });
       doc.setFontSize(14); doc.setFont('helvetica','bold');
-      doc.setTextColor(6,182,212); doc.text(fmt(td.eachShare), 22, y + 20);
-      doc.setTextColor(239,68,68); doc.text(fmt(td.totalPersonalTax), pageW/2, y + 20, { align: 'center' });
-      doc.setTextColor(245,158,11); doc.text(fmt(td.quarterlyPayment), pageW - 22, y + 20, { align: 'right' });
+      doc.setTextColor(6,120,180); doc.text(fmt(td.eachShare), 22, y + 20);
+      doc.setTextColor(180,40,40); doc.text(fmt(td.totalPersonalTax), pageW/2, y + 20, { align: 'center' });
+      doc.setTextColor(180,100,10); doc.text(fmt(td.quarterlyPayment), pageW - 22, y + 20, { align: 'right' });
       y += 36;
 
       drawDivider(y); y += 8;
@@ -593,7 +593,7 @@ export default function TaxPage() {
       y = drawRow('TOTAL ESTIMATED TAX', fmt(td.totalPersonalTax), y, true);
 
       y += 8;
-      doc.setFontSize(8); doc.setTextColor(80,80,80); doc.setFont('helvetica','italic');
+      doc.setFontSize(8); doc.setTextColor(60,60,60); doc.setFont('helvetica','italic');
       const disclaimer = 'These are estimates based on current data and simplified tax rates. Your actual tax liability depends on other income, deductions, and credits. Consult a licensed CPA before filing. Indiana county taxes may also apply.';
       const lines = doc.splitTextToSize(disclaimer, pageW - 30);
       doc.text(lines, 15, y);
