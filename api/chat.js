@@ -9,6 +9,7 @@ export default async function handler(req, res) {
       messages,
       assistantType,
       systemPrompt: customSystemPrompt,
+      enableWebSearch,
       marketerMode,
       platform,
       niche,
@@ -235,6 +236,7 @@ Always end with one specific next action they can take.
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
         max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1400 : 600) : assistantType === "sales" ? 1200 : 800,
+        ...(enableWebSearch ? { tools: [{ type: "web_search_20250305", name: "web_search" }] } : {}),
         system: systemPrompt,
         messages: [
           {
