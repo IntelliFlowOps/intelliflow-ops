@@ -13,7 +13,8 @@ export default function DataTable({
   onRowDoubleClick,
   emptyMessage = 'No data yet',
   maxHeight = 'max-h-[600px]',
-  stickyHeader = true
+  stickyHeader = true,
+  getRowStyle,
 }) {
   const [query, setQuery] = useState('');
   const [selectedRowKey, setSelectedRowKey] = useState(null);

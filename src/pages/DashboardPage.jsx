@@ -253,12 +253,12 @@ export default function DashboardPage() {
             <div className="w-full min-w-[150px] xl:w-[220px]">
               <div className="h-2 overflow-hidden rounded-full bg-white/[0.08]">
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${
+                  className={`h-full rounded-full ${
                     goal.isHit
                       ? 'bg-gradient-to-r from-cyan-300 via-cyan-400 to-emerald-400'
                       : 'bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500'
                   }`}
-                  style={{ width: `${goal.progressPercent}%` }}
+                  style={{ width: `${goal.progressPercent}%`, transition: 'width 1.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
                 />
               </div>
               <div className="mt-1 text-right text-[11px] text-zinc-400">

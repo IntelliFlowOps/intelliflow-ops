@@ -2,7 +2,42 @@ import { displayValue } from '../utils/format.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-export default function KpiCard({ label, value, subtitle, icon, color = 'accent', info }) {
+function Sparkline({ data = [], color = '#06b6d4', width = 80, height = 28 }) {
+  if (!data || data.length < 2) {
+    // Flat line when no history
+    return (
+      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        <line x1={0} y1={height/2} x2={width} y2={height/2}
+          stroke="rgba(255,255,255,0.1)" strokeWidth="1.5" strokeDasharray="3 3" />
+      </svg>
+    );
+  }
+  const nums = data.map(d => parseFloat(String(d).replace(/[^0-9.-]/g, '')) || 0);
+  const min = Math.min(...nums);
+  const max = Math.max(...nums);
+  const range = max - min || 1;
+  const pad = 3;
+  const points = nums.map((n, i) => {
+    const x = (i / (nums.length - 1)) * (width - pad * 2) + pad;
+    const y = height - pad - ((n - min) / range) * (height - pad * 2);
+    return `${x},${y}`;
+  }).join(' ');
+  const last = nums[nums.length - 1];
+  const prev = nums[nums.length - 2];
+  const trending = last >= prev;
+  const lineColor = trending ? '#10b981' : '#ef4444';
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+      <polyline points={points} fill="none" stroke={lineColor} strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
+      <circle cx={points.split(' ').pop().split(',')[0]}
+        cy={points.split(' ').pop().split(',')[1]}
+        r="2.5" fill={lineColor} opacity="0.9" />
+    </svg>
+  );
+}
+
+export default function KpiCard({ label, value, subtitle, icon, color = 'accent', info, sparkData }) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 320 });
   const buttonRef = useRef(null);
@@ -149,6 +184,11 @@ export default function KpiCard({ label, value, subtitle, icon, color = 'accent'
         {displayValue(value)}
       </span>
 
+      {sparkData !== undefined && (
+        <div className="mt-1">
+          <Sparkline data={sparkData} />
+        </div>
+      )}
       {subtitle && (
         <span className="text-xs text-zinc-500">{subtitle}</span>
       )}
