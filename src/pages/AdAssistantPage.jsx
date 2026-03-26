@@ -323,6 +323,27 @@ export default function AdAssistantPage() {
               </div>
 
               <div className="space-y-5">
+                {messages.length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center space-y-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl"
+                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.2)' }}>
+                      ⬡
+                    </div>
+                    <div>
+                      <div className="text-base font-semibold text-white">Founder Assistant</div>
+                      <div className="text-sm text-zinc-400 mt-1 max-w-xs leading-6">Ask me anything about your business — growth strategy, client analysis, campaign decisions, financial questions, or operational issues.</div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {['How are we trending this month?','What should we focus on?','Analyze our CAC','Draft a client win message'].map(q => (
+                        <button key={q} onClick={() => { const el = document.querySelector('textarea'); if (el) { const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set; nativeInputValueSetter.call(el, q); el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); } }}
+                          className="rounded-full px-3 py-1.5 text-xs transition"
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#a1a1aa' }}>
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={`${message.role}-${index}`}
@@ -333,6 +354,17 @@ export default function AdAssistantPage() {
                 ))}
 
                 {loading && (
+                  <div className="flex justify-start px-2 pb-2">
+                    <div className="flex items-center gap-1 rounded-[20px] px-4 py-3"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      {[0,150,300].map(d => (
+                        <div key={d} className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+                          style={{ animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: d + 'ms' }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {false && (
                   <div className="flex justify-start">
                     <div className="relative overflow-hidden rounded-[30px] bg-cyan-300/[0.06] px-5 py-4 shadow-[0_22px_80px_rgba(34,211,238,0.10)] backdrop-blur-3xl">
                       <div className="pointer-events-none absolute inset-0 rounded-[30px] bg-[linear-gradient(135deg,rgba(255,255,255,0.05),transparent_34%,rgba(34,211,238,0.05))]" />

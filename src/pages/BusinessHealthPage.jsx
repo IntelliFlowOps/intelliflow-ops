@@ -24,12 +24,21 @@ function HealthMetric({ label, value, target, description, status }) {
   };
   const col = colors[status] || colors.none;
 
+  const statusLabel = { good: 'Healthy', warn: 'Watch', bad: 'Critical', none: 'No Data' };
+  const statusDot = { good: '#10b981', warn: '#f59e0b', bad: '#ef4444', none: '#52525b' };
   return (
     <div className="rounded-[20px] p-5 space-y-3"
       style={{ background: col.bg, border: `1px solid ${col.border}`, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 mb-1">{label}</div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">{label}</div>
+            <div className="flex items-center gap-1 rounded-full px-2 py-0.5"
+              style={{ background: col.bg, border: `1px solid ${col.border}` }}>
+              <div className="h-1.5 w-1.5 rounded-full" style={{ background: statusDot[status] }} />
+              <span className="text-[9px] uppercase tracking-wider" style={{ color: col.text }}>{statusLabel[status]}</span>
+            </div>
+          </div>
           <div className="text-3xl font-bold tracking-tight" style={{ color: col.text }}>{value}</div>
         </div>
         {target && (

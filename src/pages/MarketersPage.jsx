@@ -320,24 +320,17 @@ export default function MarketersPage() {
                 boxShadow: "0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
               }}
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-5 flex flex-col items-center text-center gap-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold text-white"
+                  style={{ background: isSales ? 'linear-gradient(135deg,#4f46e5,#6366f1)' : 'linear-gradient(135deg,#0891b2,#06b6d4)', boxShadow: isSales ? '0 0 20px rgba(99,102,241,0.3)' : '0 0 20px rgba(6,182,212,0.3)' }}>
+                  {p.name[0]}
+                </div>
                 <div>
                   <div className="text-base font-semibold text-white">{p.name}</div>
-                  <div
-                    className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
-                    style={{ color: isSales ? "#a5b4fc" : "#67e8f9" }}
-                  >
-                    {isSales ? "Sales" : "Marketer"}
+                  <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
+                    style={{ color: isSales ? "#a5b4fc" : "#67e8f9" }}>
+                    {isSales ? "Sales · 20% commission" : "Marketer · 5% lifetime + retainer"}
                   </div>
-                </div>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-sm"
-                  style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  🔒
                 </div>
               </div>
 
@@ -396,21 +389,16 @@ export default function MarketersPage() {
                 boxShadow: "0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
               }}
             >
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-5 flex flex-col items-center text-center gap-2">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold text-white"
+                  style={{ background: 'linear-gradient(135deg,#4f46e5,#6366f1)', boxShadow: '0 0 20px rgba(99,102,241,0.3)' }}>
+                  {p.name[0]}
+                </div>
                 <div>
                   <div className="text-base font-semibold text-white">{p.name}</div>
-                  <div
-                    className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
-                    style={{ color: "#a5b4fc" }}
-                  >
-                    Sales
+                  <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium" style={{ color: "#a5b4fc" }}>
+                    Sales · 20% commission
                   </div>
-                </div>
-                <div
-                  className="flex h-8 w-8 items-center justify-center rounded-xl text-sm"
-                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
-                >
-                  🔒
                 </div>
               </div>
               <input

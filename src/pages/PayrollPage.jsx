@@ -15,17 +15,24 @@ const AVATAR_COLORS = {
   Founder: { bg: 'linear-gradient(135deg,#374151,#4b5563)', shadow: 'rgba(75,85,99,0.3)' },
 };
 
-function PersonAvatar({ name, size = 10 }) {
+function PersonAvatar({ name, size = 10, hasUnpaid = false }) {
   const col = AVATAR_COLORS[name] || AVATAR_COLORS.Founder;
   return (
-    <div className={"flex shrink-0 items-center justify-center rounded-2xl font-bold text-white"}
-      style={{
-        width: size * 4, height: size * 4,
-        background: col.bg,
-        boxShadow: "0 0 16px " + col.shadow,
-        fontSize: size * 1.5,
-      }}>
-      {name[0]}
+    <div className="relative shrink-0" style={{ width: size * 4, height: size * 4 }}>
+      <div className="flex items-center justify-center rounded-2xl font-bold text-white w-full h-full"
+        style={{
+          background: col.bg,
+          boxShadow: "0 0 16px " + col.shadow,
+          fontSize: size * 1.5,
+          outline: hasUnpaid ? '2px solid rgba(245,158,11,0.7)' : '2px solid transparent',
+          outlineOffset: '2px',
+        }}>
+        {name[0]}
+      </div>
+      {hasUnpaid && (
+        <div className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-[#07111f]"
+          style={{ background: '#f59e0b', boxShadow: '0 0 6px rgba(245,158,11,0.8)' }} />
+      )}
     </div>
   );
 }
