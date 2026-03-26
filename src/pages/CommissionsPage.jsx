@@ -160,12 +160,14 @@ export default function CommissionsPage() {
         <h2 className="section-title mb-3">Ledger Entries</h2>
         {error && <ErrorBanner message={error} />}
         {ledgerRows.length > 0 ? (
-          <DataTable
-            rows={ledgerRows}
-            columns={columns}
-            searchPlaceholder="Search ledger..."
-            emptyMessage="No ledger entries yet"
-          />
+          <div>
+            <div className="grid grid-cols-4 gap-3 px-4 py-2 mb-1">
+              {['Date','Customer','Attribution','Status'].map(h => (
+                <span key={h} className="text-[10px] uppercase tracking-wider text-zinc-600">{h}</span>
+              ))}
+            </div>
+            {ledgerRows.map((row, i) => <ExpandableLedgerRow key={i} row={row} />)}
+          </div>
         ) : (
           <EmptyState message="No ledger entries yet" />
         )}

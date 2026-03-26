@@ -10,6 +10,45 @@ const ACTIVITY_TYPES = ['Call', 'Email', 'Meeting', 'Onboarding', 'Check-in', 'I
 const HEALTH_OPTIONS = ['Positive', 'Neutral', 'Negative'];
 const OWNERS = ['Founder', 'Emma', 'Wyatt', 'ED', 'Micah', 'Justin'];
 
+function ExpandableActivityRow({ row }) {
+  const [expanded, setExpanded] = useState(false);
+  const healthColor = { Positive: '#10b981', Negative: '#ef4444', Neutral: '#a1a1aa' };
+  const hc = healthColor[row['Health Impact']] || '#a1a1aa';
+  return (
+    <div className="rounded-xl overflow-hidden transition-all"
+      style={{ background: expanded ? 'rgba(6,182,212,0.04)' : 'rgba(255,255,255,0.02)', border: expanded ? '1px solid rgba(6,182,212,0.15)' : '1px solid rgba(255,255,255,0.05)', marginBottom: 4 }}>
+      <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => setExpanded(p => !p)}>
+        <div className="h-2 w-2 rounded-full shrink-0" style={{ background: hc }} />
+        <div className="flex-1 min-w-0 grid grid-cols-4 gap-3">
+          <span className="text-xs text-zinc-500 truncate">{row['Date']}</span>
+          <span className="text-sm text-white font-medium truncate">{row['Customer Name']}</span>
+          <span className="text-xs text-zinc-400 truncate">{row['Activity Type']}</span>
+          <span className="text-xs text-zinc-400 truncate">{row['Owner']}</span>
+        </div>
+        <span className="text-zinc-600 text-xs shrink-0 transition-transform duration-200"
+          style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0)' }}>▾</span>
+      </div>
+      {expanded && (
+        <div className="px-4 pb-4 pt-1 border-t border-white/[0.05] space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: 'Summary', value: row['Summary'] },
+              { label: 'Next Step', value: row['Next Step'] },
+              { label: 'Health Impact', value: row['Health Impact'] },
+              { label: 'Reference', value: row['Link / Reference'] },
+            ].map(f => f.value ? (
+              <div key={f.label} className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">{f.label}</div>
+                <div className="text-sm text-zinc-200 leading-5">{f.value}</div>
+              </div>
+            ) : null)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ActivityPage() {
   const { rows, loading, error } = useTabData('CUSTOMER_ACTIVITY');
   const { data } = useSheetData();
@@ -61,11 +100,21 @@ export default function ActivityPage() {
         </button>
       </div>
 
-      <DataTable rows={rows} columns={[
-        {key:'Date',label:'Date'},{key:'Customer Name',label:'Customer'},{key:'Activity Type',label:'Type'},
-        {key:'Owner',label:'Owner'},{key:'Summary',label:'Summary'},{key:'Next Step',label:'Next Step'},
-        {key:'Health Impact',label:'Health Impact'},{key:'Link / Reference',label:'Reference'},
-      ]} searchPlaceholder="Search activity..." emptyMessage="No activity logged yet — use the Log Activity button above to record your first client interaction." />
+      {rows.length === 0 ? (
+        <div className="rounded-[18px] px-4 py-8 text-center"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="text-zinc-500 text-sm">No activity logged yet — use the Log Activity button above to record your first client interaction.</div>
+        </div>
+      ) : (
+        <div>
+          <div className="grid grid-cols-4 gap-3 px-4 py-2 mb-1">
+            {['Date','Client','Type','Owner'].map(h => (
+              <span key={h} className="text-[10px] uppercase tracking-wider text-zinc-600">{h}</span>
+            ))}
+          </div>
+          {rows.map((row, i) => <ExpandableActivityRow key={i} row={row} />)}
+        </div>
+      )}
 
       {modalOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
