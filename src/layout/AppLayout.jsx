@@ -36,6 +36,7 @@ const NAV_SECTIONS = [
     label: 'Intelligence',
     key: 'intelligence',
     items: [
+      { to: '/sales', label: 'Sales Intelligence', icon: '⚡' },
       { to: '/founder-assistant', label: 'Founder Assistant', icon: '⬡' },
       { to: '/marketer-assistant', label: 'Marketer AI', icon: '⬢' },
     ],
