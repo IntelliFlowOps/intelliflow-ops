@@ -383,6 +383,7 @@ export default function MarketersPage() {
           {PEOPLE.filter(p => p.role === "Tech Lead").map((p) => {
           const sums = { [p.name]: { total: 0 } };
           const isPinOk = pins[p.name] === PIN_MAP[p.name];
+          const person = p.name;
           return (
             <div
               key={p.name}
