@@ -11,37 +11,24 @@ export default function CursorTrail() {
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
 
-    let mx = -200, my = -200;
-    let vel = 0, angle = 0;
-    let prevX = -200, prevY = -200;
+    let mx = -500, my = -500, vel = 0, angle = 0;
 
-    // Distortion field — grid of points that get displaced by the cursor
-    const cols = 60;
-    const rows = 40;
-    const points = [];
+    // Dense field — no visible grid, just light values
+    const res = 8;
+    let cols, rows, field;
+
+    function buildField() {
+      cols = Math.ceil(window.innerWidth / res) + 2;
+      rows = Math.ceil(window.innerHeight / res) + 2;
+      field = new Float32Array(cols * rows * 4); // x-displacement, y-displacement, vx, vy
+    }
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      // Rebuild grid
-      points.length = 0;
-      const spacingX = window.innerWidth / (cols - 1);
-      const spacingY = window.innerHeight / (rows - 1);
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          points.push({
-            homeX: c * spacingX,
-            homeY: r * spacingY,
-            x: c * spacingX,
-            y: r * spacingY,
-            vx: 0,
-            vy: 0,
-          });
-        }
-      }
+      buildField();
     }
     resize();
 
@@ -51,8 +38,6 @@ export default function CursorTrail() {
       const dist = Math.sqrt(dx * dx + dy * dy);
       vel = Math.min(dist, 100);
       if (dist > 0.5) angle = Math.atan2(dy, dx);
-      prevX = mx;
-      prevY = my;
       mx = e.clientX;
       my = e.clientY;
     }
@@ -60,117 +45,94 @@ export default function CursorTrail() {
     function draw() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-      const cursorRadius = 80 + vel * 1.5;
-      const pushStrength = 0.15 + vel * 0.008;
+      const pushRadius = 12 + vel * 0.8;
+      const pushStrength = 0.4 + vel * 0.05;
 
-      // Physics: push points away from cursor, spring them back home
-      for (let i = 0; i < points.length; i++) {
-        const p = points[i];
-        const dx = p.x - mx;
-        const dy = p.y - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < cursorRadius && dist > 0) {
-          // Push force — falls off with distance squared
-          const force = (1 - dist / cursorRadius);
-          const forceSquared = force * force * pushStrength;
-          p.vx += (dx / dist) * forceSquared * vel * 0.15;
-          p.vy += (dy / dist) * forceSquared * vel * 0.15;
-
-          // Add movement direction bias — wake effect
-          p.vx += Math.cos(angle) * forceSquared * 0.3;
-          p.vy += Math.sin(angle) * forceSquared * 0.3;
-        }
-
-        // Spring back to home position
-        const hx = p.homeX - p.x;
-        const hy = p.homeY - p.y;
-        p.vx += hx * 0.015;
-        p.vy += hy * 0.015;
-
-        // Damping
-        p.vx *= 0.92;
-        p.vy *= 0.92;
-
-        p.x += p.vx;
-        p.y += p.vy;
-      }
-
-      // Draw the displaced field as subtle connecting lines
-      const spacingX = window.innerWidth / (cols - 1);
-      const spacingY = window.innerHeight / (rows - 1);
-
+      // Update field physics
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const i = r * cols + c;
-          const p = points[i];
+          const i = (r * cols + c) * 4;
+          const px = c * res;
+          const py = r * res;
 
-          // How displaced is this point?
-          const dispX = p.x - p.homeX;
-          const dispY = p.y - p.homeY;
+          // Distance from cursor
+          const dx = px - mx;
+          const dy = py - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < pushRadius * res && dist > 0) {
+            const force = (1 - dist / (pushRadius * res));
+            const f = force * force * pushStrength;
+            // Push outward from cursor + along movement direction
+            field[i + 2] += (dx / dist) * f * 0.6;
+            field[i + 3] += (dy / dist) * f * 0.6;
+            field[i + 2] += Math.cos(angle) * f * 0.15;
+            field[i + 3] += Math.sin(angle) * f * 0.15;
+          }
+
+          // Spring back
+          field[i + 2] -= field[i] * 0.03;
+          field[i + 3] -= field[i + 1] * 0.03;
+
+          // Damping
+          field[i + 2] *= 0.94;
+          field[i + 3] *= 0.94;
+
+          // Apply velocity
+          field[i] += field[i + 2];
+          field[i + 1] += field[i + 3];
+        }
+      }
+
+      // Render — smooth light based on displacement magnitude
+      const imageData = ctx.createImageData(canvas.width, canvas.height);
+      const data = imageData.data;
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.width;
+
+      for (let r = 0; r < rows - 1; r++) {
+        for (let c = 0; c < cols - 1; c++) {
+          const i = (r * cols + c) * 4;
+          const dispX = field[i];
+          const dispY = field[i + 1];
           const displacement = Math.sqrt(dispX * dispX + dispY * dispY);
 
-          if (displacement < 0.3) continue;
+          if (displacement < 0.15) continue;
 
-          const alpha = Math.min(displacement * 0.008, 0.07);
+          // Light intensity from displacement
+          const intensity = Math.min(displacement * 3, 18);
 
-          // Draw horizontal lines to neighbor
-          if (c < cols - 1) {
-            const next = points[i + 1];
-            const nextDisp = Math.sqrt(
-              (next.x - next.homeX) ** 2 + (next.y - next.homeY) ** 2
-            );
-            const lineAlpha = Math.min((displacement + nextDisp) * 0.004, 0.05);
+          // Paint a soft area for this cell
+          const sx = Math.round(c * res * dpr);
+          const sy = Math.round(r * res * dpr);
+          const size = Math.round(res * dpr);
 
-            if (lineAlpha > 0.003) {
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(next.x, next.y);
-              ctx.strokeStyle = `rgba(255,255,255,${lineAlpha})`;
-              ctx.lineWidth = 0.5;
-              ctx.stroke();
+          for (let py = sy; py < sy + size && py < canvas.height; py++) {
+            for (let px = sx; px < sx + size && px < canvas.width; px++) {
+              const pi = (py * w + px) * 4;
+              // Soft falloff from cell center
+              const cx = sx + size / 2;
+              const cy = sy + size / 2;
+              const cdist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+              const falloff = Math.max(0, 1 - cdist / (size * 0.7));
+              const val = intensity * falloff * falloff;
+              data[pi] = Math.min(255, data[pi] + val);
+              data[pi + 1] = Math.min(255, data[pi + 1] + val);
+              data[pi + 2] = Math.min(255, data[pi + 2] + val);
+              data[pi + 3] = Math.min(255, data[pi + 3] + val * 3.5);
             }
-          }
-
-          // Draw vertical lines to neighbor below
-          if (r < rows - 1) {
-            const below = points[i + cols];
-            const belowDisp = Math.sqrt(
-              (below.x - below.homeX) ** 2 + (below.y - below.homeY) ** 2
-            );
-            const lineAlpha = Math.min((displacement + belowDisp) * 0.004, 0.05);
-
-            if (lineAlpha > 0.003) {
-              ctx.beginPath();
-              ctx.moveTo(p.x, p.y);
-              ctx.lineTo(below.x, below.y);
-              ctx.strokeStyle = `rgba(255,255,255,${lineAlpha})`;
-              ctx.lineWidth = 0.5;
-              ctx.stroke();
-            }
-          }
-
-          // Displaced points glow faintly
-          if (displacement > 2) {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, 0.8, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,255,255,${alpha * 0.6})`;
-            ctx.fill();
           }
         }
       }
 
-      // Cursor pressure light — like the water surface dipping
-      const pressureRadius = 40 + vel * 0.5;
-      const pressureAlpha = 0.008 + vel * 0.0002;
-      const pressure = ctx.createRadialGradient(mx, my, 0, mx, my, pressureRadius);
-      pressure.addColorStop(0, `rgba(255,255,255,${pressureAlpha})`);
-      pressure.addColorStop(0.4, `rgba(255,255,255,${pressureAlpha * 0.15})`);
-      pressure.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.beginPath();
-      ctx.arc(mx, my, pressureRadius, 0, Math.PI * 2);
-      ctx.fillStyle = pressure;
-      ctx.fill();
+      ctx.putImageData(imageData, 0, 0);
+
+      // Soft gaussian blur pass
+      ctx.globalAlpha = 0.85;
+      ctx.filter = 'blur(6px)';
+      ctx.drawImage(canvas, 0, 0);
+      ctx.filter = 'none';
+      ctx.globalAlpha = 1;
 
       vel *= 0.88;
       animationRef.current = requestAnimationFrame(draw);
