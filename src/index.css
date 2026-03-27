@@ -302,3 +302,31 @@ button:active, a:active, .card:active, .card-hover:active, .kpi-card:active {
     margin: 12px;
   }
 }
+
+/* ── Ultra glass KPI cards ── */
+.kpi-card {
+  background: linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.015) 50%, rgba(255,255,255,0.03) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.5),
+    0 15px 35px rgba(0,0,0,0.4),
+    0 5px 15px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    inset 0 0 30px rgba(6,182,212,0.03) !important;
+  backdrop-filter: blur(50px) saturate(200%) brightness(1.05) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(200%) brightness(1.05) !important;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  border-color: rgba(6,182,212,0.18) !important;
+  box-shadow:
+    0 50px 100px rgba(0,0,0,0.55),
+    0 20px 45px rgba(0,0,0,0.45),
+    0 8px 20px rgba(0,0,0,0.35),
+    0 0 40px rgba(6,182,212,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    inset 0 0 40px rgba(6,182,212,0.05) !important;
+}
