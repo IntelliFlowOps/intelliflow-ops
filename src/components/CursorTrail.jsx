@@ -13,8 +13,10 @@ export default function CursorTrail() {
 
     let mx = -200, my = -200, prevX = -200, prevY = -200;
     let vel = 0, angle = 0;
-    const trail = [];
-    const sparks = [];
+    const ripples = [];
+    const motes = [];
+    let lastRippleTime = 0;
+    let totalDistance = 0;
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
@@ -25,147 +27,182 @@ export default function CursorTrail() {
     resize();
 
     function handleMove(e) {
-      const dx = e.clientX - prevX;
-      const dy = e.clientY - prevY;
+      const dx = e.clientX - mx;
+      const dy = e.clientY - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      vel = Math.min(dist, 90);
+      vel = Math.min(dist, 100);
       if (dist > 0.5) angle = Math.atan2(dy, dx);
       prevX = mx;
       prevY = my;
       mx = e.clientX;
       my = e.clientY;
+      totalDistance += dist;
 
-      // Trail points — interpolated for smoothness
-      const steps = Math.max(1, Math.floor(dist / 2));
-      for (let s = 0; s < steps; s++) {
-        const t = s / steps;
-        trail.push({
-          x: prevX + dx * t,
-          y: prevY + dy * t,
+      const now = Date.now();
+
+      // Ripples — spawn based on distance traveled, not time
+      if (vel > 2 && now - lastRippleTime > 30) {
+        lastRippleTime = now;
+        ripples.push({
+          x: mx,
+          y: my,
           life: 1,
-          width: vel,
+          maxRadius: 18 + vel * 0.6,
+          radius: 2,
+          vel: vel,
         });
-      }
-      if (trail.length > 100) trail.splice(0, trail.length - 100);
 
-      // Sparks — split off at angles like a sparkler
-      if (vel > 6) {
-        const count = Math.floor(vel / 12);
-        for (let i = 0; i < count; i++) {
-          // Fan out in a cone behind the cursor
-          const spreadAngle = angle + Math.PI + (Math.random() - 0.5) * 1.2;
-          const speed = 0.3 + Math.random() * (vel * 0.025);
-          sparks.push({
-            x: mx,
-            y: my,
-            vx: Math.cos(spreadAngle) * speed,
-            vy: Math.sin(spreadAngle) * speed,
+        // Secondary ripple — slightly delayed, slightly offset
+        if (vel > 20) {
+          ripples.push({
+            x: mx + (Math.random() - 0.5) * 6,
+            y: my + (Math.random() - 0.5) * 6,
             life: 1,
-            decay: 0.01 + Math.random() * 0.01,
-            size: 0.3 + Math.random() * 0.8,
-            bright: 0.5 + Math.random() * 0.5,
+            maxRadius: 10 + vel * 0.3,
+            radius: 1,
+            vel: vel * 0.6,
+            delay: 0.15,
           });
         }
       }
 
-      if (sparks.length > 150) sparks.splice(0, sparks.length - 150);
+      if (ripples.length > 60) ripples.splice(0, ripples.length - 60);
+
+      // Motes — rare, beautiful, drift outward slowly
+      if (vel > 8 && Math.random() < 0.12) {
+        const outAngle = angle + Math.PI + (Math.random() - 0.5) * Math.PI * 1.5;
+        const speed = 0.08 + Math.random() * 0.12;
+        motes.push({
+          x: mx,
+          y: my,
+          vx: Math.cos(outAngle) * speed,
+          vy: Math.sin(outAngle) * speed,
+          life: 1,
+          size: 0.4 + Math.random() * 0.6,
+          drift: (Math.random() - 0.5) * 0.02,
+        });
+      }
+
+      if (motes.length > 40) motes.splice(0, motes.length - 40);
     }
 
     function draw() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-      // ── Trail ribbon — tapers from nothing to cursor ──
-      for (let i = 0; i < trail.length; i++) {
-        trail[i].life -= 0.012;
-      }
-      while (trail.length > 0 && trail[0].life <= 0) trail.shift();
+      // ── Ripples — concentric rings expanding outward ──
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
 
-      if (trail.length > 4) {
-        // Draw as connected smooth segments
-        for (let i = 3; i < trail.length; i++) {
-          const p0 = trail[i - 3];
-          const p1 = trail[i - 2];
-          const p2 = trail[i - 1];
-          const p3 = trail[i];
+        if (r.delay && r.delay > 0) {
+          r.delay -= 0.016;
+          continue;
+        }
 
-          const t = i / trail.length;
-          const life = p3.life;
+        r.life -= 0.012;
+        r.radius += (r.maxRadius - r.radius) * 0.06;
 
-          // Smooth taper: thin at tail, thicker at head
-          const taper = t * t * t;
-          const fadeOut = life * life;
-          const alpha = taper * fadeOut * 0.1;
-          const width = taper * 3 * fadeOut;
+        if (r.life <= 0) { ripples.splice(i, 1); continue; }
 
-          if (alpha < 0.0005) continue;
+        const fade = r.life * r.life * r.life;
+        const alpha = fade * 0.09;
 
-          // Catmull-Rom to Bezier control points
-          const cp1x = p1.x + (p2.x - p0.x) / 6;
-          const cp1y = p1.y + (p2.y - p0.y) / 6;
-          const cp2x = p2.x - (p3.x - p1.x) / 6;
-          const cp2y = p2.y - (p3.y - p1.y) / 6;
+        if (alpha < 0.001) { ripples.splice(i, 1); continue; }
 
+        // Main ripple ring
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+        ctx.lineWidth = 0.8 + fade * 0.8;
+        ctx.stroke();
+
+        // Inner glow — fills the ripple with a whisper of light
+        if (fade > 0.3) {
+          const fillGrad = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.radius);
+          fillGrad.addColorStop(0, `rgba(255,255,255,${alpha * 0.25})`);
+          fillGrad.addColorStop(0.7, `rgba(255,255,255,${alpha * 0.05})`);
+          fillGrad.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
-          ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-          ctx.lineWidth = width;
-          ctx.lineCap = 'round';
-          ctx.stroke();
+          ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+          ctx.fillStyle = fillGrad;
+          ctx.fill();
         }
       }
 
-      // ── Sparks — fan out behind cursor like a sparkler ──
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        s.life -= s.decay;
-        s.x += s.vx;
-        s.y += s.vy;
-        s.vx *= 0.98;
-        s.vy *= 0.98;
-        s.vy += 0.005;
+      // ── Motes — tiny lights that drift outward and fade ──
+      for (let i = motes.length - 1; i >= 0; i--) {
+        const m = motes[i];
+        m.life -= 0.006;
+        m.x += m.vx;
+        m.y += m.vy;
+        m.vx += m.drift;
+        m.vy += m.drift * 0.5;
+        m.vx *= 0.997;
+        m.vy *= 0.997;
 
-        if (s.life <= 0) { sparks.splice(i, 1); continue; }
+        if (m.life <= 0) { motes.splice(i, 1); continue; }
 
-        // Smooth fade with slight flicker
-        const fade = s.life * s.life;
-        const flicker = 0.85 + Math.sin(Date.now() * 0.02 + i) * 0.15;
-        const alpha = fade * s.bright * flicker * 0.22;
-        const radius = s.size * (0.4 + fade * 0.6);
+        const fade = m.life * m.life;
+        // Gentle pulse — breathes in and out
+        const pulse = 0.7 + Math.sin(Date.now() * 0.003 + i * 2.5) * 0.3;
+        const alpha = fade * pulse * 0.1;
+        const radius = m.size * (0.6 + fade * 0.4);
 
-        if (alpha < 0.001) { sparks.splice(i, 1); continue; }
+        if (alpha < 0.001) { motes.splice(i, 1); continue; }
 
+        // Soft glow around each mote
+        const moteGlow = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, radius * 4);
+        moteGlow.addColorStop(0, `rgba(255,255,255,${alpha})`);
+        moteGlow.addColorStop(0.4, `rgba(255,255,255,${alpha * 0.3})`);
+        moteGlow.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath();
-        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.arc(m.x, m.y, radius * 4, 0, Math.PI * 2);
+        ctx.fillStyle = moteGlow;
         ctx.fill();
 
-        // Tiny connecting line from spark back toward trail
-        if (fade > 0.5 && radius > 0.4) {
-          const lineAlpha = alpha * 0.3;
-          ctx.beginPath();
-          ctx.moveTo(s.x, s.y);
-          ctx.lineTo(s.x - s.vx * 3, s.y - s.vy * 3);
-          ctx.strokeStyle = `rgba(255,255,255,${lineAlpha})`;
-          ctx.lineWidth = radius * 0.4;
-          ctx.lineCap = 'round';
-          ctx.stroke();
-        }
+        // Core dot
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${alpha * 1.5})`;
+        ctx.fill();
       }
 
-      // ── Ambient light — soft pool under cursor ──
-      const lightRadius = 35 + vel * 0.6;
-      const lightAlpha = 0.018 + vel * 0.0004;
-      const glow = ctx.createRadialGradient(mx, my, 0, mx, my, lightRadius);
-      glow.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
-      glow.addColorStop(0.6, `rgba(255,255,255,${lightAlpha * 0.2})`);
-      glow.addColorStop(1, 'rgba(255,255,255,0)');
+      // ── The surprise: surface tension ──
+      // When cursor is still, a single slow ring pulses outward
+      // like the surface settling after being disturbed
+      if (vel < 1.5 && ripples.length < 5) {
+        const breathe = Math.sin(Date.now() * 0.0015) * 0.5 + 0.5;
+        const settleRadius = 20 + breathe * 15;
+        const settleAlpha = 0.02 + breathe * 0.015;
+
+        ctx.beginPath();
+        ctx.arc(mx, my, settleRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${settleAlpha})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // Inner pool of light — like the water is still but alive
+        const poolGrad = ctx.createRadialGradient(mx, my, 0, mx, my, settleRadius * 0.6);
+        poolGrad.addColorStop(0, `rgba(255,255,255,${settleAlpha * 0.5})`);
+        poolGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.arc(mx, my, settleRadius * 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = poolGrad;
+        ctx.fill();
+      }
+
+      // ── Ambient cursor light ──
+      const lightRadius = 30 + vel * 0.4;
+      const lightAlpha = 0.012 + vel * 0.0003;
+      const ambient = ctx.createRadialGradient(mx, my, 0, mx, my, lightRadius);
+      ambient.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
+      ambient.addColorStop(0.5, `rgba(255,255,255,${lightAlpha * 0.2})`);
+      ambient.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.beginPath();
       ctx.arc(mx, my, lightRadius, 0, Math.PI * 2);
-      ctx.fillStyle = glow;
+      ctx.fillStyle = ambient;
       ctx.fill();
 
-      vel *= 0.88;
+      vel *= 0.85;
       animationRef.current = requestAnimationFrame(draw);
     }
 
