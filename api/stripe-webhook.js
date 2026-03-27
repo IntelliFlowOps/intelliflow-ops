@@ -2,6 +2,16 @@ import Stripe from 'stripe';
 import { google } from 'googleapis';
 
 const SHEET_ID = '1TK0c4BxhqSVL09SlC8SnweddOFvP9frEmYIKqdl2jqc';
+
+async function sendAlert(event, data) {
+  try {
+    await fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/alert-webhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ event, data }),
+    });
+  } catch (e) { console.error('Alert failed:', e.message); }
+}
 const LEDGER_TAB = 'Commission_Ledger';
 const CUSTOMERS_TAB = 'Customers';
 
@@ -208,6 +218,9 @@ export default async function handler(req, res) {
         'Last Payment Date': cancelDate,
       });
 
+      // Fire churn alert
+      await sendAlert('client.churned', { customerName: cancelledName, plan: 'Unknown' });
+
       await logActivity(sheets, {
         customerName: cancelledName,
         activityType: 'Churn',
@@ -339,6 +352,13 @@ export default async function handler(req, res) {
       summary: `${interval === 'year' ? 'Annual' : 'Monthly'} payment received — ${priceInfo?.plan || 'Unknown'} plan — $${amountPaid.toFixed(2)}`,
       nextStep: 'Assign closer if not already assigned',
       healthImpact: 'Positive',
+    });
+
+    // Fire onboarding alert
+    await sendAlert('client.onboarded', {
+      customerName,
+      plan: priceInfo?.plan || 'Unknown',
+      amount: base,
     });
 
     console.log(`Wrote ${rowsToWrite.length} row(s) for invoice ${invoiceId}`);
