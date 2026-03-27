@@ -13,10 +13,8 @@ export default function CursorTrail() {
 
     let mx = -200, my = -200, prevX = -200, prevY = -200;
     let vel = 0, angle = 0;
-    const ripples = [];
+    const wakeLines = [];
     const motes = [];
-    let lastRippleTime = 0;
-    let totalDistance = 0;
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
@@ -36,170 +34,192 @@ export default function CursorTrail() {
       prevY = my;
       mx = e.clientX;
       my = e.clientY;
-      totalDistance += dist;
 
-      const now = Date.now();
+      // Wake lines — two lines that spread outward perpendicular to movement
+      if (vel > 3) {
+        const perpAngle = angle + Math.PI / 2;
+        const spread = 3 + vel * 0.15;
 
-      // Ripples — spawn based on distance traveled, not time
-      if (vel > 2 && now - lastRippleTime > 30) {
-        lastRippleTime = now;
-        ripples.push({
+        // Left wake line
+        wakeLines.push({
           x: mx,
           y: my,
+          // Start point at cursor, end point spreads outward over time
+          spreadAngle: perpAngle + 0.3 + (Math.random() - 0.5) * 0.2,
+          length: 0,
+          maxLength: spread + Math.random() * spread * 0.5,
           life: 1,
-          maxRadius: 18 + vel * 0.6,
-          radius: 2,
-          vel: vel,
+          speed: 0.8 + vel * 0.03,
+          side: -1,
+          curve: (Math.random() - 0.5) * 0.02,
         });
 
-        // Secondary ripple — slightly delayed, slightly offset
-        if (vel > 20) {
-          ripples.push({
-            x: mx + (Math.random() - 0.5) * 6,
-            y: my + (Math.random() - 0.5) * 6,
+        // Right wake line
+        wakeLines.push({
+          x: mx,
+          y: my,
+          spreadAngle: perpAngle - Math.PI - 0.3 + (Math.random() - 0.5) * 0.2,
+          length: 0,
+          maxLength: spread + Math.random() * spread * 0.5,
+          life: 1,
+          speed: 0.8 + vel * 0.03,
+          side: 1,
+          curve: (Math.random() - 0.5) * 0.02,
+        });
+
+        // Occasional center line — like the seam of the wake
+        if (Math.random() < 0.15 && vel > 15) {
+          const backAngle = angle + Math.PI + (Math.random() - 0.5) * 0.3;
+          wakeLines.push({
+            x: mx,
+            y: my,
+            spreadAngle: backAngle,
+            length: 0,
+            maxLength: vel * 0.2,
             life: 1,
-            maxRadius: 10 + vel * 0.3,
-            radius: 1,
-            vel: vel * 0.6,
-            delay: 0.15,
+            speed: 0.4 + vel * 0.015,
+            side: 0,
+            curve: (Math.random() - 0.5) * 0.01,
           });
         }
       }
 
-      if (ripples.length > 60) ripples.splice(0, ripples.length - 60);
+      if (wakeLines.length > 200) wakeLines.splice(0, wakeLines.length - 200);
 
-      // Motes — rare, beautiful, drift outward slowly
-      if (vel > 8 && Math.random() < 0.12) {
-        const outAngle = angle + Math.PI + (Math.random() - 0.5) * Math.PI * 1.5;
-        const speed = 0.08 + Math.random() * 0.12;
+      // Motes — tiny droplets that separate from the wake
+      if (vel > 12 && Math.random() < 0.08) {
+        const outAngle = angle + Math.PI / 2 * (Math.random() > 0.5 ? 1 : -1) + (Math.random() - 0.5) * 0.8;
         motes.push({
-          x: mx,
-          y: my,
-          vx: Math.cos(outAngle) * speed,
-          vy: Math.sin(outAngle) * speed,
+          x: mx + Math.cos(outAngle) * (5 + Math.random() * 8),
+          y: my + Math.sin(outAngle) * (5 + Math.random() * 8),
+          vx: Math.cos(outAngle) * (0.06 + Math.random() * 0.08),
+          vy: Math.sin(outAngle) * (0.06 + Math.random() * 0.08),
           life: 1,
-          size: 0.4 + Math.random() * 0.6,
-          drift: (Math.random() - 0.5) * 0.02,
+          size: 0.3 + Math.random() * 0.5,
         });
       }
-
-      if (motes.length > 40) motes.splice(0, motes.length - 40);
+      if (motes.length > 25) motes.splice(0, motes.length - 25);
     }
 
     function draw() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-      // ── Ripples — concentric rings expanding outward ──
-      for (let i = ripples.length - 1; i >= 0; i--) {
-        const r = ripples[i];
+      // ── Wake lines — V-shaped spread from each point ──
+      for (let i = wakeLines.length - 1; i >= 0; i--) {
+        const w = wakeLines[i];
+        w.life -= 0.009;
+        w.length += (w.maxLength - w.length) * 0.08;
+        w.spreadAngle += w.curve;
 
-        if (r.delay && r.delay > 0) {
-          r.delay -= 0.016;
-          continue;
-        }
+        if (w.life <= 0) { wakeLines.splice(i, 1); continue; }
 
-        r.life -= 0.012;
-        r.radius += (r.maxRadius - r.radius) * 0.06;
+        const fade = w.life * w.life;
+        const alpha = fade * 0.08;
+        const endX = w.x + Math.cos(w.spreadAngle) * w.length;
+        const endY = w.y + Math.sin(w.spreadAngle) * w.length;
 
-        if (r.life <= 0) { ripples.splice(i, 1); continue; }
+        if (alpha < 0.001) { wakeLines.splice(i, 1); continue; }
 
-        const fade = r.life * r.life * r.life;
-        const alpha = fade * 0.09;
+        // Each wake line is a slight curve, not straight
+        const midX = (w.x + endX) / 2 + w.curve * w.length * 8;
+        const midY = (w.y + endY) / 2 + w.curve * w.length * 8;
 
-        if (alpha < 0.001) { ripples.splice(i, 1); continue; }
-
-        // Main ripple ring
         ctx.beginPath();
-        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.moveTo(w.x, w.y);
+        ctx.quadraticCurveTo(midX, midY, endX, endY);
         ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-        ctx.lineWidth = 0.8 + fade * 0.8;
+        ctx.lineWidth = 0.5 + fade * 0.8;
+        ctx.lineCap = 'round';
         ctx.stroke();
 
-        // Inner glow — fills the ripple with a whisper of light
-        if (fade > 0.3) {
-          const fillGrad = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.radius);
-          fillGrad.addColorStop(0, `rgba(255,255,255,${alpha * 0.25})`);
-          fillGrad.addColorStop(0.7, `rgba(255,255,255,${alpha * 0.05})`);
-          fillGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        // Faint glow along the line
+        if (fade > 0.4 && w.length > 3) {
+          const glowAlpha = alpha * 0.2;
+          const glow = ctx.createRadialGradient(
+            (w.x + endX) / 2, (w.y + endY) / 2, 0,
+            (w.x + endX) / 2, (w.y + endY) / 2, w.length * 0.4
+          );
+          glow.addColorStop(0, `rgba(255,255,255,${glowAlpha})`);
+          glow.addColorStop(1, 'rgba(255,255,255,0)');
           ctx.beginPath();
-          ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
-          ctx.fillStyle = fillGrad;
+          ctx.arc((w.x + endX) / 2, (w.y + endY) / 2, w.length * 0.4, 0, Math.PI * 2);
+          ctx.fillStyle = glow;
           ctx.fill();
         }
       }
 
-      // ── Motes — tiny lights that drift outward and fade ──
+      // ── Motes — droplets that separated from the wake ──
       for (let i = motes.length - 1; i >= 0; i--) {
         const m = motes[i];
-        m.life -= 0.006;
+        m.life -= 0.005;
         m.x += m.vx;
         m.y += m.vy;
-        m.vx += m.drift;
-        m.vy += m.drift * 0.5;
-        m.vx *= 0.997;
-        m.vy *= 0.997;
+        m.vx *= 0.993;
+        m.vy *= 0.993;
 
         if (m.life <= 0) { motes.splice(i, 1); continue; }
 
         const fade = m.life * m.life;
-        // Gentle pulse — breathes in and out
-        const pulse = 0.7 + Math.sin(Date.now() * 0.003 + i * 2.5) * 0.3;
+        const pulse = 0.75 + Math.sin(Date.now() * 0.003 + i * 3) * 0.25;
         const alpha = fade * pulse * 0.1;
-        const radius = m.size * (0.6 + fade * 0.4);
+        const r = m.size * (0.5 + fade * 0.5);
 
         if (alpha < 0.001) { motes.splice(i, 1); continue; }
 
-        // Soft glow around each mote
-        const moteGlow = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, radius * 4);
-        moteGlow.addColorStop(0, `rgba(255,255,255,${alpha})`);
-        moteGlow.addColorStop(0.4, `rgba(255,255,255,${alpha * 0.3})`);
-        moteGlow.addColorStop(1, 'rgba(255,255,255,0)');
+        const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 3);
+        g.addColorStop(0, `rgba(255,255,255,${alpha * 1.2})`);
+        g.addColorStop(0.5, `rgba(255,255,255,${alpha * 0.3})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath();
-        ctx.arc(m.x, m.y, radius * 4, 0, Math.PI * 2);
-        ctx.fillStyle = moteGlow;
-        ctx.fill();
-
-        // Core dot
-        ctx.beginPath();
-        ctx.arc(m.x, m.y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${alpha * 1.5})`;
+        ctx.arc(m.x, m.y, r * 3, 0, Math.PI * 2);
+        ctx.fillStyle = g;
         ctx.fill();
       }
 
-      // ── The surprise: surface tension ──
-      // When cursor is still, a single slow ring pulses outward
-      // like the surface settling after being disturbed
-      if (vel < 1.5 && ripples.length < 5) {
-        const breathe = Math.sin(Date.now() * 0.0015) * 0.5 + 0.5;
-        const settleRadius = 20 + breathe * 15;
-        const settleAlpha = 0.02 + breathe * 0.015;
+      // ── Surface tension — the surprise, when cursor rests ──
+      if (vel < 1) {
+        const t = Date.now() * 0.001;
+        const breathe = Math.sin(t * 0.8) * 0.5 + 0.5;
+        const breathe2 = Math.sin(t * 0.5 + 1.5) * 0.5 + 0.5;
+
+        // Two concentric rings breathing at different rates
+        const r1 = 15 + breathe * 12;
+        const r2 = 28 + breathe2 * 18;
+        const a1 = 0.025 + breathe * 0.012;
+        const a2 = 0.012 + breathe2 * 0.008;
 
         ctx.beginPath();
-        ctx.arc(mx, my, settleRadius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(255,255,255,${settleAlpha})`;
+        ctx.arc(mx, my, r1, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${a1})`;
         ctx.lineWidth = 0.5;
         ctx.stroke();
 
-        // Inner pool of light — like the water is still but alive
-        const poolGrad = ctx.createRadialGradient(mx, my, 0, mx, my, settleRadius * 0.6);
-        poolGrad.addColorStop(0, `rgba(255,255,255,${settleAlpha * 0.5})`);
-        poolGrad.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath();
-        ctx.arc(mx, my, settleRadius * 0.6, 0, Math.PI * 2);
-        ctx.fillStyle = poolGrad;
+        ctx.arc(mx, my, r2, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${a2})`;
+        ctx.lineWidth = 0.3;
+        ctx.stroke();
+
+        // Inner pool
+        const pool = ctx.createRadialGradient(mx, my, 0, mx, my, r1 * 0.5);
+        pool.addColorStop(0, `rgba(255,255,255,${a1 * 0.4})`);
+        pool.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.arc(mx, my, r1 * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = pool;
         ctx.fill();
       }
 
-      // ── Ambient cursor light ──
-      const lightRadius = 30 + vel * 0.4;
-      const lightAlpha = 0.012 + vel * 0.0003;
-      const ambient = ctx.createRadialGradient(mx, my, 0, mx, my, lightRadius);
-      ambient.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
-      ambient.addColorStop(0.5, `rgba(255,255,255,${lightAlpha * 0.2})`);
-      ambient.addColorStop(1, 'rgba(255,255,255,0)');
+      // ── Ambient light ──
+      const lightR = 25 + vel * 0.3;
+      const lightA = 0.01 + vel * 0.0002;
+      const amb = ctx.createRadialGradient(mx, my, 0, mx, my, lightR);
+      amb.addColorStop(0, `rgba(255,255,255,${lightA})`);
+      amb.addColorStop(0.5, `rgba(255,255,255,${lightA * 0.15})`);
+      amb.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.beginPath();
-      ctx.arc(mx, my, lightRadius, 0, Math.PI * 2);
-      ctx.fillStyle = ambient;
+      ctx.arc(mx, my, lightR, 0, Math.PI * 2);
+      ctx.fillStyle = amb;
       ctx.fill();
 
       vel *= 0.85;
