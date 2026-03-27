@@ -245,7 +245,7 @@ export default function MarketersPage() {
   const { rows: ledger = [], loading, error } = useTabData("COMMISSION_LEDGER");
   const { rows: retainer = [] } = useTabData("RETAINER_LEDGER");
 
-  const [pins, setPins] = useState({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
+  const [pins, setPins] = useState({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "", Dekahri: "" });
   const [pinErrors, setPinErrors] = useState({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
   const [open, setOpen] = useState(null);
   const [showPaid, setShowPaid] = useState(false);
@@ -286,7 +286,7 @@ export default function MarketersPage() {
   function closeModal() {
     setOpen(null);
     setShowPaid(false);
-    setPins({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
+    setPins({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "", Dekahri: "" });
     setPinErrors({ Emma: "", Wyatt: "", ED: "", Micah: "", Justin: "" });
   }
 
@@ -382,20 +382,25 @@ export default function MarketersPage() {
             return (
               <div key={p.name} className="rounded-[24px] p-7 backdrop-blur-2xl"
                 style={{
-                  background: "linear-gradient(160deg, rgba(10,14,22,0.85), rgba(6,10,18,0.9))",
+                  background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
                   border: "1px solid rgba(255,255,255,0.06)",
-                  backdropFilter: "blur(40px)",
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
+                  backdropFilter: "blur(40px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(40px) saturate(180%)",
+                  boxShadow: "0 32px 64px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.07)",
                 }}>
-                <div className="flex items-center gap-3 mb-5">
+                <div className="mb-5 flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-lg font-bold shrink-0"
-                    style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(99,102,241,0.1))", border: "1px solid rgba(168,85,247,0.25)", color: "#d8b4fe" }}>
+                    style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(99,102,241,0.1))", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 20px rgba(168,85,247,0.15)", color: "#d8b4fe" }}>
                     {p.name[0]}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="text-base font-semibold text-white">{p.name}</div>
                     <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium" style={{ color: "#d8b4fe" }}>Tech Lead</div>
                   </div>
+                  {isUnlocked && (
+                    <button onClick={() => setPins(x => ({ ...x, [p.name]: "" }))}
+                      className="text-zinc-500 hover:text-white text-lg leading-none transition-colors">✕</button>
+                  )}
                 </div>
                 {!isUnlocked ? (
                   <div className="space-y-3">
@@ -407,7 +412,7 @@ export default function MarketersPage() {
                       style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }} />
                     {pinErrors[p.name] && <div className="text-xs text-red-400">{pinErrors[p.name]}</div>}
                     <button onClick={() => unlock(p.name)}
-                      className="mt-1 w-full rounded-2xl py-2.5 text-sm font-medium"
+                      className="mt-1 w-full rounded-2xl py-2.5 text-sm font-medium transition-all duration-200"
                       style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(168,85,247,0.2)", color: "rgba(168,85,247,0.9)" }}>
                       Unlock
                     </button>
@@ -420,7 +425,7 @@ export default function MarketersPage() {
                     <div className="text-sm text-zinc-400 leading-relaxed">
                       Your compensation is being finalized. Once your contract or rate is confirmed, your pay details will appear here automatically.
                     </div>
-                    <div className="text-xs text-zinc-600">Contact Kyle or Brennan with any questions.</div>
+                    <div className="text-xs text-zinc-600 mt-1">Contact Kyle or Brennan with any questions.</div>
                   </div>
                 )}
               </div>
