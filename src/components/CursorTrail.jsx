@@ -6,9 +6,9 @@ export default function CursorTrail() {
   const pointerRef = useRef({ x: -100, y: -100 });
   const trailRef = useRef([]);
   const velocityRef = useRef(0);
+  const angleRef = useRef(0);
 
   useEffect(() => {
-    // Don't run on touch devices
     if ('ontouchstart' in window) return;
 
     const canvas = document.createElement('canvas');
@@ -30,74 +30,121 @@ export default function CursorTrail() {
     function handleMove(e) {
       const dx = e.clientX - prevX;
       const dy = e.clientY - prevY;
-      velocityRef.current = Math.min(Math.sqrt(dx * dx + dy * dy), 60);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      velocityRef.current = Math.min(dist, 80);
+      if (dist > 1) angleRef.current = Math.atan2(dy, dx);
       prevX = e.clientX;
       prevY = e.clientY;
       pointerRef.current = { x: e.clientX, y: e.clientY };
 
-      trailRef.current.push({
-        x: e.clientX,
-        y: e.clientY,
-        life: 1,
-        vel: velocityRef.current,
-      });
+      // Spawn particles based on velocity
+      const count = Math.max(1, Math.floor(dist / 3));
+      for (let p = 0; p < count; p++) {
+        const t = p / count;
+        const px = prevX - dx * t;
+        const py = prevY - dy * t;
+        trailRef.current.push({
+          x: px,
+          y: py,
+          originX: px,
+          originY: py,
+          life: 1,
+          vel: velocityRef.current,
+          // Drift perpendicular to movement direction
+          driftX: (Math.random() - 0.5) * 0.4,
+          driftY: (Math.random() - 0.5) * 0.4,
+          size: 0.3 + Math.random() * 0.5,
+        });
+      }
 
-      if (trailRef.current.length > 50) trailRef.current.shift();
+      if (trailRef.current.length > 120) {
+        trailRef.current = trailRef.current.slice(-120);
+      }
     }
 
     function draw() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
       const trail = trailRef.current;
       const { x: mx, y: my } = pointerRef.current;
+      const vel = velocityRef.current;
 
-      // Decay
+      // Decay particles
       for (let i = 0; i < trail.length; i++) {
-        trail[i].life -= 0.025;
+        const p = trail[i];
+        p.life -= 0.015;
+        // Particles drift and fall slightly like embers cooling
+        p.x += p.driftX;
+        p.y += p.driftY + 0.08;
+        p.driftX *= 0.98;
+        p.driftY *= 0.98;
       }
       trailRef.current = trail.filter(p => p.life > 0);
 
-      // Draw trail — tapered white line
-      if (trailRef.current.length > 2) {
-        for (let i = 2; i < trailRef.current.length; i++) {
-          const prev = trailRef.current[i - 1];
-          const curr = trailRef.current[i];
-          const t = i / trailRef.current.length;
-          const alpha = curr.life * t * 0.35;
-          const width = t * t * 3.5;
-
+      // Draw trail ribbon — smooth quadratic curves
+      if (trailRef.current.length > 3) {
+        const alive = trailRef.current.filter(p => p.life > 0.3);
+        if (alive.length > 2) {
           ctx.beginPath();
-          ctx.moveTo(prev.x, prev.y);
-          ctx.lineTo(curr.x, curr.y);
-          ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
-          ctx.lineWidth = width;
+          ctx.moveTo(alive[0].x, alive[0].y);
+          for (let i = 1; i < alive.length - 1; i++) {
+            const xc = (alive[i].x + alive[i + 1].x) / 2;
+            const yc = (alive[i].y + alive[i + 1].y) / 2;
+            ctx.quadraticCurveTo(alive[i].x, alive[i].y, xc, yc);
+          }
+          const last = alive[alive.length - 1];
+          ctx.lineTo(last.x, last.y);
+
+          // Gradient along trail
+          const first = alive[0];
+          const grad = ctx.createLinearGradient(first.x, first.y, last.x, last.y);
+          grad.addColorStop(0, 'rgba(255,255,255,0)');
+          grad.addColorStop(0.5, 'rgba(255,255,255,0.04)');
+          grad.addColorStop(1, `rgba(255,255,255,${0.06 + vel * 0.001})`);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 1.5 + vel * 0.02;
           ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
           ctx.stroke();
         }
       }
 
-      // Cursor tip glow — soft white halo
-      const vel = velocityRef.current;
-      const glowSize = 3 + vel * 0.15;
-      const glowAlpha = 0.12 + vel * 0.003;
+      // Draw drifting particles — tiny dots that separate from the trail
+      for (let i = 0; i < trailRef.current.length; i++) {
+        const p = trailRef.current[i];
+        if (p.life < 0.7) {
+          const fade = p.life / 0.7;
+          const alpha = fade * fade * 0.12;
+          const radius = p.size * fade;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+          ctx.fill();
+        }
+      }
 
-      // Outer halo
-      const grad = ctx.createRadialGradient(mx, my, 0, mx, my, glowSize * 8);
-      grad.addColorStop(0, `rgba(255, 255, 255, ${glowAlpha})`);
-      grad.addColorStop(0.4, `rgba(255, 255, 255, ${glowAlpha * 0.3})`);
-      grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      // Cursor proximity light — illuminates nearby glass surfaces
+      const lightSize = 60 + vel * 1.5;
+      const lightAlpha = 0.025 + vel * 0.0005;
+      const ambientGrad = ctx.createRadialGradient(mx, my, 0, mx, my, lightSize);
+      ambientGrad.addColorStop(0, `rgba(255,255,255,${lightAlpha})`);
+      ambientGrad.addColorStop(0.3, `rgba(255,255,255,${lightAlpha * 0.4})`);
+      ambientGrad.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.beginPath();
-      ctx.arc(mx, my, glowSize * 8, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
+      ctx.arc(mx, my, lightSize, 0, Math.PI * 2);
+      ctx.fillStyle = ambientGrad;
       ctx.fill();
 
-      // Inner bright dot
-      const inner = ctx.createRadialGradient(mx, my, 0, mx, my, glowSize);
-      inner.addColorStop(0, `rgba(255, 255, 255, ${0.5 + vel * 0.005})`);
-      inner.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      // Core dot — barely there
+      const coreGrad = ctx.createRadialGradient(mx, my, 0, mx, my, 2 + vel * 0.05);
+      coreGrad.addColorStop(0, `rgba(255,255,255,${0.25 + vel * 0.003})`);
+      coreGrad.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.beginPath();
-      ctx.arc(mx, my, glowSize, 0, Math.PI * 2);
-      ctx.fillStyle = inner;
+      ctx.arc(mx, my, 2 + vel * 0.05, 0, Math.PI * 2);
+      ctx.fillStyle = coreGrad;
       ctx.fill();
+
+      // Velocity decay
+      velocityRef.current *= 0.92;
 
       animationRef.current = requestAnimationFrame(draw);
     }
