@@ -7,134 +7,145 @@ export default function CursorTrail() {
     if ('ontouchstart' in window) return;
 
     const canvas = document.createElement('canvas');
-    canvas.style.cssText = 'position:fixed;inset:0;z-index:1;pointer-events:none;width:100vw;height:100vh;';
+    canvas.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;width:100vw;height:100vh;';
     document.body.appendChild(canvas);
     const ctx = canvas.getContext('2d');
 
-    let mx = -500, my = -500, vel = 0, angle = 0;
-
-    // Dense field — no visible grid, just light values
-    const res = 8;
-    let cols, rows, field;
-
-    function buildField() {
-      cols = Math.ceil(window.innerWidth / res) + 2;
-      rows = Math.ceil(window.innerHeight / res) + 2;
-      field = new Float32Array(cols * rows * 4); // x-displacement, y-displacement, vx, vy
-    }
+    let mx = -200, my = -200, prevX = -200, prevY = -200;
+    let vel = 0;
+    const trail = [];
+    const motes = [];
 
     function resize() {
       const dpr = window.devicePixelRatio || 1;
       canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      buildField();
     }
     resize();
 
     function handleMove(e) {
       const dx = e.clientX - mx;
       const dy = e.clientY - my;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      vel = Math.min(dist, 100);
-      if (dist > 0.5) angle = Math.atan2(dy, dx);
-      mx = e.clientX;
-      my = e.clientY;
+      vel = Math.min(Math.sqrt(dx * dx + dy * dy), 90);
+      prevX = mx; prevY = my;
+      mx = e.clientX; my = e.clientY;
+
+      const steps = Math.max(1, Math.floor(vel / 3));
+      for (let s = 0; s < steps; s++) {
+        const t = s / steps;
+        trail.push({
+          x: prevX + dx * t,
+          y: prevY + dy * t,
+          life: 1,
+        });
+      }
+      if (trail.length > 90) trail.splice(0, trail.length - 90);
+
+      if (vel > 10 && Math.random() < 0.1) {
+        const a = Math.atan2(dy, dx) + (Math.random() - 0.5) * Math.PI;
+        motes.push({
+          x: mx, y: my,
+          vx: Math.cos(a) * (0.05 + Math.random() * 0.08),
+          vy: Math.sin(a) * (0.05 + Math.random() * 0.08),
+          life: 1,
+          size: 0.3 + Math.random() * 0.4,
+        });
+      }
+      if (motes.length > 20) motes.splice(0, motes.length - 20);
     }
 
     function draw() {
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-      const pushRadius = 12 + vel * 0.8;
-      const pushStrength = 0.4 + vel * 0.05;
+      // Ribbon
+      for (let i = 0; i < trail.length; i++) trail[i].life -= 0.01;
+      while (trail.length && trail[0].life <= 0) trail.shift();
 
-      // Update field physics
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const i = (r * cols + c) * 4;
-          const px = c * res;
-          const py = r * res;
+      if (trail.length > 4) {
+        for (let i = 3; i < trail.length; i++) {
+          const a = trail[i - 2], b = trail[i - 1], c = trail[i];
+          const t = i / trail.length;
+          const life = c.life;
+          const fade = t * t * life * life * life;
+          const alpha = fade * 0.09;
+          const width = fade * 2.8;
+          if (alpha < 0.0005) continue;
 
-          // Distance from cursor
-          const dx = px - mx;
-          const dy = py - my;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < pushRadius * res && dist > 0) {
-            const force = (1 - dist / (pushRadius * res));
-            const f = force * force * pushStrength;
-            // Push outward from cursor + along movement direction
-            field[i + 2] += (dx / dist) * f * 0.6;
-            field[i + 3] += (dy / dist) * f * 0.6;
-            field[i + 2] += Math.cos(angle) * f * 0.15;
-            field[i + 3] += Math.sin(angle) * f * 0.15;
-          }
-
-          // Spring back
-          field[i + 2] -= field[i] * 0.03;
-          field[i + 3] -= field[i + 1] * 0.03;
-
-          // Damping
-          field[i + 2] *= 0.94;
-          field[i + 3] *= 0.94;
-
-          // Apply velocity
-          field[i] += field[i + 2];
-          field[i + 1] += field[i + 3];
+          ctx.beginPath();
+          ctx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2);
+          ctx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2);
+          ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+          ctx.lineWidth = width;
+          ctx.lineCap = 'round';
+          ctx.stroke();
         }
       }
 
-      // Render — smooth light based on displacement magnitude
-      const imageData = ctx.createImageData(canvas.width, canvas.height);
-      const data = imageData.data;
-      const dpr = window.devicePixelRatio || 1;
-      const w = canvas.width;
-
-      for (let r = 0; r < rows - 1; r++) {
-        for (let c = 0; c < cols - 1; c++) {
-          const i = (r * cols + c) * 4;
-          const dispX = field[i];
-          const dispY = field[i + 1];
-          const displacement = Math.sqrt(dispX * dispX + dispY * dispY);
-
-          if (displacement < 0.15) continue;
-
-          // Light intensity from displacement
-          const intensity = Math.min(displacement * 3, 18);
-
-          // Paint a soft area for this cell
-          const sx = Math.round(c * res * dpr);
-          const sy = Math.round(r * res * dpr);
-          const size = Math.round(res * dpr);
-
-          for (let py = sy; py < sy + size && py < canvas.height; py++) {
-            for (let px = sx; px < sx + size && px < canvas.width; px++) {
-              const pi = (py * w + px) * 4;
-              // Soft falloff from cell center
-              const cx = sx + size / 2;
-              const cy = sy + size / 2;
-              const cdist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
-              const falloff = Math.max(0, 1 - cdist / (size * 0.7));
-              const val = intensity * falloff * falloff;
-              data[pi] = Math.min(255, data[pi] + val);
-              data[pi + 1] = Math.min(255, data[pi + 1] + val);
-              data[pi + 2] = Math.min(255, data[pi + 2] + val);
-              data[pi + 3] = Math.min(255, data[pi + 3] + val * 3.5);
-            }
-          }
-        }
+      // Motes
+      for (let i = motes.length - 1; i >= 0; i--) {
+        const m = motes[i];
+        m.life -= 0.005;
+        m.x += m.vx; m.y += m.vy;
+        m.vx *= 0.996; m.vy *= 0.996;
+        if (m.life <= 0) { motes.splice(i, 1); continue; }
+        const f = m.life * m.life;
+        const pulse = 0.75 + Math.sin(Date.now() * 0.003 + i * 3) * 0.25;
+        const a = f * pulse * 0.1;
+        const r = m.size * (0.5 + f * 0.5);
+        if (a < 0.001) { motes.splice(i, 1); continue; }
+        const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, r * 3.5);
+        g.addColorStop(0, `rgba(255,255,255,${a * 1.3})`);
+        g.addColorStop(0.4, `rgba(255,255,255,${a * 0.3})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, r * 3.5, 0, Math.PI * 2);
+        ctx.fillStyle = g;
+        ctx.fill();
       }
 
-      ctx.putImageData(imageData, 0, 0);
+      // Resting breath
+      if (vel < 1.5) {
+        const t = Date.now() * 0.001;
+        const b1 = Math.sin(t * 0.8) * 0.5 + 0.5;
+        const b2 = Math.sin(t * 0.5 + 1.5) * 0.5 + 0.5;
+        const r1 = 14 + b1 * 10;
+        const r2 = 26 + b2 * 14;
 
-      // Soft gaussian blur pass
-      ctx.globalAlpha = 0.85;
-      ctx.filter = 'blur(6px)';
-      ctx.drawImage(canvas, 0, 0);
-      ctx.filter = 'none';
-      ctx.globalAlpha = 1;
+        ctx.beginPath();
+        ctx.arc(mx, my, r1, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.02 + b1 * 0.01})`;
+        ctx.lineWidth = 0.4;
+        ctx.stroke();
 
-      vel *= 0.88;
+        ctx.beginPath();
+        ctx.arc(mx, my, r2, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255,255,255,${0.01 + b2 * 0.007})`;
+        ctx.lineWidth = 0.3;
+        ctx.stroke();
+
+        const pool = ctx.createRadialGradient(mx, my, 0, mx, my, r1 * 0.5);
+        pool.addColorStop(0, `rgba(255,255,255,${0.012 + b1 * 0.006})`);
+        pool.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.beginPath();
+        ctx.arc(mx, my, r1 * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = pool;
+        ctx.fill();
+      }
+
+      // Ambient
+      const lr = 25 + vel * 0.3;
+      const la = 0.01 + vel * 0.0002;
+      const amb = ctx.createRadialGradient(mx, my, 0, mx, my, lr);
+      amb.addColorStop(0, `rgba(255,255,255,${la})`);
+      amb.addColorStop(0.5, `rgba(255,255,255,${la * 0.15})`);
+      amb.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.beginPath();
+      ctx.arc(mx, my, lr, 0, Math.PI * 2);
+      ctx.fillStyle = amb;
+      ctx.fill();
+
+      vel *= 0.85;
       animationRef.current = requestAnimationFrame(draw);
     }
 
