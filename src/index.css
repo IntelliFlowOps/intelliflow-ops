@@ -412,3 +412,138 @@ div[class*="rounded-[24px]"][class*="max-w-lg"] {
   backdrop-filter: blur(80px) saturate(220%) brightness(1.05) !important;
   -webkit-backdrop-filter: blur(80px) saturate(220%) brightness(1.05) !important;
 }
+
+/* ── Dark glass overhaul — neutral grey, max depth ── */
+
+/* Background — true black */
+body {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255,255,255,0.02), transparent 40%),
+    radial-gradient(ellipse at 80% 90%, rgba(255,255,255,0.015), transparent 40%),
+    #000000 !important;
+}
+
+/* Kill the grid overlay */
+body::before {
+  opacity: 0.04 !important;
+  background:
+    linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px) !important;
+}
+
+/* KPI cards — grey glass on black */
+.kpi-card {
+  background: linear-gradient(165deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 40%, rgba(255,255,255,0.05) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.13) !important;
+  border-top: 1px solid rgba(255,255,255,0.22) !important;
+  box-shadow:
+    0 50px 100px rgba(0,0,0,0.8),
+    0 20px 40px rgba(0,0,0,0.6),
+    0 8px 16px rgba(0,0,0,0.4),
+    0 2px 4px rgba(0,0,0,0.3),
+    inset 0 1px 1px rgba(255,255,255,0.18),
+    inset 0 -1px 1px rgba(0,0,0,0.4),
+    inset 0 0 60px rgba(255,255,255,0.02) !important;
+  backdrop-filter: blur(60px) saturate(140%) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(60px) saturate(140%) brightness(1.1) !important;
+  border-radius: 20px !important;
+}
+
+.kpi-card:hover {
+  transform: translateY(-6px) scale(1.03) !important;
+  background: linear-gradient(165deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 40%, rgba(255,255,255,0.06) 100%) !important;
+  border-top-color: rgba(255,255,255,0.3) !important;
+  box-shadow:
+    0 60px 120px rgba(0,0,0,0.85),
+    0 25px 50px rgba(0,0,0,0.65),
+    0 10px 20px rgba(0,0,0,0.45),
+    0 3px 6px rgba(0,0,0,0.35),
+    inset 0 1px 2px rgba(255,255,255,0.22),
+    inset 0 -1px 1px rgba(0,0,0,0.4),
+    inset 0 0 80px rgba(255,255,255,0.03) !important;
+}
+
+/* All cards — same dark glass */
+.card, .card-hover, .table-container {
+  background: linear-gradient(165deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.04) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-top: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.7),
+    0 15px 30px rgba(0,0,0,0.5),
+    0 5px 12px rgba(0,0,0,0.35),
+    inset 0 1px 1px rgba(255,255,255,0.14),
+    inset 0 -1px 1px rgba(0,0,0,0.35) !important;
+  backdrop-filter: blur(60px) saturate(140%) brightness(1.08) !important;
+  -webkit-backdrop-filter: blur(60px) saturate(140%) brightness(1.08) !important;
+}
+
+.card-hover:hover, .card:hover {
+  transform: translateY(-4px) scale(1.01) !important;
+  border-top-color: rgba(255,255,255,0.25) !important;
+  box-shadow:
+    0 50px 100px rgba(0,0,0,0.75),
+    0 20px 40px rgba(0,0,0,0.55),
+    0 8px 16px rgba(0,0,0,0.4),
+    inset 0 1px 2px rgba(255,255,255,0.18),
+    inset 0 -1px 1px rgba(0,0,0,0.35) !important;
+}
+
+/* Stat cards */
+div[class*="rounded-[18px]"][class*="bg-white"] {
+  background: linear-gradient(165deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-top: 1px solid rgba(255,255,255,0.14) !important;
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.5),
+    0 6px 16px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.1) !important;
+  backdrop-filter: blur(50px) saturate(140%) brightness(1.06) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(140%) brightness(1.06) !important;
+}
+
+/* Top bar — darker, sharper */
+.sticky.top-0 {
+  background: rgba(0,0,0,0.75) !important;
+  backdrop-filter: blur(60px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(60px) saturate(160%) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+}
+
+/* Page header */
+div[class*="border-b"][class*="bg-[#08131f]"] {
+  background: rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(50px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(50px) saturate(150%) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* Sidebar */
+div[class*="absolute left-0"][class*="bottom-0"] {
+  background: linear-gradient(180deg, rgba(8,8,8,0.96) 0%, rgba(4,4,4,0.98) 100%) !important;
+  backdrop-filter: blur(80px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(80px) saturate(160%) !important;
+  box-shadow: 8px 0 60px rgba(0,0,0,0.8), inset -1px 0 0 rgba(255,255,255,0.05) !important;
+}
+
+/* Modals */
+div[class*="rounded-[28px]"][class*="max-w-2xl"],
+div[class*="rounded-[24px]"][class*="max-w-md"],
+div[class*="rounded-[24px]"][class*="max-w-lg"] {
+  background: linear-gradient(165deg, rgba(18,18,18,0.96) 0%, rgba(10,10,10,0.98) 100%) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-top: 1px solid rgba(255,255,255,0.18) !important;
+  box-shadow:
+    0 60px 120px rgba(0,0,0,0.85),
+    0 20px 50px rgba(0,0,0,0.6),
+    inset 0 1px 2px rgba(255,255,255,0.15),
+    inset 0 -1px 1px rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(80px) saturate(160%) brightness(1.08) !important;
+  -webkit-backdrop-filter: blur(80px) saturate(160%) brightness(1.08) !important;
+}
+
+/* Scrollbar — neutral grey */
+* { scrollbar-color: rgba(255,255,255,0.2) transparent !important; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15) !important; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3) !important; }
