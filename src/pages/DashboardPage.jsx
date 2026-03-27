@@ -296,6 +296,15 @@ export default function DashboardPage() {
           ))}
         </div>
       )}
+      {healthStatus && healthStatus.allOk && (
+        <div className="flex items-center gap-2 px-1">
+          <span style={{ color: '#10b981', fontSize: 13 }}>✓</span>
+          <span className="text-[11px] text-zinc-500">All systems running normally</span>
+          <span className="text-[10px] text-zinc-600 ml-auto">
+            {healthStatus.checkedAt ? 'Checked ' + new Date(healthStatus.checkedAt).toLocaleTimeString() : ''}
+          </span>
+        </div>
+      )}
       {lastUpdated && (
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}

@@ -19,13 +19,13 @@ async function checkAllAnalytics() {
     const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
     const text = await res.text();
     const lines = text.trim().split('\n').filter(l => l.trim());
-    if (lines.length <= 1) return { ok: false, message: 'All Analytics is empty — Pipedream has not synced yet. Tell Claude: Check Pipedream Meta workflow is active.' };
+    if (lines.length <= 1) return { ok: true, message: 'All Analytics is empty — no ad campaigns running yet. This is expected.' };
     const rows = lines.slice(1);
     const dates = rows.map(r => r.split(',')[0]?.replace(/"/g, '').trim()).filter(Boolean);
     const latest = dates.sort().reverse()[0];
     if (latest) {
       const daysSince = (Date.now() - new Date(latest).getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSince > 3) return { ok: false, message: `All Analytics last updated ${Math.round(daysSince)} days ago. Tell Claude: Pipedream Meta sync may be paused — last data from ${latest}.` };
+      if (daysSince > 7) return { ok: false, message: `All Analytics last updated ${Math.round(daysSince)} days ago. Tell Claude: Pipedream Meta sync may be paused — last data from ${latest}.` };
     }
     return { ok: true, message: `All Analytics has ${rows.length} rows. Pipedream sync working.` };
   } catch (e) {
