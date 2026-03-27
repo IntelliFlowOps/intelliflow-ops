@@ -762,3 +762,184 @@ a[class*="bg-cyan-400"] {
 
 /* Accent color utility override */
 .text-accent-glow { color: rgba(255,255,255,0.9) !important; }
+
+/* ══════════════════════════════════════════════════
+   FINAL DESIGN SYSTEM — Apple × Tesla
+   ══════════════════════════════════════════════════ */
+
+/* Background — deep space with soft top light */
+body {
+  background: 
+    radial-gradient(ellipse at 50% -10%, rgba(60,60,70,0.2) 0%, transparent 55%),
+    #08080a !important;
+}
+body::before { opacity: 0 !important; }
+
+/* ── Logo — no container, soft glow behind it ── */
+.sticky.top-0 div[class*="h-8"][class*="w-8"],
+.sticky.top-0 div[class*="h-"][class*="w-"][class*="rounded"] {
+  width: 38px !important;
+  height: 38px !important;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%) !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.sticky.top-0 div[class*="h-8"] img,
+.sticky.top-0 div[class*="h-"][class*="w-"][class*="rounded"] img {
+  max-height: 32px !important;
+  max-width: 32px !important;
+  filter: brightness(1.8) !important;
+}
+/* Sidebar logo */
+div[class*="h-9"][class*="w-9"][class*="rounded-[12px]"] {
+  width: 42px !important;
+  height: 42px !important;
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%) !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+div[class*="h-9"][class*="w-9"] img {
+  max-height: 36px !important;
+  max-width: 36px !important;
+  filter: brightness(1.8) !important;
+}
+
+/* ── KPI Cards — true floating glass ── */
+.kpi-card {
+  background: linear-gradient(175deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.035) 100%) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.2) !important;
+  border-radius: 22px !important;
+  padding: 24px 22px !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.05),
+    0 30px 60px -10px rgba(0,0,0,0.9),
+    0 15px 30px -5px rgba(0,0,0,0.7),
+    inset 0 1px 1px rgba(255,255,255,0.15) !important;
+  backdrop-filter: blur(80px) brightness(1.15) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(80px) brightness(1.15) saturate(120%) !important;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease !important;
+}
+.kpi-card:hover {
+  transform: translateY(-8px) !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.08),
+    0 50px 100px -15px rgba(0,0,0,0.95),
+    0 25px 50px -10px rgba(0,0,0,0.8),
+    inset 0 1px 2px rgba(255,255,255,0.2) !important;
+}
+
+/* ── All cards — matching glass language ── */
+.card, .card-hover, .table-container {
+  background: linear-gradient(175deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 100%) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.14) !important;
+  border-radius: 22px !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.03),
+    0 25px 50px -8px rgba(0,0,0,0.8),
+    0 12px 24px -4px rgba(0,0,0,0.6),
+    inset 0 1px 1px rgba(255,255,255,0.1) !important;
+  backdrop-filter: blur(70px) brightness(1.12) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(70px) brightness(1.12) saturate(120%) !important;
+}
+.card-hover:hover, .card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.05),
+    0 40px 80px -12px rgba(0,0,0,0.9),
+    0 18px 36px -6px rgba(0,0,0,0.7),
+    inset 0 1px 2px rgba(255,255,255,0.14) !important;
+}
+
+/* ── Stat mini cards ── */
+div[class*="rounded-[18px]"][class*="bg-white"] {
+  background: linear-gradient(175deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 18px !important;
+  box-shadow:
+    0 20px 40px -6px rgba(0,0,0,0.7),
+    0 8px 16px -3px rgba(0,0,0,0.5),
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  backdrop-filter: blur(60px) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(60px) brightness(1.1) !important;
+}
+
+/* ── Top bar — barely there ── */
+.sticky.top-0 {
+  background: rgba(8,8,10,0.6) !important;
+  backdrop-filter: blur(60px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(60px) saturate(150%) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  box-shadow: 0 1px 20px rgba(0,0,0,0.4) !important;
+}
+
+/* ── Page header — minimal ── */
+div[class*="border-b"][class*="bg-[#08131f]"] {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+/* ── Sidebar — deep glass ── */
+div[class*="absolute left-0"][class*="bottom-0"] {
+  background: rgba(12,12,14,0.95) !important;
+  backdrop-filter: blur(80px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(80px) saturate(140%) !important;
+  box-shadow: 4px 0 40px rgba(0,0,0,0.7) !important;
+  border-right: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* ── Modals — premium glass ── */
+div[class*="rounded-[28px]"][class*="max-w-2xl"],
+div[class*="rounded-[24px]"][class*="max-w-md"],
+div[class*="rounded-[24px]"][class*="max-w-lg"] {
+  background: linear-gradient(175deg, rgba(22,22,26,0.95) 0%, rgba(14,14,16,0.98) 100%) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.15) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 60px 120px rgba(0,0,0,0.9),
+    0 20px 40px rgba(0,0,0,0.7),
+    inset 0 1px 2px rgba(255,255,255,0.12) !important;
+  backdrop-filter: blur(80px) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(80px) brightness(1.1) !important;
+}
+
+/* ── Typography — Apple-clean spacing ── */
+.page-title { letter-spacing: -0.03em !important; font-weight: 600 !important; }
+.section-title { 
+  color: rgba(255,255,255,0.3) !important; 
+  font-size: 11px !important;
+  letter-spacing: 0.2em !important;
+}
+
+/* ── Goal section — glass panel ── */
+section[class*="rounded-[24px]"][class*="overflow-hidden"] {
+  background: linear-gradient(175deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+  box-shadow:
+    0 25px 50px -8px rgba(0,0,0,0.8),
+    inset 0 1px 1px rgba(255,255,255,0.1) !important;
+}
+
+/* ── Clean scrollbar ── */
+* { scrollbar-color: rgba(255,255,255,0.08) transparent !important; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08) !important; border-radius: 10px !important; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15) !important; }
+*::-webkit-scrollbar { width: 5px !important; }
+
+/* ── Nuke remaining cyan — final pass ── */
+[class*="text-cyan"] { color: rgba(255,255,255,0.8) !important; }
+[class*="bg-cyan"] { background-color: rgba(255,255,255,0.06) !important; }
+[class*="border-cyan"] { border-color: rgba(255,255,255,0.1) !important; }
+.text-accent-glow { color: rgba(255,255,255,0.9) !important; }
+a[class*="bg-cyan-400"] {
+  background: rgba(255,255,255,0.06) !important;
+  box-shadow: inset 2px 0 0 rgba(255,255,255,0.4) !important;
+}
