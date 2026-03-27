@@ -10,7 +10,6 @@ const PEOPLE = [
   { name: "ED", role: "Sales" },
   { name: "Micah", role: "Sales" },
   { name: "Justin", role: "Sales" },
-  { name: "Dekahri", role: "Tech Lead" },
 ];
 
 const PIN_MAP = {
@@ -19,7 +18,6 @@ const PIN_MAP = {
   ED: "1876",
   Micah: "9789",
   Justin: "4535",
-  Dekahri: "8567",
 };
 
 const PLAN_COLORS = {
@@ -92,8 +90,6 @@ function buildRetainerSummary(retainerRows, person) {
 
 function buildSummary(rows, person) {
   const isSales = ["ED", "Micah", "Justin"].includes(person);
-  const isTechLead = person === "Dekahri";
-  if (isTechLead) return { total: 0, unpaidRows: [], paidRows: [], totalPaid: 0, grouped: {}, isSales: false, isTechLead: true };
   const owned = rows.filter((r) => belongs(r, person));
 
   const unpaidRows = owned.filter(unpaid).map((r) => ({
@@ -130,7 +126,7 @@ function buildSummary(rows, person) {
     return acc;
   }, {});
 
-  return { total, unpaidRows, paidRows, totalPaid, grouped, isSales, isTechLead: false };
+  return { total, unpaidRows, paidRows, totalPaid, grouped, isSales };
 }
 
 function MonthProgressBar({ month }) {
@@ -333,7 +329,7 @@ export default function MarketersPage() {
                   <div className="text-base font-semibold text-white">{p.name}</div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium"
                     style={{ color: isSales ? "#a5b4fc" : "#67e8f9" }}>
-                    {person === "Dekahri" ? "Tech Lead" : isSales ? "Sales" : "Marketer"}
+                    {isSales ? "Sales" : "Marketer"}
                   </div>
                 </div>
               </div>
@@ -374,72 +370,6 @@ export default function MarketersPage() {
           })}
         </div>
       </div>
-
-      {/* Tech Lead group */}
-      {PEOPLE.filter(p => p.role === "Tech Lead").length > 0 && (
-      <div>
-        <div className="mb-3 text-[10px] uppercase tracking-[0.22em] text-zinc-500">Tech</div>
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {PEOPLE.filter(p => p.role === "Tech Lead").map((p) => {
-          const sums = { [p.name]: { total: 0 } };
-          const isPinOk = pins[p.name] === PIN_MAP[p.name];
-          const person = p.name;
-          return (
-            <div
-              key={p.name}
-              className="rounded-[24px] p-7 backdrop-blur-2xl"
-              style={{
-                background: "linear-gradient(160deg, rgba(10,14,22,0.85), rgba(6,10,18,0.9))",
-                border: "1px solid rgba(255,255,255,0.06)",
-                backdropFilter: "blur(40px)",
-                boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)",
-              }}
-            >
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl text-lg font-bold shrink-0"
-                  style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(99,102,241,0.1))", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 20px rgba(168,85,247,0.1)", color: "#d8b4fe" }}>
-                  {p.name[0]}
-                </div>
-                <div>
-                  <div className="text-base font-semibold text-white">{p.name}</div>
-                  <div className="mt-0.5 text-[10px] uppercase tracking-wider font-medium" style={{ color: "#d8b4fe" }}>Tech Lead</div>
-                </div>
-              </div>
-              {!isPinOk ? (
-                <div className="space-y-3">
-                  <input
-                    type="password"
-                    value={pins[p.name] || ""}
-                    onChange={(e) => setPins((x) => ({ ...x, [p.name]: e.target.value }))}
-                    onKeyDown={(e) => { if (e.key === "Enter") unlock(p.name); }}
-                    placeholder="Enter PIN"
-                    className="w-full rounded-2xl px-4 py-2.5 text-sm text-white outline-none placeholder:text-zinc-600"
-                    style={{ background: "rgba(0,0,0,0.35)", border: "1px solid rgba(255,255,255,0.08)" }}
-                  />
-                  {pinErrors[p.name] && <div className="text-xs text-red-400">{pinErrors[p.name]}</div>}
-                  <button onClick={() => unlock(p.name)}
-                    className="mt-1 w-full rounded-2xl py-2.5 text-sm font-medium"
-                    style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(168,85,247,0.2)", color: "rgba(168,85,247,0.9)" }}>
-                    Unlock
-                  </button>
-                </div>
-              ) : (
-                <div className="rounded-[18px] px-5 py-6 text-center space-y-3"
-                  style={{ background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
-                  <div className="text-3xl">⚙️</div>
-                  <div className="text-base font-semibold text-white">Tech Lead</div>
-                  <div className="text-sm text-zinc-400 leading-relaxed">
-                    Your compensation is being finalized. Once your contract or rate is confirmed, your pay details will appear here.
-                  </div>
-                  <div className="text-xs text-zinc-600">Contact Kyle or Brennan with any questions.</div>
-                </div>
-              )}
-            </div>
-          );
-          })}
-        </div>
-      </div>
-      )}
 
       {/* Sales group */}
       <div>
