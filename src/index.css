@@ -270,3 +270,35 @@ button:active, a:active, .card:active, .card-hover:active, .kpi-card:active {
 
 /* No accidental double-tap zoom */
 * { touch-action: manipulation; }
+
+/* ── Mobile Polish ── */
+@media (max-width: 768px) {
+  /* Bigger breathing room on cards */
+  .kpi-card { padding: 20px 18px; }
+  
+  /* Page content more comfortable */
+  .space-y-6 { padding-left: 16px !important; padding-right: 16px !important; }
+  
+  /* Titles easier to read */
+  .text-3xl { font-size: 1.6rem; }
+  .text-2xl { font-size: 1.35rem; }
+  
+  /* Stat cards stack better */
+  .grid-cols-2 { gap: 10px; }
+  
+  /* Table text readable without squinting */
+  table { font-size: 13px; }
+  
+  /* Inputs comfortable to tap */
+  input, select, textarea, button {
+    min-height: 44px;
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+  
+  /* Modals don't overflow screen */
+  .fixed.inset-0 > div[class*="rounded"] {
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 12px;
+  }
+}
