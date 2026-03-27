@@ -315,17 +315,17 @@ export default function DashboardPage() {
           : 'bg-white/[0.035]'
       }`}
         style={goal.isHit && !goalDismissed ? {
-          background: "linear-gradient(135deg, rgba(6,182,212,0.12), rgba(2,132,199,0.08), rgba(16,185,129,0.06))",
-          boxShadow: "0 0 60px rgba(6,182,212,0.12), 0 10px 30px rgba(0,0,0,0.2)"
+          background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(2,132,199,0.08), rgba(16,185,129,0.06))",
+          boxShadow: "0 0 60px rgba(255,255,255,0.12), 0 10px 30px rgba(0,0,0,0.2)"
         } : {boxShadow: "0 10px 30px rgba(0,0,0,0.16)"}}>
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.07),transparent_28%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.07),transparent_28%)]" />
 
         {goal.isHit && !goalDismissed && (
           <div className="relative z-[1] mb-4 rounded-[18px] px-4 py-4 flex items-center justify-between gap-4"
-            style={{background: "linear-gradient(135deg, rgba(6,182,212,0.15), rgba(16,185,129,0.1))", border: "1px solid rgba(6,182,212,0.25)"}}>
+            style={{background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(16,185,129,0.1))", border: "1px solid rgba(255,255,255,0.25)"}}>
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
-                style={{background: "linear-gradient(135deg, #0891b2, #10b981)", boxShadow: "0 0 20px rgba(6,182,212,0.3)"}}>
+                style={{background: "linear-gradient(135deg, rgba(255,255,255,0.5), #10b981)", boxShadow: "0 0 20px rgba(255,255,255,0.3)"}}>
                 ✓
               </div>
               <div>
@@ -337,7 +337,7 @@ export default function DashboardPage() {
               type="button"
               onClick={() => setGoalDismissed(true)}
               className="shrink-0 rounded-full px-4 py-2 text-xs font-semibold text-white transition hover:opacity-80"
-              style={{background: "linear-gradient(135deg, #0891b2, #0e7490)", boxShadow: "0 2px 12px rgba(6,182,212,0.3)"}}>
+              style={{background: "linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0.4))", boxShadow: "0 2px 12px rgba(255,255,255,0.3)"}}>
               Move to Next Goal →
             </button>
           </div>

@@ -81,7 +81,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#07111f] text-white">
+    <div className="min-h-screen text-white" style={{ background: "#0a0a0c" }}>
 
       {/* Top bar */}
       <div className="sticky top-0 z-[100] flex items-center gap-4 px-4 py-3 backdrop-blur-2xl"
@@ -98,13 +98,13 @@ export default function AppLayout() {
 
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-[10px]"
-            style={{ background: 'linear-gradient(135deg, #020c18, #040f1e)', border: '1px solid rgba(6,182,212,0.2)', boxShadow: '0 0 12px rgba(6,182,212,0.1)' }}>
+            style={{ background: 'linear-gradient(135deg, #020c18, #040f1e)', border: '1px solid rgba(255,255,255,0.2)', boxShadow: '0 0 12px rgba(255,255,255,0.1)' }}>
             <img src="/logo.png" alt="IntelliFlow" className="max-h-7 max-w-7 object-contain"
-              onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:11px;font-weight:700;color:#06b6d4;letter-spacing:-0.5px">IF</span>'; }} />
+              onError={e => { e.target.style.display='none'; e.target.parentNode.innerHTML='<span style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:-0.5px">IF</span>'; }} />
           </div>
           <div className="hidden sm:block">
             <div className="text-sm font-semibold text-white leading-none tracking-tight">IntelliFlow</div>
-            <div className="text-[10px] tracking-[0.22em] uppercase mt-0.5" style={{ color: 'rgba(6,182,212,0.5)' }}>Communications</div>
+            <div className="text-[10px] tracking-[0.22em] uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Communications</div>
           </div>
         </div>
 
@@ -179,7 +179,7 @@ export default function AppLayout() {
                             className={({ isActive }) =>
                               ['flex items-center gap-3 rounded-[14px] px-4 py-2.5 text-sm transition relative',
                                 isActive
-                                  ? 'bg-cyan-400/[0.10] text-cyan-100 shadow-[inset_2px_0_0_rgba(6,182,212,0.6)]'
+                                  ? 'bg-cyan-400/[0.10] text-cyan-100 shadow-[inset_2px_0_0_rgba(255,255,255,0.6)]'
                                   : 'text-slate-400 hover:bg-white/[0.04] hover:text-white',
                               ].join(' ')
                             }

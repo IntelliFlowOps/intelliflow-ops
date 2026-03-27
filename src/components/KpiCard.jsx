@@ -2,7 +2,7 @@ import { displayValue } from '../utils/format.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-function Sparkline({ data = [], color = '#06b6d4', width = 80, height = 28 }) {
+function Sparkline({ data = [], color = 'rgba(255,255,255,0.7)', width = 80, height = 28 }) {
   if (!data || data.length < 2) {
     // Flat line when no history
     return (
