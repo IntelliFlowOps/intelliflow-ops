@@ -18,10 +18,22 @@ async function getAuth() {
   return auth;
 }
 
+async function logActivity(sheets, { customerName, activityType, owner, summary, nextStep, healthImpact }) {
+  const date = new Date().toISOString().split("T")[0];
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "Customer_Activity!A:H",
+      valueInputOption: "USER_ENTERED",
+      insertDataOption: "INSERT_ROWS",
+      requestBody: { values: [[date, customerName || "All", activityType, owner, summary, nextStep || "", healthImpact || "Neutral", ""]] },
+    });
+  } catch (e) { console.error("logActivity error:", e.message); }
+}
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { customerName, closer } = req.body || {};
+  const { customerName, closer, leadSource } = req.body || {};
   if (!customerName || !closer) return res.status(400).json({ error: 'Missing customerName or closer' });
 
   try {

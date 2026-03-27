@@ -161,7 +161,7 @@ function normalizeMarketers(rawRows) {
 function normalizeCommissionLedger(rawRows) {
   if (!rawRows || rawRows.length < 1) return [];
   var headerIndex = 0;
-  for (var i = 0; i < Math.min(3, rawRows.length); i++) {
+  for (var i = 0; i < Math.min(5, rawRows.length); i++) {
     if (rawRows[i] && rawRows[i][0] && rawRows[i][0].toString().trim() === 'Date') {
       headerIndex = i;
       break;
@@ -187,7 +187,7 @@ function normalizeCommissionRules(rawRows) {
   if (!rawRows || rawRows.length < 1) return { rules: [], notes: [] };
   var headerIndex = findHeaderRow(rawRows, 'Attribution Type');
   var headers = (rawRows[headerIndex] || []).map(function(h) { return (h || '').trim(); });
-  var rules = rawRows.slice(headerIndex + 1, headerIndex + 6)
+  var rules = rawRows.slice(headerIndex + 1, headerIndex + 9)
     .filter(function(row) { return row.some(function(cell) { return cell && cell.trim() !== ''; }); })
     .map(function(row) {
       var obj = {};

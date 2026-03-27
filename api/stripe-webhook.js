@@ -54,7 +54,7 @@ async function appendLedgerRows(sheets, rowsToAppend) {
     spreadsheetId: SHEET_ID,
     range: `${LEDGER_TAB}!A:U`,
     valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
+    insertDataOption: 'OVERWRITE',
     requestBody: { values: rowsToAppend },
   });
 }
@@ -101,7 +101,7 @@ async function upsertCustomer(sheets, { customerName, stripeCustomerId, plan, cl
     spreadsheetId: SHEET_ID,
     range: `${CUSTOMERS_TAB}!A:W`, // 23 columns — ends at Commission Month Count
     valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
+    insertDataOption: 'OVERWRITE',
     requestBody: { values: [newRow] },
   });
 }
@@ -112,7 +112,7 @@ async function logActivity(sheets, { customerName, activityType, owner, summary,
     spreadsheetId: SHEET_ID,
     range: 'Customer_Activity!A:H',
     valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
+    insertDataOption: 'OVERWRITE',
     requestBody: { values: [[date, customerName, activityType, owner, summary, nextStep || '', healthImpact || 'Neutral', '']] },
   });
 }
@@ -271,7 +271,7 @@ export default async function handler(req, res) {
           month === 1 ? invoiceId : `${invoiceId}-m${month}`, // B Invoice ID
           customerName,                          // C Customer Name
           month === 1 ? amountPaid : 0,          // D Revenue Collected
-          'UNASSIGNED',                          // E Attribution Type — you assign in app
+          '',                                    // E Attribution Type — you assign in app
           '',                                    // F Direct Marketer
           month,                                 // G Months Active / Paid Month
           '',                                    // H Paid Out?

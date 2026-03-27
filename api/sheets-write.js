@@ -174,7 +174,7 @@ export default async function handler(req, res) {
       range: 'PAYOUT_BATCHES!A:F',
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
-      requestBody: { values: [[payoutDate, batch, person, totalPaid.toFixed(2), rowsProcessed, monthLabel()]] },
+      requestBody: { values: [[batch, person, isMarketer ? 'Marketer' : 'Sales', payoutDate, '', '', totalPaid.toFixed(2), '', rowsProcessed + ' rows']] },
     });
 
     return res.status(200).json({
