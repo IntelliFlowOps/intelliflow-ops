@@ -943,3 +943,164 @@ a[class*="bg-cyan-400"] {
   background: rgba(255,255,255,0.06) !important;
   box-shadow: inset 2px 0 0 rgba(255,255,255,0.4) !important;
 }
+
+/* ══════════════════════════════════════
+   FINAL v2 — Pure black + spotlight + big logo
+   ══════════════════════════════════════ */
+
+/* Pure black with single dramatic top spotlight */
+body {
+  background:
+    radial-gradient(ellipse 80% 40% at 50% -5%, rgba(180,180,200,0.12) 0%, rgba(100,100,120,0.04) 30%, transparent 60%),
+    #000000 !important;
+}
+
+/* Logo — BIG, no container, bright */
+.sticky.top-0 div[class*="h-8"][class*="w-8"],
+.sticky.top-0 div[class*="h-"][class*="w-"][class*="rounded"],
+.sticky.top-0 div[class*="overflow-hidden"][class*="rounded"] {
+  width: 52px !important;
+  height: 52px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+.sticky.top-0 div[class*="h-8"] img,
+.sticky.top-0 div[class*="h-"][class*="w-"][class*="rounded"] img,
+.sticky.top-0 div[class*="overflow-hidden"] img {
+  max-height: 46px !important;
+  max-width: 46px !important;
+  filter: brightness(2.2) drop-shadow(0 0 12px rgba(255,255,255,0.15)) !important;
+}
+
+/* Sidebar logo — also big */
+div[class*="h-9"][class*="w-9"][class*="rounded-[12px]"],
+div[class*="items-center"][class*="overflow-hidden"][class*="rounded-[12px]"][class*="bg-"] {
+  width: 56px !important;
+  height: 56px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+div[class*="h-9"][class*="w-9"] img,
+div[class*="rounded-[12px]"][class*="bg-[#0a1a2b]"] img {
+  max-height: 48px !important;
+  max-width: 48px !important;
+  filter: brightness(2.2) drop-shadow(0 0 12px rgba(255,255,255,0.15)) !important;
+}
+
+/* Top bar — taller to fit bigger logo */
+.sticky.top-0 {
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  background: rgba(0,0,0,0.7) !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.04) !important;
+  box-shadow: 0 1px 30px rgba(0,0,0,0.6) !important;
+}
+
+/* KPI — smoky translucent glass on pure black */
+.kpi-card {
+  background: rgba(255,255,255,0.04) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 24px !important;
+  padding: 26px 24px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06),
+    0 40px 80px -12px rgba(0,0,0,1),
+    0 16px 32px -6px rgba(0,0,0,0.9),
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -20px 40px rgba(0,0,0,0.2) !important;
+  backdrop-filter: blur(100px) brightness(1.2) !important;
+  -webkit-backdrop-filter: blur(100px) brightness(1.2) !important;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease !important;
+}
+.kpi-card:hover {
+  transform: translateY(-10px) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.1),
+    0 60px 120px -15px rgba(0,0,0,1),
+    0 25px 50px -8px rgba(0,0,0,0.95),
+    inset 0 1px 0 rgba(255,255,255,0.15),
+    inset 0 -20px 40px rgba(0,0,0,0.25) !important;
+}
+
+/* All cards — same smoky glass */
+.card, .card-hover, .table-container {
+  background: rgba(255,255,255,0.03) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 24px !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.04),
+    0 30px 60px -10px rgba(0,0,0,0.95),
+    0 12px 24px -4px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  backdrop-filter: blur(80px) brightness(1.15) !important;
+  -webkit-backdrop-filter: blur(80px) brightness(1.15) !important;
+}
+.card-hover:hover, .card:hover {
+  transform: translateY(-4px) !important;
+}
+
+/* Stat cards */
+div[class*="rounded-[18px]"][class*="bg-white"] {
+  background: rgba(255,255,255,0.035) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 20px !important;
+  box-shadow:
+    0 20px 40px -6px rgba(0,0,0,0.9),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+  backdrop-filter: blur(60px) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(60px) brightness(1.1) !important;
+}
+
+/* Sidebar — deep black */
+div[class*="absolute left-0"][class*="bottom-0"] {
+  background: rgba(5,5,5,0.97) !important;
+  backdrop-filter: blur(60px) !important;
+  -webkit-backdrop-filter: blur(60px) !important;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.8) !important;
+  border-right: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+/* Modals */
+div[class*="rounded-[28px]"][class*="max-w-2xl"],
+div[class*="rounded-[24px]"][class*="max-w-md"],
+div[class*="rounded-[24px]"][class*="max-w-lg"] {
+  background: rgba(10,10,12,0.97) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 28px !important;
+  box-shadow:
+    0 60px 120px rgba(0,0,0,1),
+    0 20px 40px rgba(0,0,0,0.9),
+    inset 0 1px 1px rgba(255,255,255,0.1) !important;
+  backdrop-filter: blur(80px) brightness(1.1) !important;
+  -webkit-backdrop-filter: blur(80px) brightness(1.1) !important;
+}
+
+/* Goal section */
+section[class*="rounded-[24px]"][class*="overflow-hidden"] {
+  background: rgba(255,255,255,0.025) !important;
+  border: none !important;
+  border-top: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow:
+    0 25px 50px -8px rgba(0,0,0,0.9),
+    inset 0 1px 0 rgba(255,255,255,0.06) !important;
+}
+
+/* Page header — invisible */
+div[class*="border-b"][class*="bg-[#08131f]"] {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
