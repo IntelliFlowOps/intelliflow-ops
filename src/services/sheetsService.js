@@ -171,6 +171,8 @@ function normalizeCommissionLedger(rawRows) {
   var customerNameIdx = headers.indexOf('Customer Name');
   return rawRows.slice(headerIndex + 1)
     .filter(function(row) {
+      var dateVal = (row[0] || '').toString().trim();
+      if (dateVal === '' || dateVal === '0' || dateVal === '-') return false;
       var customerName = customerNameIdx >= 0 ? (row[customerNameIdx] || '').trim() : '';
       return customerName !== '' && customerName !== '0';
     })
