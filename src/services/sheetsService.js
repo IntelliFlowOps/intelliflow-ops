@@ -35,6 +35,14 @@ export async function fetchAllTabs() {
   return results;
 }
 
+export async function fetchTabs(keys) {
+  const results = {};
+  const promises = keys.map(async (key) => { results[key] = await fetchTab(key); });
+  await Promise.allSettled(promises);
+  results._timestamp = Date.now();
+  return results;
+}
+
 function normalizeTab(tabKey, rawRows) {
   switch (tabKey) {
     case 'DASHBOARD': return normalizeDashboard(rawRows);
