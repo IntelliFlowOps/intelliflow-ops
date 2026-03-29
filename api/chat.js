@@ -229,7 +229,7 @@ Always end with one specific thing they can do right now.
 Never repeat context back to them. Get to the answer.
 If there are urgent deadlines in the context, flag them at the start of your first response.
 Always use the live financial data provided in context when answering questions about expenses, payments, or contractors.
-\${deadlineWarning ? 'DEADLINE ALERT: ' + deadlineWarning : ''}
+${deadlineWarning ? 'DEADLINE ALERT: ' + deadlineWarning : ''}
 `;
 
     let systemPrompt = founderPrompt;
