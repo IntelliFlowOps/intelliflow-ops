@@ -63,10 +63,14 @@ function money(v) {
   return isFinite(n) ? n : 0;
 }
 
+const PAID_VALUES = ['yes', 'paid', 'y', '1', 'true'];
+function isRetainerPaid(row) {
+  return PAID_VALUES.includes((row["Paid Out?"] || "").trim().toLowerCase());
+}
+
 function getUnpaidRetainer(retainerRows, person) {
   return retainerRows.filter(r =>
-    r["Person"] === person &&
-    (!r["Paid Out?"] || r["Paid Out?"].toLowerCase() !== "yes")
+    r["Person"] === person && !isRetainerPaid(r)
   );
 }
 
@@ -87,7 +91,7 @@ function getUnpaidCommissions(ledgerRows, person) {
 function getPayoutHistory(retainerRows, ledgerRows, person) {
   const paid = [];
   retainerRows
-    .filter(r => r["Person"] === person && r["Paid Out?"] && r["Paid Out?"].toLowerCase() === "yes")
+    .filter(r => r["Person"] === person && isRetainerPaid(r))
     .forEach(r => paid.push({ month: r["Month"] || "", type: "Retainer", amount: money(r["Amount"]), batch: r["Payout Batch"] || "" }));
 
   const paidLedger = person === "Emma" || person === "Wyatt"
@@ -112,7 +116,7 @@ function getYTD(retainerRows, ledgerRows, person) {
   const year = new Date().getFullYear().toString();
   let total = 0;
   retainerRows
-    .filter(r => r["Person"] === person && r["Paid Out?"] && r["Paid Out?"].toLowerCase() === "yes" && (r["Date"] || "").includes(year))
+    .filter(r => r["Person"] === person && isRetainerPaid(r) && (r["Date"] || "").includes(year))
     .forEach(r => { total += money(r["Amount"]); });
 
   const paidLedger = person === "Emma" || person === "Wyatt"
