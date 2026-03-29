@@ -24,6 +24,7 @@ export function buildCsvUrl(tabName) {
   return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encoded}`;
 }
 
-export const ALL_TAB_KEYS = Object.keys(TABS);
+const WRITE_ONLY_TABS = ['PAYOUT_BATCHES'];
+export const ALL_TAB_KEYS = Object.keys(TABS).filter(k => !WRITE_ONLY_TABS.includes(k));
 export const STALE_THRESHOLD_MS = 10 * 60 * 1000;
 export const AUTO_REFRESH_INTERVAL_MS = 2 * 60 * 1000;
