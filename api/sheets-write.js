@@ -81,6 +81,7 @@ export default async function handler(req, res) {
     const lhi = findHeaderIdx(ledgerRows, 'Date');
     const lh = ledgerRows[lhi] || [];
     const lCols = {
+      attributionType: lh.findIndex(h => h.trim() === 'Attribution Type'),
       directMarketer: lh.findIndex(h => h.trim() === 'Direct Marketer'),
       salesRep: lh.findIndex(h => h.trim() === 'Sales Rep'),
       paidOut: lh.findIndex(h => h.trim() === 'Paid Out?'),
@@ -92,10 +93,13 @@ export default async function handler(req, res) {
 
     const isMarketer = person === 'Emma' || person === 'Wyatt';
     const isSales = ['ED', 'Micah', 'Justin'].includes(person);
+    let teamRowsSkipped = 0;
 
     for (let i = lhi + 1; i < ledgerRows.length; i++) {
       const row = ledgerRows[i];
       if (!row) continue;
+      const attrType = (row[lCols.attributionType] || '').trim().toUpperCase();
+      if (attrType === 'TEAM') { teamRowsSkipped++; continue; }
       const paidOutVal = (row[lCols.paidOut] || '').trim().toLowerCase();
       const payoutBatchVal = (row[lCols.payoutBatch] || '').trim();
       const alreadyPaid = ['yes','paid','y','1','true'].includes(paidOutVal);
@@ -186,9 +190,10 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       batchId: batch,
-      message: `${person} paid ${totalPaid.toFixed(2)} — ${rowsProcessed} rows marked paid`,
+      message: `${person} paid ${totalPaid.toFixed(2)} — ${rowsProcessed} rows marked paid` + (teamRowsSkipped > 0 ? ` (${teamRowsSkipped} TEAM rows skipped)` : ''),
       totalPaid,
       rowsProcessed,
+      teamRowsSkipped,
     });
 
   } catch (err) {
