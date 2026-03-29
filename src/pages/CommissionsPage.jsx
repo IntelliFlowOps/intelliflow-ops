@@ -6,9 +6,93 @@ import KpiCard from '../components/KpiCard.jsx';
 import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import StatusBadge from '../components/StatusBadge.jsx';
 
 
 const FOUNDER_PIN = "2343";
+
+const ATTR_COLORS = {
+  DIRECT:  { bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.2)', text: '#67e8f9' },
+  SALES:   { bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.2)', text: '#c4b5fd' },
+  FOUNDER: { bg: 'rgba(161,161,170,0.08)', border: 'rgba(161,161,170,0.2)', text: '#a1a1aa' },
+};
+
+function ExpandableLedgerRow({ row }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const attr = String(row['Attribution Type'] || '').trim();
+  const paidOut = String(row['Paid Out?'] || '').trim().toLowerCase();
+  const payoutBatch = String(row['Payout Batch / Month'] || '').trim();
+  const isPaid = row._isPaidOut || paidOut === 'paid' || paidOut === 'yes' || Boolean(payoutBatch);
+  const owner = String(row['Sales Rep'] || '').trim() || String(row['Direct Marketer'] || '').trim() || '—';
+  const colors = ATTR_COLORS[attr] || ATTR_COLORS.FOUNDER;
+
+  return (
+    <div
+      className="rounded-[16px] mb-1.5 transition-all duration-200 cursor-pointer"
+      style={{
+        background: expanded ? colors.bg : 'rgba(255,255,255,0.02)',
+        border: `1px solid ${expanded ? colors.border : 'rgba(255,255,255,0.05)'}`,
+      }}
+      onClick={() => setExpanded(p => !p)}
+    >
+      <div className="grid grid-cols-4 gap-3 px-4 py-2.5 items-center">
+        <span className="text-sm text-zinc-300 truncate">{row['Date'] || '—'}</span>
+        <span className="text-sm text-white font-medium truncate">{row['Customer Name'] || '—'}</span>
+        <span>{attr ? <StatusBadge status={attr} /> : <span className="text-sm text-zinc-500">—</span>}</span>
+        <div className="flex items-center justify-between">
+          <span
+            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+              isPaid
+                ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
+                : 'border-amber-500/30 bg-amber-500/15 text-amber-400'
+            }`}
+          >
+            {isPaid ? 'Paid' : 'Unpaid'}
+          </span>
+          <span
+            className="text-zinc-500 text-xs transition-transform duration-200"
+            style={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          >
+            ▾
+          </span>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="px-4 pb-3 pt-1 border-t" style={{ borderColor: colors.border }}>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-2">
+            <DetailCell label="Owner" value={owner} />
+            <DetailCell label="Revenue" value={row['Revenue Collected']} />
+            <DetailCell label="Month" value={row['Months Active / Paid Month']} />
+            <DetailCell label="Commission Base" value={row['Commission Base Amount']} prefix="$" />
+            <DetailCell label="Commission %" value={row['Commission %']} />
+            <DetailCell label="Commission Total" value={row['Commission Total']} prefix="$" />
+            <DetailCell label="Emma" value={row['Emma Commission']} prefix="$" />
+            <DetailCell label="Wyatt" value={row['Wyatt Commission']} prefix="$" />
+            <DetailCell label="Sales Rep" value={row['Sales Rep']} />
+            <DetailCell label="Sales Rate" value={row['Sales Rep Rate']} />
+            <DetailCell label="Sales Month" value={row['Sales Rep Paid Month Count']} />
+            <DetailCell label="Sales Commission" value={row['Sales Commission']} prefix="$" />
+            <DetailCell label="Payout Batch" value={payoutBatch} />
+            <DetailCell label="Invoice ID" value={row['Invoice ID']} />
+            <DetailCell label="Notes" value={row['Notes']} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function DetailCell({ label, value, prefix }) {
+  const display = value && String(value).trim() ? (prefix || '') + String(value).trim() : '—';
+  return (
+    <div className="py-1">
+      <div className="text-[10px] uppercase tracking-wider text-zinc-600">{label}</div>
+      <div className="text-sm text-zinc-300 mt-0.5">{display}</div>
+    </div>
+  );
+}
 
 function PinLock({ onUnlock }) {
   const [pin, setPin] = useState('');
