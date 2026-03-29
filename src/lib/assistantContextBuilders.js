@@ -131,7 +131,7 @@ export function buildFounderAssistantContext(data = {}, extra = {}) {
   const dashboardRows = getTab(data, ["DASHBOARD", "Dashboard"]);
   const campaignRows = getTab(data, ["CAMPAIGNS", "Campaigns"]);
   const customerRows = getTab(data, ["CUSTOMERS", "Customers"]);
-  const analyticsRows = getTab(data, ["ANALYTICS", "All Analytics", "Analytics"]);
+  const analyticsRows = getTab(data, ["ALL_ANALYTICS", "All Analytics", "Analytics"]);
   const ledgerRows = getTab(data, ["COMMISSION_LEDGER", "Commission_Ledger"]);
 
   // Commission totals from ledger
@@ -186,7 +186,7 @@ export function buildFounderAssistantContext(data = {}, extra = {}) {
 export function buildMarketerAssistantContext(data = {}, extra = {}) {
   const dashboardRows = getTab(data, ["DASHBOARD", "Dashboard"]);
   const campaignRows = getTab(data, ["CAMPAIGNS", "Campaigns"]);
-  const analyticsRows = getTab(data, ["ANALYTICS", "All Analytics", "Analytics"]);
+  const analyticsRows = getTab(data, ["ALL_ANALYTICS", "All Analytics", "Analytics"]);
   const customerRows = getTab(data, ["CUSTOMERS", "Customers"]);
 
   const selectedPlatform = extra.platform || null;
