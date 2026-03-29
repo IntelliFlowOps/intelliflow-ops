@@ -98,7 +98,7 @@ export default async function handler(req, res) {
       if (!row) continue;
       const paidOutVal = (row[lCols.paidOut] || '').trim().toLowerCase();
       const payoutBatchVal = (row[lCols.payoutBatch] || '').trim();
-      const alreadyPaid = ['yes','paid','y','1','true'].includes(paidOutVal) || payoutBatchVal;
+      const alreadyPaid = ['yes','paid','y','1','true'].includes(paidOutVal);
       if (alreadyPaid) continue;
 
       const ownerMatch = isMarketer
@@ -129,13 +129,15 @@ export default async function handler(req, res) {
         payoutBatch: rh.findIndex(h => h.trim() === 'Payout Batch'),
       };
 
+      let retainerRowsPaid = 0;
+      let lastPaymentMethod = '';
+
       for (let i = rhi + 1; i < retainerRows.length; i++) {
         const row = retainerRows[i];
         if (!row) continue;
         if ((row[rCols.person] || '').trim() !== person) continue;
         const paidOutVal = (row[rCols.paidOut] || '').trim().toLowerCase();
-        const payoutBatchVal = (row[rCols.payoutBatch] || '').trim();
-        if (['yes','paid','y','1','true'].includes(paidOutVal) || payoutBatchVal) continue;
+        if (['yes','paid','y','1','true'].includes(paidOutVal)) continue;
 
         const amt = parseFloat(row[rCols.amount] || 0);
         totalPaid += isFinite(amt) ? amt : 0;
@@ -144,8 +146,12 @@ export default async function handler(req, res) {
         updates.push({ range: `RETAINER_LEDGER!${colLetter(rCols.paidOut)}${sheetRow}`, values: [['Yes']] });
         updates.push({ range: `RETAINER_LEDGER!${colLetter(rCols.payoutBatch)}${sheetRow}`, values: [[batch]] });
         rowsProcessed++;
+        retainerRowsPaid++;
+        lastPaymentMethod = row[5] || 'Check';
+      }
 
-        // Auto-append next month retainer row
+      // Auto-append exactly one next-month retainer row after paying out
+      if (retainerRowsPaid > 0) {
         const nextMonth = new Date();
         nextMonth.setMonth(nextMonth.getMonth() + 1);
         const nextMonthLabel = ['January','February','March','April','May','June','July','August','September','October','November','December'][nextMonth.getMonth()] + ' ' + nextMonth.getFullYear();
@@ -155,7 +161,7 @@ export default async function handler(req, res) {
           range: 'RETAINER_LEDGER!A:J',
           valueInputOption: 'USER_ENTERED',
           insertDataOption: 'INSERT_ROWS',
-          requestBody: { values: [[nextDate, person, 200, nextMonthLabel, 'Retainer', row[5] || 'Check', '', '', 'Contract Labor – Marketer Retainer', '']] },
+          requestBody: { values: [[nextDate, person, 200, nextMonthLabel, 'Retainer', lastPaymentMethod, '', '', 'Contract Labor – Marketer Retainer', '']] },
         });
       }
     }
@@ -174,7 +180,7 @@ export default async function handler(req, res) {
       range: 'PAYOUT_BATCHES!A:F',
       valueInputOption: 'USER_ENTERED',
       insertDataOption: 'INSERT_ROWS',
-      requestBody: { values: [[batch, person, isMarketer ? 'Marketer' : 'Sales', payoutDate, '', '', totalPaid.toFixed(2), '', rowsProcessed + ' rows']] },
+      requestBody: { values: [[batch, person, isMarketer ? 'Marketer' : 'Sales', payoutDate, totalPaid.toFixed(2), rowsProcessed + ' rows']] },
     });
 
     return res.status(200).json({
