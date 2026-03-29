@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useTabData } from "../hooks/useSheetData.jsx";
+import { useTabData, useSheetData } from "../hooks/useSheetData.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { useToast } from "../components/Toast.jsx";
 import LoadingSpinner from "../components/LoadingSpinner.jsx";
@@ -216,6 +216,7 @@ export default function PayrollPage() {
   const { rows: retainerRows = [] } = useTabData("RETAINER_LEDGER");
   const { rows: ledgerRows = [] } = useTabData("COMMISSION_LEDGER");
   const { rows: peopleRows = [] } = useTabData("PAYROLL_PEOPLE");
+  const { refresh } = useSheetData();
   const [pin, setPin] = useState("");
   const [unlocked, setUnlocked] = useState(false);
   const [pinError, setPinError] = useState("");
@@ -279,11 +280,10 @@ export default function PayrollPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payout failed");
       setPayoutResult({ success: true, person, message: data.message, batchId: data.batchId });
-      showToast(person + " payout complete", "success");
       showToast(`Payout complete — ${data.batchId}`, 'success');
+      refresh();
     } catch (err) {
       setPayoutResult({ success: false, person, message: err.message });
-      showToast("Payout failed — check logs", "error");
       showToast('Payout failed — check sheet permissions', 'error');
     } finally {
       setPayoutProcessing(false);
@@ -423,8 +423,8 @@ export default function PayrollPage() {
               This will write directly to your Google Sheet. Cannot be undone from the app.
             </p>
             <div className="flex gap-3">
-              <button type="button" onClick={() => setPayoutConfirm(null)} className="flex-1 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition">Cancel</button>
-              <button type="button" onClick={() => confirmPayout(payoutConfirm)} className="flex-1 rounded-2xl bg-cyan-400/15 border border-cyan-400/30 px-4 py-2.5 text-sm font-medium text-cyan-100 hover:bg-cyan-400/25 transition">Confirm Pay Out</button>
+              <button type="button" onClick={() => setPayoutConfirm(null)} disabled={payoutProcessing} className="flex-1 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed">Cancel</button>
+              <button type="button" onClick={() => confirmPayout(payoutConfirm)} disabled={payoutProcessing} className="flex-1 rounded-2xl bg-cyan-400/15 border border-cyan-400/30 px-4 py-2.5 text-sm font-medium text-cyan-100 hover:bg-cyan-400/25 transition disabled:opacity-40 disabled:cursor-not-allowed">{payoutProcessing ? 'Processing...' : 'Confirm Pay Out'}</button>
             </div>
           </div>
         </div>
