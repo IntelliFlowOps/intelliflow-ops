@@ -339,6 +339,9 @@ $999/month
 4,000 texts included
 1,000 voice minutes included
 
+Commission Base Rule:
+Commission base for annual clients always uses the monthly equivalent: Starter = $299, Pro = $499, Premium = $999. Never calculate commission from the annual total.
+
 Overages:
 
 Starter
