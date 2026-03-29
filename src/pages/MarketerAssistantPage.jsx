@@ -271,12 +271,12 @@ export default function MarketerAssistantPage() {
         await fetch("/api/history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify({ chat: {
             assistantType: "marketer",
             title: (chatInput || "Conversation").slice(0, 60),
             messages: allMsgs.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "[attachment]" })),
             savedAt: new Date().toISOString(),
-          }),
+          } }),
         });
       } catch (_) {}
     } catch {
@@ -329,12 +329,12 @@ export default function MarketerAssistantPage() {
         await fetch("/api/history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+          body: JSON.stringify({ chat: {
             assistantType: "marketer",
             title: (buildInput || "Build Ad").slice(0, 60),
             messages: allMsgs.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "[attachment]" })),
             savedAt: new Date().toISOString(),
-          }),
+          } }),
         });
       } catch (_) {}
     } catch {
