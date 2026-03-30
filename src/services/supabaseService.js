@@ -87,7 +87,7 @@ const TEAM_MEMBERS_MAP = {
   name: 'Person',
   role: 'Role',
   commission_path: 'Commission Path',
-  w9_status: 'W9 Status',
+  w9_status: 'W9 Collected',
   payment_method: 'Payment Method',
   retainer_amount: 'Retainer Amount',
 };

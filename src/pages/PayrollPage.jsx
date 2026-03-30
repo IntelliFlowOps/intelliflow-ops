@@ -276,10 +276,10 @@ export default function PayrollPage() {
     setPayoutProcessing(true);
     setPayoutConfirm(null);
     try {
-      const res = await fetch("/api/sheets-write", {
+      const res = await fetch("/api/payout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "payout", person }),
+        body: JSON.stringify({ person }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payout failed");
@@ -288,7 +288,7 @@ export default function PayrollPage() {
       refresh();
     } catch (err) {
       setPayoutResult({ success: false, person, message: err.message });
-      showToast('Payout failed — check sheet permissions', 'error');
+      showToast('Payout failed — check database permissions', 'error');
     } finally {
       setPayoutProcessing(false);
     }
@@ -424,7 +424,7 @@ export default function PayrollPage() {
               Mark all unpaid amounts for <strong className="text-white">{payoutConfirm}</strong> as paid for {currentMonthLabel()}.
             </p>
             <p className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2">
-              This will write directly to your Google Sheet. Cannot be undone from the app.
+              This will write directly to your database. Cannot be undone from the app.
             </p>
             <div className="flex gap-3">
               <button type="button" onClick={() => setPayoutConfirm(null)} disabled={payoutProcessing} className="flex-1 rounded-2xl bg-white/[0.06] px-4 py-2.5 text-sm text-slate-300 hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed">Cancel</button>
@@ -445,7 +445,7 @@ export default function PayrollPage() {
               <p className="text-xs text-slate-500">Batch ID: {payoutResult.batchId}</p>
             )}
             {!payoutResult.success && (
-              <p className="text-xs text-red-400">Check your Google Sheet permissions and try again.</p>
+              <p className="text-xs text-red-400">Check your database permissions and try again.</p>
             )}
             <button
               type="button"
