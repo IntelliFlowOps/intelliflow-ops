@@ -1,9 +1,12 @@
 import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react';
-import { fetchAllTabs, fetchTabs, fetchTab } from '../services/sheetsService.js';
+import { fetchTabs, fetchTab } from '../services/sheetsService.js';
 import { fetchSupabaseTab, SUPABASE_TAB_KEYS } from '../services/supabaseService.js';
-import { STALE_THRESHOLD_MS, AUTO_REFRESH_INTERVAL_MS } from '../config/sheets.js';
+import { STALE_THRESHOLD_MS, AUTO_REFRESH_INTERVAL_MS, ALL_TAB_KEYS } from '../config/sheets.js';
 
 const DataContext = createContext(null);
+
+// Tabs that are NOT on Supabase and still need Google Sheets
+const SHEETS_ONLY_KEYS = ALL_TAB_KEYS.filter(k => !SUPABASE_TAB_KEYS.has(k));
 
 // Fetch a single tab — Supabase for migrated tables, Sheets for the rest
 async function fetchSingleTab(tabKey) {
@@ -24,16 +27,23 @@ async function fetchMultipleTabs(keys) {
   return results;
 }
 
-// Fetch all tabs — Supabase where migrated, Sheets for the rest
+// Fetch all tabs — Supabase for migrated, Sheets only for the remainder
 async function fetchAll() {
-  const results = await fetchAllTabs(); // Sheets for everything
-  // Override migrated tabs with Supabase data
+  const results = {};
+
+  // Fetch Supabase tabs
   const supabaseKeys = Array.from(SUPABASE_TAB_KEYS);
   const supabasePromises = supabaseKeys.map(async (key) => {
     const result = await fetchSupabaseTab(key);
     if (result) results[key] = result;
   });
-  await Promise.allSettled(supabasePromises);
+
+  // Fetch remaining Sheets-only tabs
+  const sheetsPromises = SHEETS_ONLY_KEYS.map(async (key) => {
+    results[key] = await fetchTab(key);
+  });
+
+  await Promise.allSettled([...supabasePromises, ...sheetsPromises]);
   results._timestamp = Date.now();
   return results;
 }

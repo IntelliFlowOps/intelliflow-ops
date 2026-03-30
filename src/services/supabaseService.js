@@ -112,6 +112,7 @@ const CUSTOMER_ACTIVITY_MAP = {
   summary: 'Summary',
   next_step: 'Next Step',
   health_impact: 'Health Impact',
+  reference: 'Link / Reference',
   notes: 'Notes',
 };
 
@@ -120,11 +121,25 @@ const CAMPAIGNS_MAP = {
   platform: 'Platform',
   campaign_name: 'Campaign Name',
   spend: 'Spend',
+  leads: 'Leads',
+  qualified_leads: 'Qualified Leads',
   impressions: 'Impressions',
   clicks: 'Clicks',
   ctr: 'CTR',
   cpc: 'CPC',
+  cpl: 'CPL',
+  cac: 'CAC',
+  close_rate: 'Close Rate',
+  customers_won: 'Customers Won',
+  revenue_won: 'Revenue Won',
   status: 'Status',
+  niche: 'Niche',
+  hook: 'Hook',
+  cta: 'CTA',
+  creative_type: 'Creative Type',
+  offer: 'Offer',
+  managed_by: 'Managed By',
+  campaign_link: 'Campaign ID / Link',
 };
 
 const ALL_ANALYTICS_MAP = {
@@ -136,20 +151,25 @@ const ALL_ANALYTICS_MAP = {
   clicks: 'Clicks',
   ctr: 'CTR',
   cpc: 'CPC',
+  leads: 'Leads',
+  cpl: 'CPL',
+  cac: 'CAC',
+  close_rate: 'Close Rate',
+  customers_won: 'Customers Won',
+  revenue_won: 'Revenue Won',
   status: 'Status',
+  notes: 'Notes',
 };
 
 const CREATIVE_INSIGHTS_MAP = {
   date: 'Date',
-  creative_name: 'Creative Name',
-  format: 'Format',
-  hook: 'Hook',
-  cta: 'CTA',
-  impressions: 'Impressions',
-  clicks: 'Clicks',
-  ctr: 'CTR',
-  conversions: 'Conversions',
-  cpa: 'CPA',
+  platform: 'Platform',
+  niche: 'Niche',
+  winning_hook: 'Winning Hook',
+  winning_cta: 'Winning CTA',
+  best_creative_type: 'Best Creative Type',
+  what_is_not_working: 'What Is Not Working',
+  next_test_idea: 'Next Test Idea',
   notes: 'Notes',
 };
 
