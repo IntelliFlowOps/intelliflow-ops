@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     if (VIEWS[table]) {
       const { view, single } = VIEWS[table];
       let query = supabase.from(view).select('*');
-      if (single) query = query.single();
+      if (single) query = query.maybeSingle();
       const { data, error } = await query;
       if (error) {
         console.error(`Supabase view error (${view}):`, error.message);
@@ -47,10 +47,15 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: `Table not allowed: ${table}` });
     }
 
+    const selectCols = table === 'team_members'
+      ? 'id, name, role, commission_path, commission_rate, commission_term_months, w9_status, payment_method, retainer_amount, active, created_at'
+      : '*';
+
     const { data, error } = await supabase
       .from(table)
-      .select('*')
-      .order(config.orderBy, { ascending: config.ascending });
+      .select(selectCols)
+      .order(config.orderBy, { ascending: config.ascending })
+      .limit(10000);
 
     if (error) {
       console.error(`Supabase read error (${table}):`, error.message);

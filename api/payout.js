@@ -45,7 +45,8 @@ export default async function handler(req, res) {
     let ledgerQuery = supabase
       .from('commission_ledger')
       .select('*')
-      .eq('paid_out', false);
+      .eq('paid_out', false)
+      .limit(10000);
 
     if (isMarketer) {
       ledgerQuery = ledgerQuery.eq('assigned_to', teamMember.id);
@@ -104,7 +105,8 @@ export default async function handler(req, res) {
         .from('retainer_ledger')
         .select('*')
         .eq('team_member_id', teamMember.id)
-        .eq('paid_out', false);
+        .eq('paid_out', false)
+        .limit(10000);
 
       if (retErr) {
         console.error('Retainer query error:', retErr.message);
@@ -191,6 +193,20 @@ export default async function handler(req, res) {
 
     if (batchErr) {
       console.error('Payout batch insert error:', batchErr.message);
+      // Duplicate batch_id = concurrent payout race condition
+      if (batchErr.code === '23505') {
+        return res.status(409).json({ success: false, error: 'Payout already in progress — try again in a moment' });
+      }
+      // Batch record failed but rows were already marked paid
+      return res.status(200).json({
+        success: true,
+        warning: 'Payout processed but batch record failed — check payout_batches table',
+        batchId: null,
+        message: `${person} paid ${totalPaid.toFixed(2)} — ${rowsProcessed} rows marked paid (batch record failed)`,
+        totalPaid,
+        rowsProcessed,
+        teamRowsSkipped,
+      });
     }
 
     // ── Return response ──────────────────────────────────────────────────

@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     if (teamMemberId !== 'founder') {
       const { data, error } = await supabase
         .from('team_members')
-        .select('id, name, commission_path')
+        .select('id, name, commission_path, commission_rate')
         .eq('id', teamMemberId)
         .single();
       if (error || !data) {
@@ -63,22 +63,61 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: updateErr.message });
     }
 
-    // Update ALL unpaid commission_ledger rows for this customer to the new attribution.
+    // Update ALL unpaid commission_ledger rows for this customer: attribution + recalculate commission.
     // Paid rows (paid_out = true) are left unchanged — they belong to whoever was assigned at payout time.
-    const { error: ledgerErr } = await supabase
+    const { data: unpaidRows, error: fetchErr } = await supabase
       .from('commission_ledger')
-      .update({
-        attribution_type: update.attribution_type,
-        assigned_to: update.assigned_to || null,
-        assigned_to_name: update.assigned_to_name || null,
-        sales_rep: update.sales_rep || null,
-        sales_rep_name: update.sales_rep_name || null,
-      })
+      .select('id, commission_base, paid_month')
       .eq('customer_id', customerId)
-      .eq('paid_out', false);
+      .eq('paid_out', false)
+      .limit(10000);
 
-    if (ledgerErr) {
-      console.warn('Ledger update warning:', ledgerErr.message);
+    if (fetchErr) {
+      console.warn('Ledger fetch warning:', fetchErr.message);
+    }
+
+    if (unpaidRows && unpaidRows.length > 0) {
+      const rate = teamMember?.commission_rate || 0;
+      const memberName = teamMember?.name || '';
+
+      for (const row of unpaidRows) {
+        const base = parseFloat(row.commission_base) || 0;
+        const rowUpdate = {
+          attribution_type: update.attribution_type,
+          assigned_to: update.assigned_to || null,
+          assigned_to_name: update.assigned_to_name || null,
+          sales_rep: update.sales_rep || null,
+          sales_rep_name: update.sales_rep_name || null,
+          commission_rate: 0,
+          commission_total: 0,
+          emma_rate: 0,
+          emma_commission: 0,
+          wyatt_rate: 0,
+          wyatt_commission: 0,
+          sales_rep_rate: 0,
+          sales_commission: 0,
+        };
+
+        if (derivedAttribution === 'DIRECT') {
+          const total = base * rate;
+          rowUpdate.commission_rate = rate;
+          rowUpdate.commission_total = total;
+          if (memberName === 'Emma') { rowUpdate.emma_rate = rate; rowUpdate.emma_commission = total; }
+          else if (memberName === 'Wyatt') { rowUpdate.wyatt_rate = rate; rowUpdate.wyatt_commission = total; }
+        } else if (derivedAttribution === 'SALES') {
+          const paidMonth = parseInt(row.paid_month) || 0;
+          if (paidMonth <= 6) {
+            rowUpdate.sales_rep_rate = rate;
+            rowUpdate.sales_commission = base * rate;
+          }
+        }
+        // FOUNDER: all commission fields stay 0
+
+        await supabase
+          .from('commission_ledger')
+          .update(rowUpdate)
+          .eq('id', row.id);
+      }
     }
 
     return res.status(200).json({

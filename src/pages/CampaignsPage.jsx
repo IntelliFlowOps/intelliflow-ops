@@ -67,15 +67,6 @@ function displayValue(value) {
 function DetailField({ label, value }) {
   const showBadge = label === 'Status';
 
-  const stats = useMemo(() => {
-    const money = v => parseFloat(String(v||'0').replace(/[^0-9.-]/g,''))||0;
-    const spend = rows.reduce((s,r) => s + money(r['Spend']), 0);
-    const leads = rows.reduce((s,r) => s + money(r['Leads']), 0);
-    const won = rows.reduce((s,r) => s + money(r['Customers Won']), 0);
-    const rev = rows.reduce((s,r) => s + money(r['Revenue Won']), 0);
-    return { spend, leads, won, rev };
-  }, [rows]);
-
   return (
     <div className="grid grid-cols-[180px_1fr] gap-3 border-b border-white/5 py-3 last:border-b-0">
       <div className="text-sm text-zinc-500">{label}</div>
@@ -115,11 +106,14 @@ export default function CampaignsPage() {
     const totalSpend = filteredRows.reduce((s, r) => s + num(r['Spend']), 0);
     const totalLeads = filteredRows.reduce((s, r) => s + num(r['Leads']), 0);
     const totalCustomers = filteredRows.reduce((s, r) => s + num(r['Customers Won']), 0);
+    const totalRev = filteredRows.reduce((s, r) => s + num(r['Revenue Won']), 0);
     const cpl = totalLeads > 0 ? totalSpend / totalLeads : 0;
     const closeRate = totalLeads > 0 ? (totalCustomers / totalLeads) * 100 : 0;
     return {
       spend: fmt(totalSpend),
       leads: totalLeads > 0 ? totalLeads.toLocaleString() : '—',
+      won: totalCustomers,
+      rev: totalRev,
       cpl: cpl > 0 ? fmt(cpl) : '—',
       closeRate: closeRate > 0 ? `${closeRate.toFixed(1)}%` : '—',
     };
@@ -135,10 +129,10 @@ export default function CampaignsPage() {
       {rows.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: 'Total Spend', value: '$' + stats.spend.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}), color: '#f87171' },
-            { label: 'Total Leads', value: Math.round(stats.leads).toLocaleString(), color: '#67e8f9' },
-            { label: 'Customers Won', value: Math.round(stats.won).toLocaleString(), color: '#10b981' },
-            { label: 'Revenue Won', value: '$' + stats.rev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}), color: '#a5b4fc' },
+            { label: 'Total Spend', value: stats.spend, color: '#f87171' },
+            { label: 'Total Leads', value: stats.leads, color: '#67e8f9' },
+            { label: 'Customers Won', value: stats.won > 0 ? stats.won.toLocaleString() : '—', color: '#10b981' },
+            { label: 'Revenue Won', value: stats.rev > 0 ? '$' + stats.rev.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—', color: '#a5b4fc' },
           ].map(k => (
             <div key={k.label} className="rounded-[18px] p-4"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>

@@ -85,6 +85,8 @@ async function handleInvoicePaid(invoice) {
         months_active: newMonthsActive,
         last_payment_date: today(),
         status: 'Active',
+        plan_id: plan?.id ?? existingCustomer.plan_id,
+        mrr: plan ? plan.monthly_price : existingCustomer.mrr,
         updated_at: new Date().toISOString(),
       })
       .eq('id', existingCustomer.id);
