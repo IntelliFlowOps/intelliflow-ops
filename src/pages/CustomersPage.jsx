@@ -1,25 +1,23 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import DataTable from '../components/DataTable.jsx';
 import DrawerPanel from '../components/DrawerPanel.jsx';
 import ErrorBanner from '../components/ErrorBanner.jsx';
 import LoadingSpinner, { SkeletonTable } from '../components/LoadingSpinner.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { useTabData } from '../hooks/useSheetData.jsx';
+import { useTabData, useSheetData } from '../hooks/useSheetData.jsx';
 import { useToast } from '../components/Toast.jsx';
-
-const CLOSERS = ['Emma', 'Wyatt', 'ED', 'Micah', 'Justin', 'Founder'];
-const LEAD_SOURCES = ['Referral', 'Cold Outreach', 'Inbound', 'Paid Ads', 'Social Media', 'Event', 'Partnership', 'Other'];
 
 const columns = [
   { key: 'Customer Name', label: 'Customer', render: (val, row) => {
-    const unassigned = !row['Attribution Type'] || row['Attribution Type'].trim() === 'UNASSIGNED' || row['Attribution Type'].trim() === '';
+    const attr = (row['Attribution Type'] || '').trim();
+    const unassigned = !attr || attr === 'UNASSIGNED';
     return (
       <span className="flex items-center gap-2">
         <span>{val || '—'}</span>
         {unassigned && (
           <span className="rounded-full px-2 py-0.5 text-[10px] font-medium"
             style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.25)', color: '#fb923c' }}>
-            Needs Closer
+            Needs Seller
           </span>
         )}
       </span>
@@ -29,8 +27,14 @@ const columns = [
   { key: 'Status', label: 'Status' },
   { key: 'Lead Source', label: 'Lead Source' },
   { key: 'Months Active', label: 'Mo. Active' },
-  { key: 'Attribution Type', label: 'Attribution' },
-  { key: 'Direct Marketer', label: 'Marketer' },
+  { key: 'Attribution Type', label: 'Attribution', render: (val) => {
+    if (!val || val === 'UNASSIGNED') return <span className="text-zinc-500">—</span>;
+    return <StatusBadge status={val} />;
+  }},
+  { key: 'Direct Marketer', label: 'Assigned To', render: (val, row) => {
+    const salesRep = row['Sales Rep'] || '';
+    return val || salesRep || '—';
+  }},
   { key: 'Health Score', label: 'Health' },
   { key: 'Churn Risk', label: 'Churn Risk' },
   { key: 'LTV', label: 'LTV' },
@@ -55,7 +59,6 @@ const sections = [
       'Attribution Type',
       'Direct Marketer',
       'Commission Eligible?',
-      'Commission Month Count',
     ],
   },
   {
@@ -88,7 +91,7 @@ function displayValue(value) {
 }
 
 function DetailField({ label, value }) {
-  const showBadge = label === 'Status' || label === 'Churn Risk';
+  const showBadge = label === 'Status' || label === 'Churn Risk' || label === 'Attribution Type';
 
   return (
     <div className="grid grid-cols-[180px_1fr] gap-3 border-b border-white/5 py-3 last:border-b-0">
@@ -100,35 +103,81 @@ function DetailField({ label, value }) {
   );
 }
 
+const SELLER_OPTIONS_FOUNDER = { id: 'founder', name: 'Founder', role: 'Founder', commission_path: 'FOUNDER' };
+
 export default function CustomersPage() {
   const { rows, loading, error } = useTabData('CUSTOMERS');
+  const { rows: teamMembers = [] } = useTabData('PAYROLL_PEOPLE');
+  const { refresh } = useSheetData();
   const showToast = useToast();
   const [selected, setSelected] = useState(null);
-  const [assigningCloser, setAssigningCloser] = useState(false);
-  const [selectedCloser, setSelectedCloser] = useState('');
-  const [selectedLeadSource, setSelectedLeadSource] = useState('');
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+
+  // Build seller options from team_members data
+  const sellerOptions = useMemo(() => {
+    const options = [];
+    teamMembers.forEach(tm => {
+      const name = tm['Person'] || tm['name'] || '';
+      const role = tm['Role'] || tm['role'] || '';
+      const path = tm['Commission Path'] || tm['commission_path'] || '';
+      const id = tm.id || '';
+      if (name && id) {
+        options.push({ id, name, role, commission_path: path });
+      }
+    });
+    options.push(SELLER_OPTIONS_FOUNDER);
+    return options;
+  }, [teamMembers]);
 
   const isUnassigned = (row) => {
     const attr = (row['Attribution Type'] || '').trim();
     return attr === '' || attr === 'UNASSIGNED';
   };
 
-  async function saveCloser() {
-    if (!selectedCloser || !selected) return;
+  const currentAssignment = (row) => {
+    const attr = (row['Attribution Type'] || '').trim();
+    const marketer = (row['Direct Marketer'] || '').trim();
+    const salesRep = (row['Sales Rep'] || '').trim();
+    if (attr === 'DIRECT' && marketer) return `${marketer} (Direct)`;
+    if (attr === 'SALES' && salesRep) return `${salesRep} (Sales)`;
+    if (attr === 'FOUNDER') return 'Founder';
+    return null;
+  };
+
+  async function saveSeller() {
+    if (!selectedSeller || !selected) return;
     setSaveStatus('saving');
+
+    const seller = sellerOptions.find(s => s.id === selectedSeller);
+    if (!seller) { setSaveStatus('error'); return; }
+
+    const attributionType = seller.commission_path === 'DIRECT' ? 'DIRECT'
+      : seller.commission_path === 'SALES' ? 'SALES'
+      : 'FOUNDER';
+
     try {
-      const res = await fetch('/api/assign-closer', {
+      const res = await fetch('/api/assign-seller', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerName: selected['Customer Name'], closer: selectedCloser, leadSource: selectedLeadSource }),
+        body: JSON.stringify({
+          customerId: selected.id,
+          teamMemberId: seller.id,
+          attributionType,
+        }),
       });
-      if (!res.ok) throw new Error('Failed');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed');
+      }
       setSaveStatus('saved');
-      showToast(`${selectedCloser} assigned as closer`, 'success');
-      setTimeout(() => { setSaveStatus(''); setAssigningCloser(false); setSelectedCloser(''); setSelectedLeadSource(''); }, 1500);
-    } catch {
+      showToast(`${seller.name} assigned to ${selected['Customer Name']}`, 'success');
+      refresh();
+      setTimeout(() => { setSaveStatus(''); setAssignOpen(false); setSelectedSeller(''); }, 1200);
+    } catch (err) {
       setSaveStatus('error');
+      showToast('Assignment failed — ' + err.message, 'error');
       setTimeout(() => setSaveStatus(''), 2000);
     }
   }
@@ -156,7 +205,7 @@ export default function CustomersPage() {
   return (
     <div className="space-y-6 px-6 py-6">
       <div className="space-y-1">
-        <p className="text-sm text-zinc-500">Customer records from the Customers sheet. Click any row to open the full customer drawer.</p>
+        <p className="text-sm text-zinc-500">Customer records. Click any row to open the full customer drawer.</p>
       </div>
 
       {loading && !rows.length && <SkeletonTable rows={6} cards={4} />}
@@ -195,69 +244,111 @@ export default function CustomersPage() {
 
       <DrawerPanel
         open={!!selected}
-        onClose={() => setSelected(null)}
+        onClose={() => { setSelected(null); setAssignOpen(false); setSelectedSeller(''); setSaveStatus(''); }}
         title={selected?.['Customer Name'] || 'Customer Detail'}
       >
         {selected && (
           <div className="space-y-8">
-            {isUnassigned(selected) && (
-              <section className="space-y-2">
-                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-400">
-                  ⚠ Needs Closer Assignment
-                </h3>
-                <div className="rounded-2xl p-4 space-y-3"
-                  style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.2)' }}>
-                  <p className="text-xs text-zinc-400">This customer has no closer assigned. Select one to activate commission tracking.</p>
-                  {!assigningCloser ? (
-                    <button
-                      onClick={() => setAssigningCloser(true)}
-                      className="w-full rounded-xl py-2.5 text-sm font-medium transition-all"
-                      style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c' }}
-                    >
-                      Assign Closer
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <select
-                        value={selectedCloser}
-                        onChange={e => setSelectedCloser(e.target.value)}
-                        className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none"
-                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
-                      >
-                        <option value="">Select closer...</option>
-                        {CLOSERS.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <select
-                        value={selectedLeadSource}
-                        onChange={e => setSelectedLeadSource(e.target.value)}
-                        className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none mt-2"
-                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
-                      >
-                        <option value="">Lead source (optional)...</option>
-                        {LEAD_SOURCES.map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={saveCloser}
-                          disabled={!selectedCloser || saveStatus === 'saving'}
-                          className="flex-1 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-40"
-                          style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
-                        >
-                          {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Error — retry' : 'Save'}
-                        </button>
-                        <button
-                          onClick={() => { setAssigningCloser(false); setSelectedCloser(''); }}
-                          className="rounded-xl px-4 py-2.5 text-sm text-zinc-500 transition hover:text-zinc-300"
-                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
+            {/* Seller Assignment Section */}
+            <section className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
+                Seller Assignment
+              </h3>
+              <div className="rounded-2xl p-4 space-y-3"
+                style={{
+                  background: isUnassigned(selected) ? 'rgba(249,115,22,0.06)' : 'rgba(6,182,212,0.04)',
+                  border: `1px solid ${isUnassigned(selected) ? 'rgba(249,115,22,0.2)' : 'rgba(6,182,212,0.15)'}`,
+                }}>
+                {currentAssignment(selected) ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-zinc-500">Currently assigned to</div>
+                      <div className="text-sm font-medium text-white mt-0.5">{currentAssignment(selected)}</div>
                     </div>
-                  )}
-                </div>
-              </section>
-            )}
+                    <StatusBadge status={selected['Attribution Type']} />
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-400">No seller assigned. Select one to activate commission tracking.</p>
+                )}
+
+                {!assignOpen ? (
+                  <button
+                    onClick={() => setAssignOpen(true)}
+                    className="w-full rounded-xl py-2.5 text-sm font-medium transition-all"
+                    style={{
+                      background: isUnassigned(selected) ? 'rgba(249,115,22,0.12)' : 'rgba(6,182,212,0.08)',
+                      border: `1px solid ${isUnassigned(selected) ? 'rgba(249,115,22,0.3)' : 'rgba(6,182,212,0.2)'}`,
+                      color: isUnassigned(selected) ? '#fb923c' : '#67e8f9',
+                    }}
+                  >
+                    {currentAssignment(selected) ? 'Reassign Seller' : 'Assign Seller'}
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      {sellerOptions.map(seller => {
+                        const isSelected = selectedSeller === seller.id;
+                        const pathColor = seller.commission_path === 'DIRECT'
+                          ? { bg: 'rgba(6,182,212,0.08)', border: 'rgba(6,182,212,0.3)', text: '#67e8f9' }
+                          : seller.commission_path === 'SALES'
+                          ? { bg: 'rgba(139,92,246,0.08)', border: 'rgba(139,92,246,0.3)', text: '#c4b5fd' }
+                          : { bg: 'rgba(161,161,170,0.08)', border: 'rgba(161,161,170,0.3)', text: '#a1a1aa' };
+
+                        return (
+                          <button
+                            key={seller.id}
+                            type="button"
+                            onClick={() => setSelectedSeller(seller.id)}
+                            className="w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-left transition-all"
+                            style={{
+                              background: isSelected ? pathColor.bg : 'rgba(0,0,0,0.2)',
+                              border: `1px solid ${isSelected ? pathColor.border : 'rgba(255,255,255,0.06)'}`,
+                              color: isSelected ? pathColor.text : '#a1a1aa',
+                            }}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div className="flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold shrink-0"
+                                style={{ background: pathColor.bg, border: `1px solid ${pathColor.border}`, color: pathColor.text }}>
+                                {seller.name[0]}
+                              </div>
+                              <div>
+                                <div className="font-medium" style={{ color: isSelected ? '#fff' : '#d4d4d8' }}>{seller.name}</div>
+                                <div className="text-[10px] mt-0.5" style={{ color: pathColor.text }}>
+                                  {seller.commission_path === 'DIRECT' ? 'Marketer · 5% lifetime'
+                                    : seller.commission_path === 'SALES' ? 'Sales · 20% months 1-6'
+                                    : 'Founder · No commission'}
+                                </div>
+                              </div>
+                            </div>
+                            {isSelected && (
+                              <span className="text-xs font-medium" style={{ color: pathColor.text }}>Selected</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={saveSeller}
+                        disabled={!selectedSeller || saveStatus === 'saving'}
+                        className="flex-1 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+                        style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
+                      >
+                        {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Error — retry' : 'Confirm Assignment'}
+                      </button>
+                      <button
+                        onClick={() => { setAssignOpen(false); setSelectedSeller(''); setSaveStatus(''); }}
+                        className="rounded-xl px-4 py-2.5 text-sm text-zinc-500 transition hover:text-zinc-300"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
             {sections.map((section) => (
               <section key={section.title} className="space-y-2">
                 <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">
