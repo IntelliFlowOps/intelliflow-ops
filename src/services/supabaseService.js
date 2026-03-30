@@ -215,6 +215,46 @@ function transformRows(rows, tableName) {
   return mapped;
 }
 
+// ── Dashboard transformer ────────────────────────────────────────────────────
+// Converts the single-row dashboard_kpis view into the { kpis, marketing, watchlist, lastUpdated }
+// shape that DashboardPage.jsx expects.
+
+function transformDashboard(row) {
+  if (!row || typeof row !== 'object') {
+    return { kpis: {}, marketing: {}, watchlist: [], lastUpdated: '' };
+  }
+
+  const fmt$ = (v) => {
+    const n = parseFloat(v);
+    return isFinite(n) ? '$' + n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00';
+  };
+  const fmtN = (v) => {
+    const n = parseFloat(v);
+    return isFinite(n) ? String(n) : '0';
+  };
+
+  return {
+    lastUpdated: new Date().toLocaleString(),
+    kpis: {
+      'Total Revenue':          fmt$(row.revenue_mtd),
+      'Active Customers':       fmtN(row.active_customers),
+      'MRR':                    fmt$(row.total_mrr),
+      'Ad Spend (MTD)':         fmt$(row.ad_spend_mtd),
+      'Total Commissions (MTD)': fmt$(row.commissions_unpaid_mtd),
+      'Net Profit (MTD)':       fmt$((parseFloat(row.revenue_mtd) || 0) - (parseFloat(row.ad_spend_mtd) || 0) - (parseFloat(row.commissions_unpaid_mtd) || 0)),
+    },
+    marketing: {
+      'Leads (MTD)':          fmtN(row.leads_mtd),
+      'Customers Won (MTD)':  fmtN(row.customers_won_mtd),
+      'CAC':                  (parseFloat(row.customers_won_mtd) || 0) > 0 ? fmt$((parseFloat(row.ad_spend_mtd) || 0) / parseFloat(row.customers_won_mtd)) : '—',
+      'Cost / Lead':          (parseFloat(row.leads_mtd) || 0) > 0 ? fmt$((parseFloat(row.ad_spend_mtd) || 0) / parseFloat(row.leads_mtd)) : '—',
+      'Blended CTR':          '—',
+      'Blended Close Rate':   (parseFloat(row.leads_mtd) || 0) > 0 ? ((parseFloat(row.customers_won_mtd) || 0) / parseFloat(row.leads_mtd) * 100).toFixed(1) + '%' : '—',
+    },
+    watchlist: [],
+  };
+}
+
 // ── Fetch from the server-side API ───────────────────────────────────────────
 
 export async function fetchSupabaseTab(tabKey) {
@@ -226,6 +266,12 @@ export async function fetchSupabaseTab(tabKey) {
     if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${tableParam}`);
     const json = await response.json();
     if (json.error) return { data: [], error: json.error };
+
+    // Dashboard is a single-row view → transform to the shape DashboardPage expects
+    if (tableParam === 'dashboard') {
+      return { data: transformDashboard(json.data), error: null };
+    }
+
     const transformed = transformRows(json.data, tableParam);
     return { data: transformed, error: null };
   } catch (err) {

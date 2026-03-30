@@ -55,23 +55,6 @@ export default function DashboardPage() {
 
   const lastUpdated = safeDashboard.lastUpdated || null;
 
-  const [healthStatus, setHealthStatus] = useState(null);
-
-  useEffect(() => {
-    async function runHealthCheck() {
-      try {
-        const res = await fetch('/api/health-check');
-        const data = await res.json();
-        setHealthStatus(data);
-      } catch (e) {
-        setHealthStatus({ allOk: false, failures: [{ name: 'Health Check', message: 'Could not reach the health check API. Tell Claude: /api/health-check endpoint is not responding.' }] });
-      }
-    }
-    runHealthCheck();
-    const interval = setInterval(runHealthCheck, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
   const { rows: ledgerRows = [] } = useTabData('COMMISSION_LEDGER');
   const { rows: customerRows = [] } = useTabData('CUSTOMERS');
   const { rows: campaignRows = [] } = useTabData('CAMPAIGNS');
@@ -278,33 +261,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 px-6 py-6">
-      {healthStatus && !healthStatus.allOk && (
-        <div className="rounded-[16px] px-4 py-3 space-y-2"
-          style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
-          <div className="flex items-center gap-2">
-            <span className="text-red-400 text-sm">⚠</span>
-            <span className="text-sm font-semibold text-red-300">System Issue Detected</span>
-            <span className="text-[10px] text-zinc-500 ml-auto">
-              {healthStatus.checkedAt ? new Date(healthStatus.checkedAt).toLocaleTimeString() : ''}
-            </span>
-          </div>
-          {healthStatus.failures?.map((f, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs text-zinc-400 leading-relaxed">
-              <span className="text-red-400 shrink-0 mt-0.5">•</span>
-              <span><span className="text-white font-medium">{f.name}:</span> {f.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {healthStatus && healthStatus.allOk && (
-        <div className="flex items-center gap-2 px-1">
-          <span style={{ color: '#10b981', fontSize: 13 }}>✓</span>
-          <span className="text-[11px] text-zinc-500">All systems running normally</span>
-          <span className="text-[10px] text-zinc-600 ml-auto">
-            {healthStatus.checkedAt ? 'Checked ' + new Date(healthStatus.checkedAt).toLocaleTimeString() : ''}
-          </span>
-        </div>
-      )}
       {lastUpdated && (
         <p className="text-xs text-zinc-500">Sheet last updated: {lastUpdated}</p>
       )}
