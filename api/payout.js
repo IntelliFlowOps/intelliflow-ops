@@ -130,33 +130,53 @@ export default async function handler(req, res) {
           console.error('Retainer update error:', retUpdateErr.message);
         }
 
-        // Append exactly ONE next-month retainer row
+        // Append exactly ONE next-month retainer row (if it doesn't already exist)
         const nextMonth = new Date();
         nextMonth.setMonth(nextMonth.getMonth() + 1);
         const nextMonthLabel = MONTH_NAMES[nextMonth.getMonth()] + ' ' + nextMonth.getFullYear();
         const nextDate = nextMonth.toISOString().split('T')[0].substring(0, 7) + '-01';
 
-        const { error: appendErr } = await supabase
+        const { data: existingNext } = await supabase
           .from('retainer_ledger')
-          .insert({
-            date: nextDate,
-            team_member_id: teamMember.id,
-            person_name: teamMember.name,
-            amount: teamMember.retainer_amount,
-            month_label: nextMonthLabel,
-            category: 'Retainer',
-            payment_method: teamMember.payment_method || 'Check',
-            paid_out: false,
-            description: 'Contract Labor – Marketer Retainer',
-          });
+          .select('id')
+          .eq('team_member_id', teamMember.id)
+          .eq('month_label', nextMonthLabel)
+          .maybeSingle();
 
-        if (appendErr) {
-          console.error('Retainer append error:', appendErr.message);
+        if (!existingNext) {
+          const { error: appendErr } = await supabase
+            .from('retainer_ledger')
+            .insert({
+              date: nextDate,
+              team_member_id: teamMember.id,
+              person_name: teamMember.name,
+              amount: teamMember.retainer_amount,
+              month_label: nextMonthLabel,
+              category: 'Retainer',
+              payment_method: teamMember.payment_method || 'Check',
+              paid_out: false,
+              description: 'Contract Labor – Marketer Retainer',
+            });
+
+          if (appendErr) {
+            console.error('Retainer append error:', appendErr.message);
+          }
         }
       }
     }
 
-    // ── Record payout batch ──────────────────────────────────────────────
+    // ── Record payout batch (only if something was actually paid) ───────
+    if (rowsProcessed === 0) {
+      return res.status(200).json({
+        success: true,
+        batchId: null,
+        message: `Nothing to pay out for ${person}`,
+        totalPaid: 0,
+        rowsProcessed: 0,
+        teamRowsSkipped,
+      });
+    }
+
     const { error: batchErr } = await supabase
       .from('payout_batches')
       .insert({

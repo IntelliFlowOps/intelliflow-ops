@@ -42,6 +42,7 @@ const CUSTOMER_MAP = {
   status: 'Status',
   attribution_type: 'Attribution Type',
   assigned_to_name: 'Direct Marketer',
+  sales_rep_name: 'Sales Rep',
   commission_eligible: 'Commission Eligible?',
   close_date: 'Close Date',
   onboard_date: 'Onboard Date',
@@ -238,6 +239,9 @@ function transformRows(rows, tableName) {
 // ── Dashboard transformer ────────────────────────────────────────────────────
 // Converts the single-row dashboard_kpis view into the { kpis, marketing, watchlist, lastUpdated }
 // shape that DashboardPage.jsx expects.
+// NOTE: The Supabase dashboard_kpis view should return commissions_mtd as the TOTAL commissions
+// for the current month (regardless of paid_out status), not just unpaid. If the view still uses
+// WHERE paid_out = false, update the view SQL to remove that filter so Net Profit is accurate.
 
 function transformDashboard(row) {
   if (!row || typeof row !== 'object') {
@@ -260,8 +264,8 @@ function transformDashboard(row) {
       'Active Customers':       fmtN(row.active_customers),
       'MRR':                    fmt$(row.total_mrr),
       'Ad Spend (MTD)':         fmt$(row.ad_spend_mtd),
-      'Total Commissions (MTD)': fmt$(row.commissions_unpaid_mtd),
-      'Net Profit (MTD)':       fmt$((parseFloat(row.revenue_mtd) || 0) - (parseFloat(row.ad_spend_mtd) || 0) - (parseFloat(row.commissions_unpaid_mtd) || 0)),
+      'Total Commissions (MTD)': fmt$(row.commissions_mtd ?? row.commissions_unpaid_mtd),
+      'Net Profit (MTD)':       fmt$((parseFloat(row.revenue_mtd) || 0) - (parseFloat(row.ad_spend_mtd) || 0) - (parseFloat(row.commissions_mtd ?? row.commissions_unpaid_mtd) || 0)),
     },
     marketing: {
       'Leads (MTD)':          fmtN(row.leads_mtd),

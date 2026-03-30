@@ -63,7 +63,7 @@ async function handleInvoicePaid(invoice) {
       .from('plans')
       .select('*')
       .or(`stripe_monthly_price_id.eq.${priceId},stripe_annual_price_id.eq.${priceId}`)
-      .single();
+      .maybeSingle();
     plan = data || null;
   }
   const commissionBase = plan ? plan.commission_base : revenueCollected;
@@ -243,7 +243,7 @@ export default async function handler(req, res) {
       .from('stripe_events')
       .select('id')
       .eq('event_id', event.id)
-      .single();
+      .maybeSingle();
 
     if (existingEvent) {
       return res.status(200).json({ already_processed: true, event_id: event.id });
