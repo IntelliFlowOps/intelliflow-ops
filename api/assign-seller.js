@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     // Paid rows (paid_out = true) are left unchanged — they belong to whoever was assigned at payout time.
     const { data: unpaidRows, error: fetchErr } = await supabase
       .from('commission_ledger')
-      .select('id, commission_base, paid_month')
+      .select('id, commission_base, paid_month, attribution_type, assigned_to, sales_rep')
       .eq('customer_id', customerId)
       .eq('paid_out', false)
       .limit(10000);
@@ -83,8 +83,21 @@ export default async function handler(req, res) {
     if (unpaidRows && unpaidRows.length > 0) {
       const rate = teamMember?.commission_rate || 0;
       const memberName = teamMember?.name || '';
+      const newAssignedTo = update.assigned_to || null;
+      const newSalesRep = update.sales_rep || null;
 
       for (const row of unpaidRows) {
+        // Skip rows where attribution and assignee are already correct.
+        // This prevents rate changes from retroactively overwriting historical commission amounts.
+        // Only recalculate when the attribution or person is actually changing.
+        const sameAttribution = row.attribution_type === derivedAttribution;
+        const samePerson = derivedAttribution === 'DIRECT'
+          ? row.assigned_to === newAssignedTo
+          : derivedAttribution === 'SALES'
+          ? row.sales_rep === newSalesRep
+          : true; // FOUNDER has no person
+        if (sameAttribution && samePerson) continue;
+
         const base = parseFloat(row.commission_base) || 0;
         const rowUpdate = {
           attribution_type: update.attribution_type,

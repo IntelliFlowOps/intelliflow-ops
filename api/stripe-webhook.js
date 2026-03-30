@@ -41,6 +41,78 @@ async function handleSubscriptionDeleted(subscription) {
   return { success: true, action: 'customer_churned', customer_name: customer.customer_name };
 }
 
+// ── Handle charge.dispute.created ────────────────────────────────────────────
+
+async function handleDispute(dispute) {
+  const invoiceId = dispute.invoice;
+  const stripeCustomerId = dispute.customer;
+  const disputeDate = today();
+
+  if (invoiceId) {
+    await supabase
+      .from('commission_ledger')
+      .update({ notes: `DISPUTED — charge dispute opened ${disputeDate}` })
+      .eq('invoice_id', invoiceId);
+  }
+
+  if (stripeCustomerId) {
+    await supabase
+      .from('customers')
+      .update({ status: 'At Risk', updated_at: new Date().toISOString() })
+      .eq('stripe_customer_id', stripeCustomerId);
+  }
+
+  return { success: true, action: 'dispute_recorded', invoice_id: invoiceId };
+}
+
+// ── Handle charge.refunded ──────────────────────────────────────────────────
+
+async function handleRefund(charge) {
+  const invoiceId = charge.invoice;
+  const stripeCustomerId = charge.customer;
+  const refundDate = today();
+  const amountRefunded = (charge.amount_refunded || 0) / 100;
+  const amountTotal = (charge.amount || 0) / 100;
+  const isFullRefund = amountRefunded >= amountTotal;
+
+  if (invoiceId) {
+    await supabase
+      .from('commission_ledger')
+      .update({
+        commission_total: 0,
+        emma_commission: 0,
+        wyatt_commission: 0,
+        sales_commission: 0,
+        notes: `REFUNDED — commission zeroed out ${refundDate}${isFullRefund ? '' : ` (partial: $${amountRefunded.toFixed(2)} of $${amountTotal.toFixed(2)})`}`,
+      })
+      .eq('invoice_id', invoiceId);
+  }
+
+  if (stripeCustomerId && isFullRefund) {
+    await supabase
+      .from('customers')
+      .update({ status: 'Refunded', updated_at: new Date().toISOString() })
+      .eq('stripe_customer_id', stripeCustomerId);
+  }
+
+  return { success: true, action: isFullRefund ? 'full_refund' : 'partial_refund', invoice_id: invoiceId };
+}
+
+// ── Handle invoice.payment_failed ───────────────────────────────────────────
+
+async function handlePaymentFailed(invoice) {
+  const stripeCustomerId = invoice.customer;
+
+  if (stripeCustomerId) {
+    await supabase
+      .from('customers')
+      .update({ status: 'At Risk', updated_at: new Date().toISOString() })
+      .eq('stripe_customer_id', stripeCustomerId);
+  }
+
+  return { success: true, action: 'payment_failed_recorded', customer: stripeCustomerId };
+}
+
 // ── Handle invoice.payment_succeeded ─────────────────────────────────────────
 
 async function handleInvoicePaid(invoice) {
@@ -66,7 +138,8 @@ async function handleInvoicePaid(invoice) {
       .maybeSingle();
     plan = data || null;
   }
-  const commissionBase = plan ? plan.commission_base : revenueCollected;
+  let commissionBase = plan ? plan.commission_base : revenueCollected;
+  if (revenueCollected === 0) commissionBase = 0; // No commission on $0 invoices (trials, coupons)
   const planTier = plan ? plan.name : 'Unknown';
 
   // Step 5 — Find or create the customer (upsert-safe for concurrent webhooks)
@@ -280,6 +353,12 @@ export default async function handler(req, res) {
       result = await handleInvoicePaid(event.data.object);
     } else if (event.type === 'customer.subscription.deleted') {
       result = await handleSubscriptionDeleted(event.data.object);
+    } else if (event.type === 'charge.dispute.created') {
+      result = await handleDispute(event.data.object);
+    } else if (event.type === 'charge.refunded') {
+      result = await handleRefund(event.data.object);
+    } else if (event.type === 'invoice.payment_failed') {
+      result = await handlePaymentFailed(event.data.object);
     } else {
       result = { success: true, action: 'ignored', event_type: event.type };
     }
