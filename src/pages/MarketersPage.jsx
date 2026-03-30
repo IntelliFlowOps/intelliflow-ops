@@ -45,9 +45,7 @@ function belongs(row, person) {
 }
 
 function unpaid(row) {
-  if (row["_isPaidOut"]) return false;
-  if (String(row["Payout Batch / Month"] || "").trim()) return false;
-  return true;
+  return !row["_isPaidOut"];
 }
 
 function commission(row, person) {
@@ -255,12 +253,9 @@ export default function MarketersPage() {
     retainer.forEach(r => {
       const person = (r["Person"] || "").trim();
       const paid = (r["Paid Out?"] || "").trim().toLowerCase();
-      const batch = (r["Payout Batch"] || "").trim();
-      if (!paid || paid === "" || paid === "no") {
-        if (!batch) {
-          const amt = parseFloat(String(r["Amount"] || "0").replace(/[^0-9.-]/g, "")) || 0;
-          unpaidByPerson[person] = (unpaidByPerson[person] || 0) + amt;
-        }
+      if (!paid || !['yes', 'paid', 'y', '1', 'true'].includes(paid)) {
+        const amt = parseFloat(String(r["Amount"] || "0").replace(/[^0-9.-]/g, "")) || 0;
+        unpaidByPerson[person] = (unpaidByPerson[person] || 0) + amt;
       }
     });
     return unpaidByPerson;

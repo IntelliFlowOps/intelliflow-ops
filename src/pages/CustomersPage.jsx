@@ -160,7 +160,7 @@ export default function CustomersPage() {
     try {
       const res = await fetch('/api/assign-seller', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify({
           customerId: selected.id,
           teamMemberId: seller.id,

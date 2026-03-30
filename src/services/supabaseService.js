@@ -286,7 +286,9 @@ export async function fetchSupabaseTab(tabKey) {
   if (!tableParam) return null; // Not a Supabase table — fall back to Sheets
 
   try {
-    const response = await fetch(`/api/supabase-read?table=${encodeURIComponent(tableParam)}`);
+    const response = await fetch(`/api/supabase-read?table=${encodeURIComponent(tableParam)}`, {
+      headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
+    });
     if (!response.ok) throw new Error(`HTTP ${response.status} fetching ${tableParam}`);
     const json = await response.json();
     if (json.error) return { data: [], error: json.error };

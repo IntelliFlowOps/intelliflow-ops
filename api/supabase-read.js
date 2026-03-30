@@ -1,4 +1,5 @@
 import supabase from '../lib/supabase.js';
+import { validateRequest } from '../lib/api-auth.js';
 
 const ALLOWED_TABLES = {
   customers:         { orderBy: 'created_at', ascending: false },
@@ -21,6 +22,9 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
+
+  const auth = validateRequest(req);
+  if (!auth.valid) return res.status(401).json({ error: auth.error });
 
   const table = req.query.table;
   if (!table) {

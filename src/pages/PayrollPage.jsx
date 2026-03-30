@@ -278,7 +278,7 @@ export default function PayrollPage() {
     try {
       const res = await fetch("/api/payout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-secret": "INTELLIFLOW_OPS_2026" },
         body: JSON.stringify({ person }),
       });
       const data = await res.json();

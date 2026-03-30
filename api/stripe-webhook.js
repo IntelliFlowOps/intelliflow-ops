@@ -69,13 +69,13 @@ async function handleInvoicePaid(invoice) {
   const commissionBase = plan ? plan.commission_base : revenueCollected;
   const planTier = plan ? plan.name : 'Unknown';
 
-  // Step 5 — Find or create the customer
+  // Step 5 — Find or create the customer (upsert-safe for concurrent webhooks)
   let customer = null;
   const { data: existingCustomer } = await supabase
     .from('customers')
     .select('*')
     .eq('stripe_customer_id', stripeCustomerId)
-    .single();
+    .maybeSingle();
 
   if (existingCustomer) {
     const newMonthsActive = (existingCustomer.months_active || 0) + 1;
@@ -109,8 +109,26 @@ async function handleInvoicePaid(invoice) {
       .select()
       .single();
     if (insertErr) {
-      console.error('Failed to insert customer:', insertErr.message);
-      customer = { ...newCustomer, id: null, assigned_to: null, sales_rep: null };
+      // Handle concurrent insert race — another webhook created this customer first
+      if (insertErr.code === '23505') {
+        const { data: raceCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('stripe_customer_id', stripeCustomerId)
+          .single();
+        if (raceCustomer) {
+          const newMonthsActive = (raceCustomer.months_active || 0) + 1;
+          await supabase
+            .from('customers')
+            .update({ months_active: newMonthsActive, last_payment_date: today(), status: 'Active', updated_at: new Date().toISOString() })
+            .eq('id', raceCustomer.id);
+          customer = { ...raceCustomer, months_active: newMonthsActive };
+        } else {
+          throw new Error(`Customer race condition: insert conflict but re-query failed for ${stripeCustomerId}`);
+        }
+      } else {
+        throw new Error(`Failed to insert customer: ${insertErr.message}`);
+      }
     } else {
       customer = inserted;
     }
@@ -268,8 +286,14 @@ export default async function handler(req, res) {
 
     return res.status(200).json(result);
   } catch (err) {
-    // Always return 200 to Stripe to prevent endless retries
     console.error('Webhook processing error:', err);
+    // Transient errors (DB down, network issues) → 500 so Stripe retries
+    // Permanent errors (bad data, logic errors) → 200 so Stripe stops
+    const msg = (err.message || '').toLowerCase();
+    const isTransient = ['econnrefused', 'timeout', 'etimedout', 'fetch failed', 'network', 'socket', 'connection', 'unavailable'].some(t => msg.includes(t));
+    if (isTransient) {
+      return res.status(500).json({ error: 'Temporary failure — Stripe will retry', detail: err.message });
+    }
     return res.status(200).json({ success: false, error: err.message });
   }
 }

@@ -1,4 +1,5 @@
 import supabase from '../lib/supabase.js';
+import { validateRequest } from '../lib/api-auth.js';
 
 const MONTH_NAMES = [
   'January','February','March','April','May','June',
@@ -11,11 +12,14 @@ function today() {
 
 function batchId(person) {
   const d = new Date();
-  return `PAY-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${person.toUpperCase()}`;
+  return `PAY-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}-${person.toUpperCase()}`;
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const auth = validateRequest(req);
+  if (!auth.valid) return res.status(401).json({ error: auth.error });
 
   const { person } = req.body || {};
   if (!person) return res.status(400).json({ error: 'Missing person' });
