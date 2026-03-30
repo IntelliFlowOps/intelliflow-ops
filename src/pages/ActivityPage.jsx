@@ -70,7 +70,7 @@ export default function ActivityPage() {
     try {
       const res = await fetch('/api/log-activity', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error('Failed');

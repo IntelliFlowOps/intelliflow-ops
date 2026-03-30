@@ -1,7 +1,12 @@
+import { validateRequest } from '../lib/api-auth.js';
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  const auth = validateRequest(req);
+  if (!auth.valid) return res.status(401).json({ error: auth.error });
 
   try {
     const {

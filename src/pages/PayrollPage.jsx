@@ -303,7 +303,7 @@ export default function PayrollPage() {
         </div>
         <div className="max-w-sm space-y-3">
           <input
-            type="password"
+            type="password" inputMode="numeric"
             value={pin}
             onChange={e => setPin(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") unlock(); }}

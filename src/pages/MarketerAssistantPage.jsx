@@ -218,6 +218,7 @@ export default function MarketerAssistantPage() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-api-secret": "INTELLIFLOW_OPS_2026",
       },
       body: JSON.stringify({
         assistantType: "marketer",

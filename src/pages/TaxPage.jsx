@@ -74,7 +74,7 @@ function PinLock({ onUnlock }) {
           <div className="text-xs text-zinc-500 mt-1">Enter your PIN to continue</div>
         </div>
         <input
-          type="password"
+          type="password" inputMode="numeric"
           value={pin}
           onChange={e => { setPin(e.target.value); setError(''); }}
           onKeyDown={e => { if (e.key === 'Enter') attempt(); }}
@@ -135,7 +135,7 @@ export default function TaxPage() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify({
           assistantType: 'tax',
           message: msg,
@@ -277,7 +277,7 @@ export default function TaxPage() {
     setSaving(true);
     try {
       const res = await fetch('/api/log-expense', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify(expenseForm),
       });
       if (!res.ok) throw new Error('Failed');
@@ -293,7 +293,7 @@ export default function TaxPage() {
     setSaving(true);
     try {
       const res = await fetch('/api/log-distribution', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify(distForm),
       });
       if (!res.ok) throw new Error('Failed');

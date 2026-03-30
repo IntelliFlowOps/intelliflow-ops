@@ -55,7 +55,7 @@ function PinModal({ onUnlock, onCancel, title }) {
           <div className="text-base font-semibold text-white">{title}</div>
           <div className="text-xs text-zinc-500 mt-1">Founder PIN required</div>
         </div>
-        <input type="password" value={pin} onChange={e => { setPin(e.target.value); setError(''); }}
+        <input type="password" inputMode="numeric" value={pin} onChange={e => { setPin(e.target.value); setError(''); }}
           onKeyDown={e => { if (e.key === 'Enter') attempt(); }}
           placeholder="PIN" autoFocus
           className="w-full rounded-2xl px-4 py-3 text-center text-lg text-white outline-none tracking-[0.4em]"
@@ -113,7 +113,7 @@ export default function SalesPage() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
         body: JSON.stringify({
           assistantType: 'sales',
           message: msg,

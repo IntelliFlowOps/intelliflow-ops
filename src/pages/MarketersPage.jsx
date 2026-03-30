@@ -332,7 +332,7 @@ export default function MarketersPage() {
               </div>
 
               <input
-                type="password"
+                type="password" inputMode="numeric"
                 value={pins[p.name]}
                 onChange={(e) => setPins((x) => ({ ...x, [p.name]: e.target.value }))}
                 onKeyDown={(e) => { if (e.key === "Enter") unlock(p.name); }}
@@ -399,7 +399,7 @@ export default function MarketersPage() {
                 </div>
                 {!isUnlocked ? (
                   <div className="space-y-3">
-                    <input type="password" value={pins[p.name] || ""}
+                    <input type="password" inputMode="numeric" value={pins[p.name] || ""}
                       onChange={(e) => setPins((x) => ({ ...x, [p.name]: e.target.value }))}
                       onKeyDown={(e) => { if (e.key === "Enter") unlock(p.name); }}
                       placeholder="Enter PIN"
@@ -460,7 +460,7 @@ export default function MarketersPage() {
                 </div>
               </div>
               <input
-                type="password"
+                type="password" inputMode="numeric"
                 value={pins[p.name]}
                 onChange={(e) => setPins((x) => ({ ...x, [p.name]: e.target.value }))}
                 onKeyDown={(e) => { if (e.key === "Enter") unlock(p.name); }}

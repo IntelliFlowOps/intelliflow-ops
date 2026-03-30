@@ -112,7 +112,7 @@ function PinLock({ onUnlock }) {
           <div className="text-xs text-zinc-500 mt-1">Enter your PIN to continue</div>
         </div>
         <input
-          type="password"
+          type="password" inputMode="numeric"
           value={pin}
           onChange={e => { setPin(e.target.value); setError(''); }}
           onKeyDown={e => { if (e.key === 'Enter') attempt(); }}

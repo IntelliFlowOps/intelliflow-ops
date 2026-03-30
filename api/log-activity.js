@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { validateRequest } from '../lib/api-auth.js';
 
 const SHEET_ID = '1TK0c4BxhqSVL09SlC8SnweddOFvP9frEmYIKqdl2jqc';
 
@@ -15,6 +16,8 @@ async function getAuth() {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const authCheck = validateRequest(req);
+  if (!authCheck.valid) return res.status(401).json({ error: authCheck.error });
   const { customerName, activityType, owner, summary, nextStep, healthImpact, reference } = req.body || {};
   if (!customerName || !summary) return res.status(400).json({ error: 'Missing customerName or summary' });
   try {

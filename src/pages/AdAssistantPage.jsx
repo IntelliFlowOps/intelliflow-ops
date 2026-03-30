@@ -241,6 +241,7 @@ export default function AdAssistantPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-api-secret": "INTELLIFLOW_OPS_2026",
         },
         body: JSON.stringify({
           assistantType: "founder",
