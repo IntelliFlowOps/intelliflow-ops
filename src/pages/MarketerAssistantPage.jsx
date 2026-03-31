@@ -13,8 +13,8 @@ function MessageBubble({ role, content, attachments = [], badge }) {
   return (
     <div className={["flex w-full items-end gap-2 message-enter", isUser ? "justify-end" : "justify-start"].join(" ")}>
       {!isUser && (
-        <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300"
-          style={{background:"linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))",border:"1px solid rgba(6,182,212,0.25)"}}>
+        <div className="shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300 avatar-pulse"
+          style={{background:"linear-gradient(135deg,rgba(6,182,212,0.25),rgba(2,132,199,0.12))",border:"1px solid rgba(6,182,212,0.3)"}}>
           IF
         </div>
       )}
@@ -518,8 +518,8 @@ export default function MarketerAssistantPage() {
           </div>
         )}
 
-        <div className="overflow-hidden rounded-[42px] bg-white/[0.04] shadow-[0_40px_120px_rgba(0,0,0,0.50)] backdrop-blur-3xl">
-          <div className="pointer-events-none absolute inset-0 rounded-[42px] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),transparent_16%,transparent_84%,rgba(255,255,255,0.018))]" />
+        <div className="overflow-hidden rounded-[28px] sm:rounded-[42px] glass-card">
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] sm:rounded-[42px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_14%,transparent_86%,rgba(255,255,255,0.02))]" />
 
           <div className="grid min-h-[72vh] grid-rows-[1fr_auto]">
             <div
@@ -539,19 +539,19 @@ export default function MarketerAssistantPage() {
 
                 {chatMessages.length === 0 && !loadingChat && (
                   <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center space-y-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl"
-                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.2)' }}>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl avatar-pulse"
+                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.25)', boxShadow: '0 8px 32px rgba(6,182,212,0.1)' }}>
                       ⬢
                     </div>
                     <div>
-                      <div className="text-base font-semibold text-white">Marketer AI</div>
-                      <div className="text-sm text-zinc-400 mt-1 max-w-xs leading-6">Ask me about campaign strategy, ad hooks, targeting, creative ideas, or use the Ad Builder tab to generate complete ad copy.</div>
+                      <div className="text-lg font-semibold gradient-text-cyan">Marketer AI</div>
+                      <div className="text-sm text-zinc-400 mt-1.5 max-w-sm leading-6">Campaign strategy, ad hooks, targeting, creative ideas, or full ad copy generation.</div>
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {['Write a hook for HVAC','Best CTA for plumbers','Review my ad angle','What creatives are working?'].map(q => (
                         <button key={q} onClick={() => { const el = document.querySelector('textarea'); if (el) { const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set; nativeInputValueSetter.call(el, q); el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); } }}
-                          className="rounded-full px-3 py-1.5 text-xs transition"
-                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#a1a1aa' }}>
+                          className="prompt-pill rounded-full px-3.5 py-2 text-xs"
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#a1a1aa' }}>
                           {q}
                         </button>
                       ))}

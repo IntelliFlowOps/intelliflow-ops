@@ -12,8 +12,8 @@ function MessageBubble({ role, content, attachments = [] }) {
   return (
     <div className={`flex w-full items-end gap-2 message-enter ${isUser ? "justify-end" : "justify-start"}`}>
       {!isUser && (
-        <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300"
-          style={{background: "linear-gradient(135deg, rgba(6,182,212,0.2), rgba(2,132,199,0.1))", border: "1px solid rgba(6,182,212,0.25)"}}>
+        <div className="shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300 avatar-pulse"
+          style={{background: "linear-gradient(135deg, rgba(6,182,212,0.25), rgba(2,132,199,0.12))", border: "1px solid rgba(6,182,212,0.3)"}}>
           IF
         </div>
       )}
@@ -62,8 +62,8 @@ function MessageBubble({ role, content, attachments = [] }) {
         </div>
       </div>
       {isUser && (
-        <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold text-white"
-          style={{background: "linear-gradient(135deg, #0e7490, #0891b2)", border: "1px solid rgba(6,182,212,0.4)"}}>
+        <div className="shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
+          style={{background: "linear-gradient(135deg, #0e7490, #0891b2)", border: "1px solid rgba(6,182,212,0.4)", boxShadow: "0 4px 12px rgba(6,182,212,0.15)"}}>
           U
         </div>
       )}
@@ -313,8 +313,8 @@ export default function AdAssistantPage() {
       </div>
 
       <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
-        <div className="overflow-hidden rounded-[42px] bg-white/[0.04] shadow-[0_40px_120px_rgba(0,0,0,0.50)] backdrop-blur-3xl">
-          <div className="pointer-events-none absolute inset-0 rounded-[42px] bg-[linear-gradient(180deg,rgba(255,255,255,0.045),transparent_16%,transparent_84%,rgba(255,255,255,0.018))]" />
+        <div className="overflow-hidden rounded-[28px] sm:rounded-[42px] glass-card">
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] sm:rounded-[42px] bg-[linear-gradient(180deg,rgba(255,255,255,0.05),transparent_14%,transparent_86%,rgba(255,255,255,0.02))]" />
 
           <div className="grid min-h-[82vh] grid-rows-[1fr_auto]">
             <div
@@ -322,7 +322,8 @@ export default function AdAssistantPage() {
               className="relative overflow-y-auto px-4 py-6 md:px-6 md:py-7"
             >
               <div className="mb-5 flex justify-center">
-                <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 shadow-[0_12px_30px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
+                <div className="rounded-full px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-cyan-200/80 backdrop-blur-2xl"
+                  style={{ background: 'linear-gradient(135deg, rgba(6,182,212,0.08), rgba(2,132,199,0.04))', border: '1px solid rgba(6,182,212,0.15)', boxShadow: '0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(6,182,212,0.05)' }}>
                   Founder Assistant
                 </div>
               </div>
@@ -330,19 +331,19 @@ export default function AdAssistantPage() {
               <div className="space-y-5">
                 {messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center space-y-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl text-xl"
-                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.2)' }}>
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl avatar-pulse"
+                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.25)', boxShadow: '0 8px 32px rgba(6,182,212,0.1)' }}>
                       ⬡
                     </div>
                     <div>
-                      <div className="text-base font-semibold text-white">Founder Assistant</div>
-                      <div className="text-sm text-zinc-400 mt-1 max-w-xs leading-6">Ask me anything about your business — growth strategy, client analysis, campaign decisions, financial questions, or operational issues.</div>
+                      <div className="text-lg font-semibold gradient-text-cyan">Founder Assistant</div>
+                      <div className="text-sm text-zinc-400 mt-1.5 max-w-sm leading-6">Your strategic co-founder. Growth, clients, campaigns, finances, operations — ask anything.</div>
                     </div>
                     <div className="flex flex-wrap gap-2 justify-center">
                       {['How are we trending this month?','What should we focus on?','Analyze our CAC','Draft a client win message'].map(q => (
                         <button key={q} onClick={() => { const el = document.querySelector('textarea'); if (el) { const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set; nativeInputValueSetter.call(el, q); el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); } }}
-                          className="rounded-full px-3 py-1.5 text-xs transition"
-                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#a1a1aa' }}>
+                          className="prompt-pill rounded-full px-3.5 py-2 text-xs"
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#a1a1aa' }}>
                           {q}
                         </button>
                       ))}
@@ -359,13 +360,17 @@ export default function AdAssistantPage() {
                 ))}
 
                 {loading && (
-                  <div className="flex justify-start px-2 pb-2">
-                    <div className="flex items-center gap-1 rounded-[20px] px-4 py-3"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {[0,150,300].map(d => (
-                        <div key={d} className="h-1.5 w-1.5 rounded-full bg-cyan-400"
-                          style={{ animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: d + 'ms' }} />
-                      ))}
+                  <div className="flex justify-start px-2 pb-2 message-enter">
+                    <div className="flex flex-col gap-2 rounded-[20px] px-5 py-3.5"
+                      style={{ background: 'linear-gradient(145deg, rgba(6,182,212,0.06), rgba(255,255,255,0.02))', border: '1px solid rgba(6,182,212,0.12)' }}>
+                      <div className="flex items-center gap-1.5">
+                        {[0,150,300].map(d => (
+                          <div key={d} className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+                            style={{ animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: d + 'ms' }} />
+                        ))}
+                        <span className="ml-1.5 text-[10px] text-cyan-400/60 uppercase tracking-wider">Thinking</span>
+                      </div>
+                      <div className="think-shimmer w-24" />
                     </div>
                   </div>
                 )}
@@ -434,14 +439,15 @@ export default function AdAssistantPage() {
                         }}
                         rows={3}
                         placeholder="Ask about growth, delivery, pricing, churn, hiring, sales, ops, objections, or the next move. Enter to send, Shift+Enter for new line."
-                        className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
+                        className="assistant-input min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-500 outline-none backdrop-blur-2xl transition-all duration-300"
+                        style={{ border: '1px solid rgba(255,255,255,0.06)' }}
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={loading || (!input.trim() && attachments.length === 0)}
-                      className="h-[54px] rounded-[22px] bg-cyan-300/10 px-5 text-sm font-medium text-cyan-100 shadow-[0_12px_30px_rgba(34,211,238,0.10)] transition hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="send-btn h-[54px] rounded-[22px] bg-cyan-300/10 px-5 text-sm font-medium text-cyan-100 transition-all duration-200 hover:bg-cyan-300/16 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {loading ? "Thinking..." : "Send"}
                     </button>

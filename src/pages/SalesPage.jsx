@@ -219,9 +219,12 @@ export default function SalesPage() {
       <div className="rounded-[20px] p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px', maxHeight: '500px', overflowY: 'auto' }}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-5">
-            <div className="text-4xl">{tab.icon}</div>
+            <div className={`text-4xl ${isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse'} flex h-16 w-16 items-center justify-center rounded-2xl`}
+              style={{ background: isOpsDesk ? 'linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.08))' : 'linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.08))', border: isOpsDesk ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(6,182,212,0.2)' }}>
+              {tab.icon}
+            </div>
             <div>
-              <div className="text-base font-semibold text-white">
+              <div className={`text-lg font-semibold ${isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan'}`}>
                 {isOpsDesk ? 'OpsDesk Sales Intelligence' : 'IntelliFlow Sales Intelligence'}
               </div>
               <div className="text-sm text-zinc-400 mt-1 max-w-md leading-6">
@@ -234,8 +237,8 @@ export default function SalesPage() {
               {tab.prompts.map(function(p, i) {
                 return (
                   <button key={i} onClick={() => sendMessage(p)}
-                    className="rounded-full px-3 py-1.5 text-xs transition text-left"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#a1a1aa' }}>
+                    className="prompt-pill rounded-full px-3.5 py-2 text-xs text-left"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#a1a1aa' }}>
                     {p}
                   </button>
                 );
@@ -248,9 +251,9 @@ export default function SalesPage() {
               return (
                 <div key={i} className={"flex w-full items-end gap-2 " + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
                   {m.role === 'assistant' && (
-                    <div className="shrink-0 mb-1 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+                    <div className={"shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
                       style={{
-                        background: isOpsDesk ? 'rgba(245,158,11,0.15)' : 'rgba(6,182,212,0.15)',
+                        background: isOpsDesk ? 'rgba(245,158,11,0.2)' : 'rgba(6,182,212,0.2)',
                         border: isOpsDesk ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(6,182,212,0.25)',
                         color: tab.color.text,
                       }}>
@@ -292,10 +295,10 @@ export default function SalesPage() {
           placeholder={isOpsDesk
             ? "Ask anything — pitches, objections, demo scripts, research a business..."
             : "Ask anything — scripts, objections, pitches, research a specific business..."}
-          className="flex-1 rounded-2xl px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-600"
-          style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }} />
+          className="assistant-input flex-1 rounded-2xl px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 transition-all duration-300"
+          style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)' }} />
         <button onClick={() => sendMessage()} disabled={!input.trim() || loading}
-          className="rounded-2xl px-5 py-3 text-sm font-medium transition disabled:opacity-40"
+          className="send-btn rounded-2xl px-5 py-3 text-sm font-medium transition-all duration-200 disabled:opacity-40"
           style={{
             background: isOpsDesk ? 'rgba(245,158,11,0.12)' : 'rgba(6,182,212,0.12)',
             border: isOpsDesk ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(6,182,212,0.3)',
