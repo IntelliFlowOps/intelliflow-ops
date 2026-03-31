@@ -11,23 +11,19 @@ const MAX_FILE_SIZE_MB = 8;
 function MessageBubble({ role, content, attachments = [], badge }) {
   const isUser = role === "user";
   return (
-    <div className={["flex w-full items-end gap-2 message-enter", isUser ? "justify-end" : "justify-start"].join(" ")}>
+    <div className={["flex w-full items-end gap-2.5", isUser ? "justify-end user-send" : "justify-start ai-fade-in"].join(" ")}>
       {!isUser && (
-        <div className="shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-cyan-300 avatar-pulse"
-          style={{background:"linear-gradient(135deg,rgba(6,182,212,0.25),rgba(2,132,199,0.12))",border:"1px solid rgba(6,182,212,0.3)"}}>
+        <div className="shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-cyan-300 avatar-pulse"
+          style={{background:"linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.08))",border:"1px solid rgba(6,182,212,0.2)"}}>
           IF
         </div>
       )}
       <div
-        className={["relative max-w-[78%] text-sm leading-7 whitespace-pre-wrap break-words backdrop-blur-3xl transition-all duration-200", isUser ? "rounded-[28px] rounded-br-[8px] px-5 py-3.5 text-white" : "rounded-[28px] rounded-bl-[8px] px-5 py-3.5 text-slate-100"].join(" ")}
+        className={["relative max-w-[85%] sm:max-w-[78%] text-[15px] leading-7 whitespace-pre-wrap break-words", isUser ? "rounded-[20px] rounded-br-[6px] px-4 sm:px-5 py-3 sm:py-3.5 text-white" : "border-l-2 border-cyan-500/50 pl-4 py-3 text-zinc-200"].join(" ")}
         style={isUser ? {
-          background: "linear-gradient(135deg,#0e7490,#0891b2)",
-          boxShadow: "0 4px 24px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.1)"
-        } : {
-          background: "linear-gradient(145deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.04)"
-        }}
+          background: "linear-gradient(135deg,#0e5c73,#0891b2)",
+          boxShadow: "0 8px 32px rgba(8,145,178,0.18)"
+        } : {}}
       >
         <div className="relative z-10">
           {badge && !isUser && (
@@ -537,35 +533,25 @@ export default function MarketerAssistantPage() {
                 ))}
 
                 {chatMessages.length === 0 && !loadingChat && (
-                  <div className="flex flex-col items-center justify-center h-full py-12 px-6 text-center space-y-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl text-2xl avatar-pulse"
-                      style={{ background: 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))', border: '1px solid rgba(6,182,212,0.25)', boxShadow: '0 8px 32px rgba(6,182,212,0.1)' }}>
-                      ⬢
+                  <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center space-y-4 prompts-slide-up">
+                    <div className="text-2xl sm:text-3xl font-light tracking-wide gradient-text-cyan">
+                      Creative Partner
                     </div>
-                    <div>
-                      <div className="text-lg font-semibold gradient-text-cyan">Marketer AI</div>
-                      <div className="text-sm text-zinc-400 mt-1.5 max-w-sm leading-6">Campaign strategy, ad hooks, targeting, creative ideas, or full ad copy generation.</div>
+                    <div className="relative w-48 h-[1px] bg-white/[0.06]">
+                      <div className="travel-dot absolute top-1/2 -translate-y-1/2 w-[6px] h-[6px] rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
                     </div>
-                    <div className="flex flex-wrap gap-2 justify-center">
-                      {['Write a hook for HVAC','Best CTA for plumbers','Review my ad angle','What creatives are working?'].map(q => (
-                        <button key={q} onClick={() => { const el = document.querySelector('textarea'); if (el) { const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set; nativeInputValueSetter.call(el, q); el.dispatchEvent(new Event('input', { bubbles: true })); el.focus(); } }}
-                          className="prompt-pill rounded-full px-3.5 py-2 text-xs"
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#a1a1aa' }}>
-                          {q}
-                        </button>
-                      ))}
+                    <div className="text-[13px] italic text-zinc-500 max-w-xs">
+                      Campaigns, hooks, ad builds, budget strategy, and creative direction.
                     </div>
                   </div>
                 )}
                 {loadingChat && (
-                  <div className="flex justify-start px-2 pb-2">
-                    <div className="flex items-center gap-1 rounded-[20px] px-4 py-3"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {[0,150,300].map(d => (
-                        <div key={d} className="h-1.5 w-1.5 rounded-full bg-cyan-400"
-                          style={{ animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: d + 'ms' }} />
-                      ))}
+                  <div className="flex items-center gap-3 px-4 py-3 ai-fade-in">
+                    <div className="relative w-full h-[2px] bg-white/[0.04] rounded-full overflow-hidden">
+                      <div className="trace-sweep absolute inset-y-0 w-[40%] rounded-full"
+                           style={{ background: 'linear-gradient(90deg, transparent, #0891b2, transparent)' }} />
                     </div>
+                    <div className="cursor-blink w-[2px] h-4 bg-cyan-400 rounded-full shrink-0" />
                   </div>
                 )}
                 {false && (
@@ -648,7 +634,7 @@ export default function MarketerAssistantPage() {
                           }
                         }}
                         rows={3}
-                        placeholder="Ask about social posts, ad strategy, hooks, offers, campaigns, or anything marketing. Enter to send, Shift+Enter for new line."
+                        placeholder="Ads, hooks, campaigns, creative, budget — ask anything..."
                         className="min-h-[92px] w-full resize-none rounded-[24px] bg-[#071521]/80 px-4 py-3 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-2xl"
                       />
                     </div>

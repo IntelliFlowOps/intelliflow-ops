@@ -372,6 +372,56 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(6,182,212,0.08), 0 0 20px rgba(6,182,212,0.06) !important;
 }
 
+/* Traveling glow dot on empty state line */
+@keyframes travelDot {
+  0%, 100% { left: 0%; }
+  50% { left: calc(100% - 6px); }
+}
+.travel-dot { animation: travelDot 3s ease-in-out infinite; }
+
+/* Heartbeat trace line while AI thinks */
+@keyframes traceSweep {
+  0% { transform: translateX(-150%); }
+  100% { transform: translateX(350%); }
+}
+.trace-sweep { animation: traceSweep 1.5s ease-in-out infinite; }
+
+/* Blinking terminal cursor */
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink { animation: cursorBlink 1s step-end infinite; }
+
+/* User message slide in from right */
+@keyframes userSend {
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+.user-send { animation: userSend 0.3s ease-out forwards; }
+
+/* AI message fade in */
+@keyframes aiFadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.ai-fade-in { animation: aiFadeIn 0.4s ease-out forwards; }
+
+/* Accent line traces bottom then fades */
+@keyframes traceBottom {
+  0% { width: 0%; opacity: 1; }
+  60% { width: 100%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+.trace-bottom { animation: traceBottom 1s ease-out forwards; }
+
+/* Prompts slide up */
+@keyframes promptsSlideUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.prompts-slide-up { animation: promptsSlideUp 0.6s ease-out forwards; }
+
 /* Glass card effect */
 .glass-card {
   background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);

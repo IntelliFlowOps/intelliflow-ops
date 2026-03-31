@@ -214,38 +214,26 @@ export default function SalesPage() {
 
           <div className="overflow-y-auto overflow-x-hidden px-3 sm:px-5 py-4 sm:py-6" style={{ minHeight: '55vh', maxHeight: '60vh' }}>
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full py-10 sm:py-16 px-4 text-center space-y-5">
-                <div className={"flex h-14 w-14 items-center justify-center rounded-2xl text-xl " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
-                  style={{ background: isOpsDesk ? 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.05))' : 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(2,132,199,0.05))', border: isOpsDesk ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(6,182,212,0.15)' }}>
-                  {tab.icon}
+              <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center space-y-4 prompts-slide-up">
+                <div className={"text-2xl sm:text-3xl font-light tracking-wide " + (isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan')}>
+                  {isOpsDesk ? 'OpsDesk Partner' : 'Sales Partner'}
                 </div>
-                <div>
-                  <div className={"text-base sm:text-lg font-semibold " + (isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan')}>
-                    {isOpsDesk ? 'What do you need to sell OpsDesk?' : 'What do you need to close?'}
-                  </div>
-                  <div className="text-[13px] text-zinc-500 mt-2 max-w-xs sm:max-w-sm leading-relaxed">
-                    {isOpsDesk
-                      ? 'Pitches, objections, demo scripts, competitor answers, pricing justification.'
-                      : 'Scripts, objections, competitor comparisons, ROI math, cold outreach.'}
-                  </div>
+                <div className="relative w-48 h-[1px] bg-white/[0.06]">
+                  <div className={"travel-dot absolute top-1/2 -translate-y-1/2 w-[6px] h-[6px] rounded-full " + (isOpsDesk ? '' : '')}
+                    style={{ background: isOpsDesk ? '#d97706' : '#06b6d4', boxShadow: isOpsDesk ? '0 0 12px rgba(217,119,6,0.6)' : '0 0 12px rgba(6,182,212,0.6)' }} />
                 </div>
-                <div className="flex flex-wrap gap-2 justify-center max-w-md">
-                  {tab.prompts.map(function(p, i) {
-                    return (
-                      <button key={i} onClick={() => sendMessage(p)}
-                        className="prompt-pill rounded-full px-3 sm:px-3.5 py-2 text-[13px]"
-                        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a' }}>
-                        {p}
-                      </button>
-                    );
-                  })}
+                <div className="text-[13px] italic text-zinc-500 max-w-xs">
+                  {isOpsDesk
+                    ? 'Product demos, pricing objections, competitive positioning, and closing.'
+                    : 'Scripts, objections, pitches, competitor intel, and closing strategy.'}
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
                 {messages.map(function(m, i) {
+                  var isLastAi = m.role === 'assistant' && i === messages.length - 1;
                   return (
-                    <div key={i} className={"flex w-full items-end gap-2.5 message-enter " + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
+                    <div key={i} className={"flex w-full items-end gap-2.5 " + (m.role === 'user' ? 'justify-end user-send' : 'justify-start ai-fade-in')}>
                       {m.role === 'assistant' && (
                         <div className={"shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
                           style={{
@@ -256,7 +244,7 @@ export default function SalesPage() {
                           {tab.icon}
                         </div>
                       )}
-                      <div className={"max-w-[85%] sm:max-w-[78%] text-[15px] leading-7 whitespace-pre-wrap break-words px-4 sm:px-5 py-3 sm:py-3.5 " + (m.role === 'user' ? 'rounded-[20px] rounded-br-[6px] text-white' : 'rounded-[20px] rounded-bl-[6px] text-slate-200')}
+                      <div className={"max-w-[85%] sm:max-w-[78%] text-[15px] leading-7 whitespace-pre-wrap break-words " + (m.role === 'user' ? 'rounded-[20px] rounded-br-[6px] px-4 sm:px-5 py-3 sm:py-3.5 text-white' : 'border-l-2 pl-4 py-3 text-zinc-200')}
                         style={m.role === 'user' ? {
                           background: isOpsDesk
                             ? 'linear-gradient(135deg,#92400e,#d97706)'
@@ -265,29 +253,25 @@ export default function SalesPage() {
                             ? '0 8px 32px rgba(217,119,6,0.15)'
                             : '0 8px 32px rgba(8,145,178,0.15)',
                         } : {
-                          background: 'rgba(255,255,255,0.025)',
-                          borderLeft: isOpsDesk ? '2px solid rgba(245,158,11,0.25)' : '2px solid rgba(6,182,212,0.25)',
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          borderLeftWidth: '2px',
-                          borderLeftColor: isOpsDesk ? 'rgba(245,158,11,0.25)' : 'rgba(6,182,212,0.25)',
+                          borderLeftColor: isOpsDesk ? 'rgba(245,158,11,0.4)' : 'rgba(6,182,212,0.4)',
                         }}>
                         {m.content}
+                        {isLastAi && (
+                          <div className="relative h-[1px] mt-2">
+                            <div className="trace-bottom absolute left-0 top-0 h-full rounded-full" style={{ background: isOpsDesk ? 'rgba(245,158,11,0.4)' : 'rgba(6,182,212,0.4)' }} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
                 {loading && (
-                  <div className="flex justify-start px-2 message-enter">
-                    <div className="flex flex-col gap-2 rounded-[20px] px-5 py-3.5"
-                      style={{ background: isOpsDesk ? 'rgba(245,158,11,0.04)' : 'rgba(6,182,212,0.04)', border: isOpsDesk ? '1px solid rgba(245,158,11,0.1)' : '1px solid rgba(6,182,212,0.1)' }}>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite' }} />
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '150ms' }} />
-                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '300ms' }} />
-                        <span className="ml-1.5 text-[10px] uppercase tracking-wider" style={{ color: tab.color.text, opacity: 0.5 }}>Thinking</span>
-                      </div>
-                      <div className="think-shimmer w-24" />
+                  <div className="flex items-center gap-3 px-4 py-3 ai-fade-in">
+                    <div className="relative w-full h-[2px] bg-white/[0.04] rounded-full overflow-hidden">
+                      <div className="trace-sweep absolute inset-y-0 w-[40%] rounded-full"
+                           style={{ background: isOpsDesk ? 'linear-gradient(90deg, transparent, #d97706, transparent)' : 'linear-gradient(90deg, transparent, #0891b2, transparent)' }} />
                     </div>
+                    <div className="cursor-blink w-[2px] h-4 rounded-full shrink-0" style={{ background: isOpsDesk ? '#d97706' : '#06b6d4' }} />
                   </div>
                 )}
                 <div ref={bottomRef} />
@@ -303,7 +287,7 @@ export default function SalesPage() {
                 <div className="flex-1">
                   <input value={input} onChange={e => setInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
-                    placeholder={isOpsDesk ? "Ask anything about OpsDesk..." : "Ask anything..."}
+                    placeholder={isOpsDesk ? "OpsDesk pitches, demos, pricing, objections — ask anything..." : "Scripts, objections, role-play, competitor questions — ask anything..."}
                     className="assistant-input w-full rounded-xl bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none transition-all duration-300"
                     style={{ border: '1px solid rgba(255,255,255,0.06)' }} />
                 </div>
