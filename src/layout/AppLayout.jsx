@@ -81,7 +81,7 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="min-h-screen text-white" style={{ background: "#0a0a0c" }}>
+    <div className="min-h-screen text-white overflow-x-hidden" style={{ background: "#0a0a0c" }}>
 
       {/* Top bar */}
       <div className="sticky top-0 z-[100] flex items-center gap-4 px-4 py-3 backdrop-blur-2xl"

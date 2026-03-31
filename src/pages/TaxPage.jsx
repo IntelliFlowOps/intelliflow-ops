@@ -112,7 +112,7 @@ export default function TaxPage() {
       const saved = JSON.parse(localStorage.getItem('intelliflow_firstyear') || '{}');
       const defaults = { ein: true, bank: true, operating: true, agent: true };
       return { ...defaults, ...saved };
-    } catch { return { ein: true, bank: true, operating: true, agent: true }; }
+    } catch (_e) { return { ein: true, bank: true, operating: true, agent: true }; }
   });
   const [taxChat, setTaxChat] = useState([{ role: 'assistant', content: 'Ask me anything about legally minimizing your tax bill — deductions you might be missing, S-Corp timing, retirement accounts, write-off strategies, or anything else. I know your business specifically.' }]);
   const [taxInput, setTaxInput] = useState('');

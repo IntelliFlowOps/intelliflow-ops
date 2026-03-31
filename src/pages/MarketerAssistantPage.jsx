@@ -19,7 +19,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
         </div>
       )}
       <div
-        className={["relative max-w-[78%] text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200", isUser ? "rounded-[28px] rounded-br-[8px] px-5 py-3.5 text-white" : "rounded-[28px] rounded-bl-[8px] px-5 py-3.5 text-slate-100"].join(" ")}
+        className={["relative max-w-[78%] text-sm leading-7 whitespace-pre-wrap break-words backdrop-blur-3xl transition-all duration-200", isUser ? "rounded-[28px] rounded-br-[8px] px-5 py-3.5 text-white" : "rounded-[28px] rounded-bl-[8px] px-5 py-3.5 text-slate-100"].join(" ")}
         style={isUser ? {
           background: "linear-gradient(135deg,#0e7490,#0891b2)",
           boxShadow: "0 4px 24px rgba(6,182,212,0.2),inset 0 1px 0 rgba(255,255,255,0.1)"
@@ -131,25 +131,19 @@ export default function MarketerAssistantPage() {
       .catch(() => {});
   }, []);
 
-  const [chatMessages, setChatMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Ask for social posts, budget allocation, hooks, offers, campaign ideas, messaging, creative direction, testing plans, platform strategy, reporting help, or anything else marketing-related.",
-      attachments: [],
-      badge: "Chat",
-    },
-  ]);
+  const defaultChat = [{ role: "assistant", content: "Ask for social posts, budget allocation, hooks, offers, campaign ideas, messaging, creative direction, testing plans, platform strategy, reporting help, or anything else marketing-related.", attachments: [], badge: "Chat" }];
+  const defaultBuild = [{ role: "assistant", content: "Build Ad mode is ready. Give me a niche, platform, screenshot, offer, angle, rough idea, or ask me to build the whole concept from scratch.", attachments: [], badge: "Build Ad" }];
 
-  const [builderMessages, setBuilderMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Build Ad mode is ready. Give me a niche, platform, screenshot, offer, angle, rough idea, or ask me to build the whole concept from scratch.",
-      attachments: [],
-      badge: "Build Ad",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState(() => {
+    try { const saved = sessionStorage.getItem('chat_marketer'); return saved ? JSON.parse(saved) : defaultChat; }
+    catch (_e) { return defaultChat; }
+  });
+  const [builderMessages, setBuilderMessages] = useState(() => {
+    try { const saved = sessionStorage.getItem('chat_marketer_build'); return saved ? JSON.parse(saved) : defaultBuild; }
+    catch (_e) { return defaultBuild; }
+  });
+  useEffect(() => { sessionStorage.setItem('chat_marketer', JSON.stringify(chatMessages)); }, [chatMessages]);
+  useEffect(() => { sessionStorage.setItem('chat_marketer_build', JSON.stringify(builderMessages)); }, [builderMessages]);
 
   const [chatInput, setChatInput] = useState("");
   const [buildInput, setBuildInput] = useState("");

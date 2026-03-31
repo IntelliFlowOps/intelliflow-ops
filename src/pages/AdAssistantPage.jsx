@@ -18,7 +18,7 @@ function MessageBubble({ role, content, attachments = [] }) {
         </div>
       )}
       <div
-        className={`relative max-w-[78%] overflow-hidden text-sm leading-7 whitespace-pre-wrap backdrop-blur-3xl transition-all duration-200 ${
+        className={`relative max-w-[78%] overflow-hidden text-sm leading-7 whitespace-pre-wrap break-words backdrop-blur-3xl transition-all duration-200 ${
           isUser
             ? "rounded-[28px] rounded-br-[8px] px-5 py-3.5 text-white"
             : "rounded-[28px] rounded-bl-[8px] px-5 py-3.5 text-slate-100"
@@ -99,14 +99,18 @@ export default function AdAssistantPage() {
       .catch(() => {});
   }, []);
 
-  const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Drop the problem, the numbers, or the messy situation. I’ll help you find the strongest next move.",
-      attachments: [],
-    },
-  ]);
+  const defaultFounderMessages = [
+    { role: "assistant", content: "Drop the problem, the numbers, or the messy situation. I will help you find the strongest next move.", attachments: [] },
+  ];
+  const [messages, setMessages] = useState(function () {
+    try {
+      var saved = sessionStorage.getItem("chat_founder");
+      return saved ? JSON.parse(saved) : defaultFounderMessages;
+    } catch (_e) {
+      return defaultFounderMessages;
+    }
+  });
+  useEffect(function () { sessionStorage.setItem("chat_founder", JSON.stringify(messages)); }, [messages]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [attachments, setAttachments] = useState([]);

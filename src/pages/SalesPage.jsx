@@ -114,7 +114,11 @@ function getSystemPrompt(tabKey) {
 
 export default function SalesPage() {
   const [activeTab, setActiveTab] = useState('Recovery');
-  const [chatStates, setChatStates] = useState({ Recovery: [], OpsDesk: [] });
+  const [chatStates, setChatStates] = useState(() => {
+    try { const saved = sessionStorage.getItem('chat_sales'); return saved ? JSON.parse(saved) : { Recovery: [], OpsDesk: [] }; }
+    catch (_e) { return { Recovery: [], OpsDesk: [] }; }
+  });
+  useEffect(() => { sessionStorage.setItem('chat_sales', JSON.stringify(chatStates)); }, [chatStates]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -253,7 +257,7 @@ export default function SalesPage() {
                       {tab.icon}
                     </div>
                   )}
-                  <div className={"max-w-[78%] text-sm leading-7 whitespace-pre-wrap px-5 py-3.5 " + (m.role === 'user' ? 'rounded-[28px] rounded-br-[8px] text-white' : 'rounded-[28px] rounded-bl-[8px] text-slate-100')}
+                  <div className={"max-w-[78%] text-sm leading-7 whitespace-pre-wrap break-words px-5 py-3.5 " + (m.role === 'user' ? 'rounded-[28px] rounded-br-[8px] text-white' : 'rounded-[28px] rounded-bl-[8px] text-slate-100')}
                     style={m.role === 'user' ? {
                       background: isOpsDesk
                         ? 'linear-gradient(135deg,#b45309,#d97706)'
