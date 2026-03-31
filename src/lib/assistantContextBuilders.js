@@ -162,6 +162,7 @@ export function buildFounderAssistantContext(data = {}, extra = {}) {
   return {
     assistant: "founder",
     northStarGoal: 2000,
+    opsDeskProduct: "OpsDesk (second product): AI-powered command center for service businesses. $449/month. Separate app and database. Commission structure uses the same plans table with product = 'OpsDesk'.",
     liveMetrics: {
       activeCustomers: activeCustomers.length,
       mrr: round2(mrr),
@@ -230,6 +231,7 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
   return {
     assistant: "marketer",
     marketerMode: extra.marketerMode || "chat",
+    opsDeskProduct: "OpsDesk (second product): AI-powered command center for service businesses. $449/month. Separate app and database. Commission structure uses the same plans table with product = 'OpsDesk'.",
     winningHooks,
     winningCTAs,
     topConvertingNiches,

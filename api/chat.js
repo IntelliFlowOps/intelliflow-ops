@@ -106,6 +106,20 @@ Ramble. Pad answers. Give motivational filler. Repeat what the person said. Give
 STYLE
 Co-founder energy. Operator level. You work here. You care about this business winning.
 Every word earns its place. If it can be said in one sentence, say it in one sentence.
+
+OPSDESK — OUR NEW SAAS PRODUCT
+IntelliFlow Communications now has a second product called OpsDesk — an AI-powered command center for service businesses. It connects to their existing tools (Stripe, QuickBooks, Google Ads, Meta Ads, Google Business Profile) and puts every number in one place with an AI that knows their specific business and industry.
+
+Key facts:
+- Pricing: $449/month or $4,939/year (1 month free)
+- Target: Service businesses doing $250k-$5M annually (HVAC, plumbing, electrical, cleaning, landscaping, roofing, pest control, etc.)
+- Features: AI voice assistant, receipt scanner, tax PDF export, cash flow calendar, competitor tracking, team pay tracker, Google review requests, morning briefing, 30+ industry knowledge bases
+- OpsDesk does NOT replace their existing apps — it connects them into one view
+- Separate product from IntelliFlow's missed call/booking automation platform
+- Has its own Stripe pricing, its own app (intelliflow-opsdesk.vercel.app), its own database
+- Commission structure for OpsDesk sales: will use the same plans table (product = 'OpsDesk') — commission rules TBD
+
+When the founder asks about OpsDesk, provide strategic advice: pricing analysis, target market strategy, sales approach, competitive positioning. You know both products and can help think about how they complement each other — IntelliFlow handles missed calls and booking automation, OpsDesk handles business intelligence and financial visibility. Together they give service businesses communication automation AND operational command.
 `;
 
     const marketerChatPrompt = `
@@ -163,6 +177,21 @@ For full campaigns, go as long as needed but keep every word earning its place.
 
 STYLE
 Bold. Specific. You work here. You care about the campaigns working.
+
+OPSDESK — NEW PRODUCT FOR MARKETING
+IntelliFlow Communications has launched OpsDesk — an AI-powered command center for service businesses. When creating marketing content, ads, or campaigns for OpsDesk, know these key selling points:
+
+- The hook: "What if you could talk to your business?" — AI voice assistant that answers questions with real numbers
+- The pain: Service business owners log into 6 different apps every morning. OpsDesk connects them all into one view.
+- Tax season angle: "Tax season ready in 10 minutes" — receipt scanner + tax PDF export
+- Price justification: $449/month replaces the need for a bookkeeper ($200-500/mo) + ad analyst ($500+/mo) + business coach ($1,000+/mo)
+- Target audience: Service business owners, $250k-$5M revenue, 1-50 employees
+- Industries: HVAC, plumbing, electrical, cleaning, landscaping, roofing, pest control, chiropractic, auto repair, and 25+ more
+- Competitive edge: 30+ industry-specific knowledge bases with real benchmarks
+
+IMPORTANT: OpsDesk CONNECTS their existing apps (Stripe, QuickBooks, Google Ads) — it does NOT replace them. Never say "replaces 6 apps." Say "connects your apps into one view."
+
+When creating OpsDesk marketing content, match the brand voice: confident, clear, specific numbers over vague claims, real examples over generic promises.
 `;
 
     const marketerBuildPrompt = `
@@ -238,7 +267,7 @@ ${deadlineWarning ? 'DEADLINE ALERT: ' + deadlineWarning : ''}
 `;
 
     let systemPrompt = founderPrompt;
-    if (assistantType === "sales" && customSystemPrompt) {
+    if ((assistantType === "sales" || assistantType === "opsdesk-sales") && customSystemPrompt) {
       systemPrompt = customSystemPrompt;
     } else if (assistantType === "tax") {
       systemPrompt = taxAdvisorPrompt;
@@ -265,7 +294,7 @@ ${deadlineWarning ? 'DEADLINE ALERT: ' + deadlineWarning : ''}
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1000 : 400) : assistantType === "sales" ? 1600 : assistantType === "tax" ? 500 : 600,
+        max_tokens: assistantType === "marketer" ? (marketerMode === "build-ad" ? 1000 : 400) : assistantType === "sales" ? 1600 : assistantType === "opsdesk-sales" ? 800 : assistantType === "tax" ? 500 : 600,
         ...(enableWebSearch ? { tools: [{ type: "web_search_20250305", name: "web_search" }] } : {}),
         system: systemPrompt,
         messages: [
