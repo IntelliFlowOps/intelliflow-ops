@@ -163,149 +163,159 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="space-y-4 px-3 sm:px-6 py-4 w-full max-w-[100vw] overflow-x-hidden">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl text-lg shrink-0"
+    <div className="w-full max-w-[100vw] overflow-x-hidden" style={{ background: 'linear-gradient(180deg, #08090b 0%, #0c0e14 100%)' }}>
+      <div className="relative mx-auto w-full max-w-3xl px-3 sm:px-4 py-4 sm:py-6 space-y-4">
+
+        {/* Header */}
+        <div className="flex items-center gap-2.5">
+          <div className={"flex h-8 w-8 items-center justify-center rounded-xl text-sm " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
             style={{
               background: isOpsDesk
-                ? 'linear-gradient(135deg,rgba(245,158,11,0.2),rgba(217,119,6,0.1))'
-                : 'linear-gradient(135deg,rgba(6,182,212,0.2),rgba(2,132,199,0.1))',
+                ? 'linear-gradient(135deg, rgba(245,158,11,0.15), rgba(217,119,6,0.08))'
+                : 'linear-gradient(135deg, rgba(6,182,212,0.15), rgba(2,132,199,0.08))',
               border: isOpsDesk
-                ? '1px solid rgba(245,158,11,0.25)'
-                : '1px solid rgba(6,182,212,0.25)',
+                ? '1px solid rgba(245,158,11,0.2)'
+                : '1px solid rgba(6,182,212,0.2)',
             }}>
             {tab.icon}
           </div>
           <div>
-            <h1 className="text-base font-semibold text-white">
-              {isOpsDesk ? 'OpsDesk Sales Intelligence' : 'IntelliFlow Sales Intelligence'}
-            </h1>
-            <p className="text-xs text-zinc-500 mt-0.5">
-              {isOpsDesk
-                ? 'Pitches, objections, demos, competitor answers for OpsDesk'
-                : 'Scripts, objections, pitches, competitor questions, business research'}
-            </p>
+            <div className="text-[13px] font-semibold text-white">
+              {isOpsDesk ? 'OpsDesk Sales' : 'Sales Intelligence'}
+            </div>
+            <div className="text-[11px] text-zinc-500">{tab.badgeDetail}</div>
           </div>
         </div>
-        <div className="shrink-0 flex items-center gap-1 rounded-2xl p-1"
-          style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.07)' }}>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1.5 rounded-2xl p-1.5"
+          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }}>
           {Object.keys(TAB_CONFIG).map(function(key) {
             const t = TAB_CONFIG[key];
             const isActive = activeTab === key;
             return (
               <button key={key} onClick={() => setActiveTab(key)}
-                className="rounded-xl px-3 py-1.5 text-xs font-semibold transition"
+                className="flex-1 rounded-xl py-2.5 text-[13px] font-medium transition-all duration-200 text-center"
                 style={isActive ? {
                   background: t.color.bg,
                   color: t.color.text,
                   border: t.color.border,
-                } : { color: '#52525b' }}>
+                  boxShadow: key === 'OpsDesk' ? '0 4px 16px rgba(245,158,11,0.1)' : '0 4px 16px rgba(6,182,212,0.1)',
+                } : { color: '#52525b', border: '1px solid transparent' }}>
                 {t.label}
               </button>
             );
           })}
         </div>
-      </div>
 
-      <div className="flex items-center gap-2">
-        <div className="rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
-          style={{ background: tab.color.badgeBg, color: tab.color.text, border: tab.color.badgeBorder }}>
-          {tab.badge}
-        </div>
-        <span className="text-[10px] text-zinc-600">{tab.badgeDetail}</span>
-      </div>
+        {/* Chat area */}
+        <div className="overflow-hidden rounded-[20px] sm:rounded-[28px]"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', boxShadow: '0 40px 100px rgba(0,0,0,0.4)' }}>
 
-      <div className="rounded-[16px] sm:rounded-[20px] p-3 sm:p-4 overflow-x-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px', maxHeight: '500px', overflowY: 'auto' }}>
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-5">
-            <div className={`text-4xl ${isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse'} flex h-16 w-16 items-center justify-center rounded-2xl`}
-              style={{ background: isOpsDesk ? 'linear-gradient(135deg,rgba(245,158,11,0.15),rgba(217,119,6,0.08))' : 'linear-gradient(135deg,rgba(6,182,212,0.15),rgba(2,132,199,0.08))', border: isOpsDesk ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(6,182,212,0.2)' }}>
-              {tab.icon}
-            </div>
-            <div>
-              <div className={`text-lg font-semibold ${isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan'}`}>
-                {isOpsDesk ? 'OpsDesk Sales Intelligence' : 'IntelliFlow Sales Intelligence'}
-              </div>
-              <div className="text-sm text-zinc-400 mt-1 max-w-md leading-6">
-                {isOpsDesk
-                  ? 'Ask me anything about selling OpsDesk. Pitches, objections, demo scripts, competitor comparisons, pricing justification. Give me a business name and I\'ll build a tailored pitch.'
-                  : 'Ask me anything about selling IntelliFlow. Scripts, objections, competitor comparisons, ROI math, cold DMs. Give me a business name and I will research them and build a tailored pitch.'}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center max-w-lg">
-              {tab.prompts.map(function(p, i) {
-                return (
-                  <button key={i} onClick={() => sendMessage(p)}
-                    className="prompt-pill rounded-full px-3.5 py-2 text-xs text-left"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: '#a1a1aa' }}>
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {messages.map(function(m, i) {
-              return (
-                <div key={i} className={"flex w-full items-end gap-2 " + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
-                  {m.role === 'assistant' && (
-                    <div className={"shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
-                      style={{
-                        background: isOpsDesk ? 'rgba(245,158,11,0.2)' : 'rgba(6,182,212,0.2)',
-                        border: isOpsDesk ? '1px solid rgba(245,158,11,0.25)' : '1px solid rgba(6,182,212,0.25)',
-                        color: tab.color.text,
-                      }}>
-                      {tab.icon}
-                    </div>
-                  )}
-                  <div className={"max-w-[78%] text-sm leading-7 whitespace-pre-wrap break-words px-5 py-3.5 " + (m.role === 'user' ? 'rounded-[28px] rounded-br-[8px] text-white' : 'rounded-[28px] rounded-bl-[8px] text-slate-100')}
-                    style={m.role === 'user' ? {
-                      background: isOpsDesk
-                        ? 'linear-gradient(135deg,#b45309,#d97706)'
-                        : 'linear-gradient(135deg,#0e7490,#0891b2)',
-                    } : {
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}>
-                    {m.content}
+          <div className="overflow-y-auto overflow-x-hidden px-3 sm:px-5 py-4 sm:py-6" style={{ minHeight: '55vh', maxHeight: '60vh' }}>
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full py-10 sm:py-16 px-4 text-center space-y-5">
+                <div className={"flex h-14 w-14 items-center justify-center rounded-2xl text-xl " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
+                  style={{ background: isOpsDesk ? 'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.05))' : 'linear-gradient(135deg,rgba(6,182,212,0.12),rgba(2,132,199,0.05))', border: isOpsDesk ? '1px solid rgba(245,158,11,0.15)' : '1px solid rgba(6,182,212,0.15)' }}>
+                  {tab.icon}
+                </div>
+                <div>
+                  <div className={"text-base sm:text-lg font-semibold " + (isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan')}>
+                    {isOpsDesk ? 'What do you need to sell OpsDesk?' : 'What do you need to close?'}
+                  </div>
+                  <div className="text-[13px] text-zinc-500 mt-2 max-w-xs sm:max-w-sm leading-relaxed">
+                    {isOpsDesk
+                      ? 'Pitches, objections, demo scripts, competitor answers, pricing justification.'
+                      : 'Scripts, objections, competitor comparisons, ROI math, cold outreach.'}
                   </div>
                 </div>
-              );
-            })}
-            {loading && (
-              <div className="flex justify-start px-2">
-                <div className="flex items-center gap-1 rounded-[20px] px-4 py-3"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite' }} />
-                  <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '150ms' }} />
-                  <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '300ms' }} />
+                <div className="flex flex-wrap gap-2 justify-center max-w-md">
+                  {tab.prompts.map(function(p, i) {
+                    return (
+                      <button key={i} onClick={() => sendMessage(p)}
+                        className="prompt-pill rounded-full px-3 sm:px-3.5 py-2 text-[13px]"
+                        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)', color: '#71717a' }}>
+                        {p}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+            ) : (
+              <div className="space-y-4">
+                {messages.map(function(m, i) {
+                  return (
+                    <div key={i} className={"flex w-full items-end gap-2.5 message-enter " + (m.role === 'user' ? 'justify-end' : 'justify-start')}>
+                      {m.role === 'assistant' && (
+                        <div className={"shrink-0 mb-1 flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold " + (isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse')}
+                          style={{
+                            background: isOpsDesk ? 'rgba(245,158,11,0.15)' : 'rgba(6,182,212,0.15)',
+                            border: isOpsDesk ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(6,182,212,0.2)',
+                            color: tab.color.text,
+                          }}>
+                          {tab.icon}
+                        </div>
+                      )}
+                      <div className={"max-w-[85%] sm:max-w-[78%] text-[15px] leading-7 whitespace-pre-wrap break-words px-4 sm:px-5 py-3 sm:py-3.5 " + (m.role === 'user' ? 'rounded-[20px] rounded-br-[6px] text-white' : 'rounded-[20px] rounded-bl-[6px] text-slate-200')}
+                        style={m.role === 'user' ? {
+                          background: isOpsDesk
+                            ? 'linear-gradient(135deg,#92400e,#d97706)'
+                            : 'linear-gradient(135deg,#0e5c73,#0891b2)',
+                          boxShadow: isOpsDesk
+                            ? '0 8px 32px rgba(217,119,6,0.15)'
+                            : '0 8px 32px rgba(8,145,178,0.15)',
+                        } : {
+                          background: 'rgba(255,255,255,0.025)',
+                          borderLeft: isOpsDesk ? '2px solid rgba(245,158,11,0.25)' : '2px solid rgba(6,182,212,0.25)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderLeftWidth: '2px',
+                          borderLeftColor: isOpsDesk ? 'rgba(245,158,11,0.25)' : 'rgba(6,182,212,0.25)',
+                        }}>
+                        {m.content}
+                      </div>
+                    </div>
+                  );
+                })}
+                {loading && (
+                  <div className="flex justify-start px-2 message-enter">
+                    <div className="flex flex-col gap-2 rounded-[20px] px-5 py-3.5"
+                      style={{ background: isOpsDesk ? 'rgba(245,158,11,0.04)' : 'rgba(6,182,212,0.04)', border: isOpsDesk ? '1px solid rgba(245,158,11,0.1)' : '1px solid rgba(6,182,212,0.1)' }}>
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite' }} />
+                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '150ms' }} />
+                        <div className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tab.color.text, animation: 'typingDot 1.2s ease-in-out infinite', animationDelay: '300ms' }} />
+                        <span className="ml-1.5 text-[10px] uppercase tracking-wider" style={{ color: tab.color.text, opacity: 0.5 }}>Thinking</span>
+                      </div>
+                      <div className="think-shimmer w-24" />
+                    </div>
+                  </div>
+                )}
+                <div ref={bottomRef} />
+              </div>
             )}
-            <div ref={bottomRef} />
           </div>
-        )}
-      </div>
 
-      <div className="flex gap-3">
-        <input value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
-          placeholder={isOpsDesk
-            ? "Ask anything — pitches, objections, demo scripts, research a business..."
-            : "Ask anything — scripts, objections, pitches, research a specific business..."}
-          className="assistant-input flex-1 rounded-2xl px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 transition-all duration-300"
-          style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)' }} />
-        <button onClick={() => sendMessage()} disabled={!input.trim() || loading}
-          className="send-btn rounded-2xl px-5 py-3 text-sm font-medium transition-all duration-200 disabled:opacity-40"
-          style={{
-            background: isOpsDesk ? 'rgba(245,158,11,0.12)' : 'rgba(6,182,212,0.12)',
-            border: isOpsDesk ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(6,182,212,0.3)',
-            color: tab.color.text,
-          }}>
-          Send
-        </button>
+          {/* Input bar */}
+          <div className="px-3 pb-3 sm:px-5 sm:pb-4" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+            <div className="relative overflow-hidden rounded-2xl backdrop-blur-xl"
+              style={{ background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="relative z-10 flex items-end gap-2 sm:gap-3 p-2 sm:p-3">
+                <div className="flex-1">
+                  <input value={input} onChange={e => setInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}}
+                    placeholder={isOpsDesk ? "Ask anything about OpsDesk..." : "Ask anything..."}
+                    className="assistant-input w-full rounded-xl bg-white/[0.04] px-3.5 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none transition-all duration-300"
+                    style={{ border: '1px solid rgba(255,255,255,0.06)' }} />
+                </div>
+                <button onClick={() => sendMessage()} disabled={!input.trim() || loading}
+                  className="send-btn flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all duration-200 disabled:opacity-30"
+                  style={{ background: (!input.trim() || loading) ? 'rgba(255,255,255,0.04)' : (isOpsDesk ? 'linear-gradient(135deg, #d97706, #f59e0b)' : 'linear-gradient(135deg, #0891b2, #06b6d4)') }}>
+                  <span className="text-sm font-medium text-white">{loading ? "..." : "\u2191"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
