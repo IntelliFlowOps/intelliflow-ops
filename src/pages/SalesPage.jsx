@@ -163,7 +163,7 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="space-y-4 px-6 py-4">
+    <div className="space-y-4 px-3 sm:px-6 py-4 w-full max-w-[100vw] overflow-x-hidden">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl text-lg shrink-0"
@@ -216,7 +216,7 @@ export default function SalesPage() {
         <span className="text-[10px] text-zinc-600">{tab.badgeDetail}</span>
       </div>
 
-      <div className="rounded-[20px] p-4" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px', maxHeight: '500px', overflowY: 'auto' }}>
+      <div className="rounded-[16px] sm:rounded-[20px] p-3 sm:p-4 overflow-x-hidden" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', minHeight: '400px', maxHeight: '500px', overflowY: 'auto' }}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 px-4 text-center space-y-5">
             <div className={`text-4xl ${isOpsDesk ? 'avatar-pulse-amber' : 'avatar-pulse'} flex h-16 w-16 items-center justify-center rounded-2xl`}

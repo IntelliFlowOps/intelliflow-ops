@@ -364,14 +364,13 @@ export default function MarketerAssistantPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#040a12] text-white">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-[6%] top-[8%] h-64 w-64 rounded-full bg-cyan-400/7 blur-3xl" />
-        <div className="absolute right-[8%] top-[16%] h-80 w-80 rounded-full bg-sky-400/7 blur-3xl" />
-        <div className="absolute bottom-[6%] left-1/3 h-72 w-72 rounded-full bg-white/4 blur-3xl" />
+    <div className="min-h-screen overflow-x-hidden w-full max-w-[100vw] text-white" style={{ background: 'linear-gradient(180deg, #08090b 0%, #0c0e14 100%)' }}>
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute left-[10%] top-[15%] h-[280px] w-[280px] rounded-full blur-[120px]" style={{ background: 'rgba(6,182,212,0.04)' }} />
+        <div className="absolute right-[5%] bottom-[20%] h-[220px] w-[220px] rounded-full blur-[100px]" style={{ background: 'rgba(59,130,246,0.03)' }} />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 py-6 md:px-6 lg:px-8">
+      <div className="relative mx-auto w-full max-w-3xl px-3 sm:px-4 py-4 sm:py-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-white/[0.04] px-4 py-2 text-[11px] uppercase tracking-[0.22em] text-slate-300 shadow-[0_12px_30px_rgba(0,0,0,0.20)] backdrop-blur-2xl">
