@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
 import ChatHistoryDrawer from "../components/ChatHistoryDrawer.jsx";
 import { buildMarketerAssistantContext } from "../lib/assistantContextBuilders.js";
+import TypewriterText from "../components/TypewriterText.jsx";
 
 const PLATFORMS = ["Meta", "Google Ads", "Google Search"];
 
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
 
-function MessageBubble({ role, content, attachments = [], badge }) {
+function MessageBubble({ role, content, attachments = [], badge, animating = false, onAnimComplete }) {
   const isUser = role === "user";
   return (
     <div className={["flex w-full items-end gap-2.5", isUser ? "justify-end user-send" : "justify-start ai-fade-in"].join(" ")}>
@@ -45,7 +46,7 @@ function MessageBubble({ role, content, attachments = [], badge }) {
               ))}
             </div>
           )}
-          <div>{content}</div>
+          <div>{animating ? <TypewriterText text={content} speed={8} onComplete={onAnimComplete} /> : content}</div>
         </div>
       </div>
       {isUser && (
@@ -158,6 +159,26 @@ export default function MarketerAssistantPage() {
   const buildScrollRef = useRef(null);
   const chatFileInputRef = useRef(null);
   const buildFileInputRef = useRef(null);
+  const chatPrevLen = useRef(chatMessages.length);
+  const buildPrevLen = useRef(builderMessages.length);
+  const [chatAnimIdx, setChatAnimIdx] = useState(-1);
+  const [buildAnimIdx, setBuildAnimIdx] = useState(-1);
+
+  useEffect(function () {
+    if (chatMessages.length > chatPrevLen.current) {
+      var last = chatMessages[chatMessages.length - 1];
+      if (last.role === "assistant") setChatAnimIdx(chatMessages.length - 1);
+    }
+    chatPrevLen.current = chatMessages.length;
+  }, [chatMessages.length]);
+
+  useEffect(function () {
+    if (builderMessages.length > buildPrevLen.current) {
+      var last = builderMessages[builderMessages.length - 1];
+      if (last.role === "assistant") setBuildAnimIdx(builderMessages.length - 1);
+    }
+    buildPrevLen.current = builderMessages.length;
+  }, [builderMessages.length]);
 
   useEffect(() => {
     if (chatScrollRef.current) {
@@ -406,6 +427,8 @@ export default function MarketerAssistantPage() {
                       key={`build-${message.role}-${index}`}
                       role={message.role}
                       content={message.content}
+                      animating={index === buildAnimIdx}
+                      onAnimComplete={function () { setBuildAnimIdx(-1); }}
                       attachments={message.attachments || []}
                       badge={message.badge}
                     />
@@ -529,6 +552,8 @@ export default function MarketerAssistantPage() {
                     content={message.content}
                     attachments={message.attachments || []}
                     badge={message.badge}
+                    animating={index === chatAnimIdx}
+                    onAnimComplete={function () { setChatAnimIdx(-1); }}
                   />
                 ))}
 

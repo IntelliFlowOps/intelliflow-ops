@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useSheetData } from "../hooks/useSheetData.jsx";
 import ChatHistoryDrawer from "../components/ChatHistoryDrawer.jsx";
 import { buildFounderAssistantContext } from "../lib/assistantContextBuilders.js";
+import TypewriterText from "../components/TypewriterText.jsx";
 
 const MAX_ATTACHMENTS = 4;
 const MAX_FILE_SIZE_MB = 8;
 
-function MessageBubble({ role, content, attachments = [], isLast = false }) {
+function MessageBubble({ role, content, attachments = [], isLast = false, animating = false, onAnimComplete }) {
   const isUser = role === "user";
 
   return (
@@ -54,8 +55,8 @@ function MessageBubble({ role, content, attachments = [], isLast = false }) {
               ))}
             </div>
           )}
-          <div>{content}</div>
-          {!isUser && isLast && (
+          <div>{animating ? <TypewriterText text={content} speed={8} onComplete={onAnimComplete} /> : content}</div>
+          {!isUser && isLast && !animating && (
             <div className="relative h-[1px] mt-2">
               <div className="trace-bottom absolute left-0 top-0 h-full bg-cyan-400/40 rounded-full" />
             </div>
@@ -119,6 +120,18 @@ export default function AdAssistantPage() {
 
   const scrollRef = useRef(null);
   const fileInputRef = useRef(null);
+  const prevLengthRef = useRef(messages.length);
+  const [animatingIndex, setAnimatingIndex] = useState(-1);
+
+  useEffect(function () {
+    if (messages.length > prevLengthRef.current) {
+      var lastMsg = messages[messages.length - 1];
+      if (lastMsg.role === "assistant") {
+        setAnimatingIndex(messages.length - 1);
+      }
+    }
+    prevLengthRef.current = messages.length;
+  }, [messages.length]);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -355,6 +368,8 @@ export default function AdAssistantPage() {
                     content={message.content}
                     attachments={message.attachments || []}
                     isLast={index === messages.length - 1}
+                    animating={index === animatingIndex}
+                    onAnimComplete={function () { setAnimatingIndex(-1); }}
                   />
                 ))}
 

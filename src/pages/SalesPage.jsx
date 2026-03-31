@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import TypewriterText from '../components/TypewriterText.jsx';
 
 const PROMPTS_RECOVERY = [
   "Write a cold call script for an HVAC company in Fort Wayne",
@@ -126,6 +127,16 @@ export default function SalesPage() {
   const messages = chatStates[activeTab];
   const tab = TAB_CONFIG[activeTab];
   const isOpsDesk = activeTab === 'OpsDesk';
+  const prevLenRef = useRef(messages.length);
+  const [animatingIdx, setAnimatingIdx] = useState(-1);
+
+  useEffect(function () {
+    if (messages.length > prevLenRef.current) {
+      var last = messages[messages.length - 1];
+      if (last.role === 'assistant') setAnimatingIdx(messages.length - 1);
+    }
+    prevLenRef.current = messages.length;
+  }, [messages.length]);
 
   useEffect(() => {
     if (bottomRef.current) {
@@ -255,8 +266,8 @@ export default function SalesPage() {
                         } : {
                           borderLeftColor: isOpsDesk ? 'rgba(245,158,11,0.4)' : 'rgba(6,182,212,0.4)',
                         }}>
-                        {m.content}
-                        {isLastAi && (
+                        {i === animatingIdx ? <TypewriterText text={m.content} speed={8} onComplete={function () { setAnimatingIdx(-1); }} /> : m.content}
+                        {isLastAi && i !== animatingIdx && (
                           <div className="relative h-[1px] mt-2">
                             <div className="trace-bottom absolute left-0 top-0 h-full rounded-full" style={{ background: isOpsDesk ? 'rgba(245,158,11,0.4)' : 'rgba(6,182,212,0.4)' }} />
                           </div>
