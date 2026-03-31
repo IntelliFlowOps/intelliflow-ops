@@ -68,7 +68,7 @@ function DetailField({ label, value }) {
   const showBadge = label === 'Status';
 
   return (
-    <div className="grid grid-cols-[180px_1fr] gap-3 border-b border-white/5 py-3 last:border-b-0">
+    <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[180px_1fr] gap-2 sm:gap-3 border-b border-white/5 py-3 last:border-b-0">
       <div className="text-sm text-zinc-500">{label}</div>
       <div className="text-sm text-zinc-200">
         {showBadge ? <StatusBadge status={displayValue(value)} /> : displayValue(value)}

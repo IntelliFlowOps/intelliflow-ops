@@ -158,7 +158,7 @@ export default function CreativeInsightsPage() {
             </div>
 
             {/* Platform + Niche + Creative Type */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <Field label="Platform">
                 <select value={form.platform} onChange={e => setField('platform', e.target.value)} className={inputClass} style={inputStyle}>
                   {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}

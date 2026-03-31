@@ -75,8 +75,8 @@ export default function DataTable({
         </div>
       )}
 
-      <div className={`overflow-auto ${maxHeight}`}>
-        <table className="w-full text-sm">
+      <div className={`overflow-auto ${maxHeight} -webkit-overflow-scrolling-touch`}>
+        <table className="w-full text-sm min-w-[640px]">
           {cols.length > 0 && (
             <thead className={stickyHeader ? 'sticky top-0 z-10' : ''}>
               <tr className="bg-surface-600/80 backdrop-blur-sm border-b border-surface-500/40">

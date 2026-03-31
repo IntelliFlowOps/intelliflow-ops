@@ -19,7 +19,7 @@ function ExpandableActivityRow({ row }) {
       style={{ background: expanded ? 'rgba(6,182,212,0.04)' : 'rgba(255,255,255,0.02)', border: expanded ? '1px solid rgba(6,182,212,0.15)' : '1px solid rgba(255,255,255,0.05)', marginBottom: 4 }}>
       <div className="flex items-center gap-3 px-4 py-3 cursor-pointer" onClick={() => setExpanded(p => !p)}>
         <div className="h-2 w-2 rounded-full shrink-0" style={{ background: hc }} />
-        <div className="flex-1 min-w-0 grid grid-cols-4 gap-3">
+        <div className="flex-1 min-w-0 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <span className="text-xs text-zinc-500 truncate">{row['Date']}</span>
           <span className="text-sm text-white font-medium truncate">{row['Customer Name']}</span>
           <span className="text-xs text-zinc-400 truncate">{row['Activity Type']}</span>
@@ -107,7 +107,7 @@ export default function ActivityPage() {
         </div>
       ) : (
         <div>
-          <div className="grid grid-cols-4 gap-3 px-4 py-2 mb-1">
+          <div className="hidden sm:grid grid-cols-4 gap-3 px-4 py-2 mb-1">
             {['Date','Client','Type','Owner'].map(h => (
               <span key={h} className="text-[10px] uppercase tracking-wider text-zinc-600">{h}</span>
             ))}

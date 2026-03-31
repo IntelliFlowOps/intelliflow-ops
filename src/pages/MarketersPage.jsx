@@ -196,7 +196,7 @@ function SalesClientCard({ row, index }) {
           className="px-4 pb-3 pt-1 border-t"
           style={{ borderColor: colors.border }}
         >
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             <div className="rounded-xl p-2.5 text-center" style={{ background: "rgba(0,0,0,0.2)" }}>
               <div className="text-[10px] text-zinc-500 uppercase tracking-wider">Plan</div>
               <div className="mt-1 text-xs font-semibold" style={{ color: colors.text }}>{row.plan}</div>
@@ -308,7 +308,7 @@ export default function MarketersPage() {
           return (
             <div
               key={p.name}
-              className="rounded-[24px] p-7 backdrop-blur-2xl"
+              className="rounded-[20px] sm:rounded-[24px] p-4 sm:p-7 backdrop-blur-2xl"
               style={{
                 background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
                 border: "1px solid rgba(255,255,255,0.06)",
@@ -375,7 +375,7 @@ export default function MarketersPage() {
           {PEOPLE.filter(p => p.role === "Tech").map((p) => {
             const isUnlocked = pins[p.name] === PIN_MAP[p.name];
             return (
-              <div key={p.name} className="rounded-[24px] p-7 backdrop-blur-2xl"
+              <div key={p.name} className="rounded-[20px] sm:rounded-[24px] p-4 sm:p-7 backdrop-blur-2xl"
                 style={{
                   background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
                   border: "1px solid rgba(255,255,255,0.06)",
@@ -438,7 +438,7 @@ export default function MarketersPage() {
           return (
             <div
               key={p.name}
-              className="rounded-[24px] p-7 backdrop-blur-2xl"
+              className="rounded-[20px] sm:rounded-[24px] p-4 sm:p-7 backdrop-blur-2xl"
               style={{
                 background: "linear-gradient(160deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 100%)",
                 border: "1px solid rgba(255,255,255,0.06)",
@@ -494,7 +494,7 @@ export default function MarketersPage() {
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div
-            className="relative w-full max-w-2xl rounded-[28px] p-7"
+            className="relative w-full max-w-2xl rounded-[20px] sm:rounded-[28px] p-4 sm:p-7"
             style={{
               background: "linear-gradient(160deg, rgba(10,14,20,0.97) 0%, rgba(6,10,16,0.98) 100%)",
               border: "1px solid rgba(255,255,255,0.07)",

@@ -36,7 +36,7 @@ function ExpandableLedgerRow({ row }) {
       }}
       onClick={() => setExpanded(p => !p)}
     >
-      <div className="grid grid-cols-4 gap-3 px-4 py-2.5 items-center">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 items-center">
         <span className="text-sm text-zinc-300 truncate">{row['Date'] || '—'}</span>
         <span className="text-sm text-white font-medium truncate">{row['Customer Name'] || '—'}</span>
         <span>{attr ? <StatusBadge status={attr} /> : <span className="text-sm text-zinc-500">—</span>}</span>
@@ -244,7 +244,7 @@ export default function CommissionsPage() {
         {error && <ErrorBanner message={error} />}
         {ledgerRows.length > 0 ? (
           <div>
-            <div className="grid grid-cols-4 gap-3 px-4 py-2 mb-1">
+            <div className="hidden sm:grid grid-cols-4 gap-3 px-4 py-2 mb-1">
               {['Date','Customer','Attribution','Status'].map(h => (
                 <span key={h} className="text-[10px] uppercase tracking-wider text-zinc-600">{h}</span>
               ))}
