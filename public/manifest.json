@@ -1,11 +1,11 @@
 {
   "name": "IntelliFlow Ops",
-  "short_name": "IntelliFlow",
-  "description": "IntelliFlow Communications internal operations dashboard",
+  "short_name": "IF Ops",
+  "description": "IntelliFlow Communications Operations Dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#07111f",
-  "theme_color": "#07111f",
+  "background_color": "#ffffff",
+  "theme_color": "#0a0a0c",
   "orientation": "portrait-primary",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
