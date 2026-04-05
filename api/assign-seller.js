@@ -69,15 +69,18 @@ export default async function handler(req, res) {
 
     // Update ALL unpaid commission_ledger rows for this customer: attribution + recalculate commission.
     // Paid rows (paid_out = true) are left unchanged — they belong to whoever was assigned at payout time.
+    // Use select('*') to avoid 400 errors from requesting columns that may not exist on the table.
     const { data: unpaidRows, error: fetchErr } = await supabase
       .from('commission_ledger')
-      .select('id, commission_base, paid_month, attribution_type, assigned_to, sales_rep')
+      .select('*')
       .eq('customer_id', customerId)
       .eq('paid_out', false)
       .limit(10000);
 
+    console.log('[assign-seller] Ledger recalc: customerId =', customerId, ', fetchErr =', fetchErr?.message || null, ', unpaidRows count =', unpaidRows?.length ?? 'null');
+
     if (fetchErr) {
-      console.warn('Ledger fetch warning:', fetchErr.message);
+      console.error('[assign-seller] Ledger fetch FAILED — recalculation skipped:', fetchErr.message);
     }
 
     if (unpaidRows && unpaidRows.length > 0) {
@@ -96,14 +99,15 @@ export default async function handler(req, res) {
           : derivedAttribution === 'SALES'
           ? row.sales_rep === newSalesRep
           : true; // FOUNDER has no person
-        if (sameAttribution && samePerson) continue;
+        if (sameAttribution && samePerson) {
+          console.log('[assign-seller] Skipping row', row.id, '— same attribution + person');
+          continue;
+        }
 
         const base = parseFloat(row.commission_base) || 0;
         const rowUpdate = {
           attribution_type: update.attribution_type,
-          assigned_to: update.assigned_to || null,
           assigned_to_name: update.assigned_to_name || null,
-          sales_rep: update.sales_rep || null,
           sales_rep_name: update.sales_rep_name || null,
           commission_rate: 0,
           commission_total: 0,
@@ -114,6 +118,11 @@ export default async function handler(req, res) {
           sales_rep_rate: 0,
           sales_commission: 0,
         };
+
+        // Only set assigned_to / sales_rep if those columns exist on the row
+        // (the webhook writes them, but legacy rows or tables may lack them)
+        if ('assigned_to' in row) rowUpdate.assigned_to = update.assigned_to || null;
+        if ('sales_rep' in row) rowUpdate.sales_rep = update.sales_rep || null;
 
         if (derivedAttribution === 'DIRECT') {
           const total = base * rate;
@@ -130,10 +139,16 @@ export default async function handler(req, res) {
         }
         // FOUNDER: all commission fields stay 0
 
-        await supabase
+        console.log('[assign-seller] Updating row', row.id, ':', JSON.stringify({ base, rate, attribution: update.attribution_type, commission_total: rowUpdate.commission_total }));
+
+        const { error: rowErr } = await supabase
           .from('commission_ledger')
           .update(rowUpdate)
           .eq('id', row.id);
+
+        if (rowErr) {
+          console.error('[assign-seller] Row update FAILED for', row.id, ':', rowErr.message, rowErr.details);
+        }
       }
     }
 
