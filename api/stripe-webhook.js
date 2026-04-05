@@ -62,6 +62,19 @@ async function handleDispute(dispute) {
       .eq('stripe_customer_id', stripeCustomerId);
   }
 
+  // Look up customer name for notification
+  let disputeCustomerName = 'Unknown';
+  if (stripeCustomerId) {
+    const { data: dc } = await supabase.from('customers').select('customer_name').eq('stripe_customer_id', stripeCustomerId).maybeSingle();
+    if (dc) disputeCustomerName = dc.customer_name;
+  }
+  await supabase.from('notifications').insert({
+    type: 'dispute',
+    title: 'Charge Disputed',
+    message: `${disputeCustomerName} has disputed a charge — invoice ${invoiceId || 'unknown'}`,
+    data: { invoice_id: invoiceId, stripe_customer_id: stripeCustomerId },
+  });
+
   return { success: true, action: 'dispute_recorded', invoice_id: invoiceId };
 }
 
@@ -95,6 +108,18 @@ async function handleRefund(charge) {
       .eq('stripe_customer_id', stripeCustomerId);
   }
 
+  let refundCustomerName = 'Unknown';
+  if (stripeCustomerId) {
+    const { data: rc } = await supabase.from('customers').select('customer_name').eq('stripe_customer_id', stripeCustomerId).maybeSingle();
+    if (rc) refundCustomerName = rc.customer_name;
+  }
+  await supabase.from('notifications').insert({
+    type: 'refund',
+    title: 'Charge Refunded',
+    message: `${refundCustomerName} — ${isFullRefund ? 'full' : 'partial'} refund of $${amountRefunded.toFixed(2)}`,
+    data: { invoice_id: invoiceId, stripe_customer_id: stripeCustomerId, amount: amountRefunded, full: isFullRefund },
+  });
+
   return { success: true, action: isFullRefund ? 'full_refund' : 'partial_refund', invoice_id: invoiceId };
 }
 
@@ -109,6 +134,18 @@ async function handlePaymentFailed(invoice) {
       .update({ status: 'At Risk', updated_at: new Date().toISOString() })
       .eq('stripe_customer_id', stripeCustomerId);
   }
+
+  let failedCustomerName = 'Unknown';
+  if (stripeCustomerId) {
+    const { data: fc } = await supabase.from('customers').select('customer_name').eq('stripe_customer_id', stripeCustomerId).maybeSingle();
+    if (fc) failedCustomerName = fc.customer_name;
+  }
+  await supabase.from('notifications').insert({
+    type: 'payment_failed',
+    title: 'Payment Failed',
+    message: `${failedCustomerName} — payment attempt failed`,
+    data: { stripe_customer_id: stripeCustomerId },
+  });
 
   return { success: true, action: 'payment_failed_recorded', customer: stripeCustomerId };
 }
@@ -309,10 +346,19 @@ async function handleInvoicePaid(invoice) {
     return { success: false, error: ledgerErr.message };
   }
 
-  // Step 8 — Return success
+  // Step 8 — Notification
+  const customerName = customer.customer_name || customerDisplay;
+  await supabase.from('notifications').insert({
+    type: 'new_customer',
+    title: 'New Customer',
+    message: `${customerName} just signed up on the ${planTier} plan — $${revenueCollected}`,
+    data: { customer_id: customer.id, customer_name: customerName, plan: planTier, revenue: revenueCollected },
+  });
+
+  // Step 9 — Return success
   return {
     success: true,
-    customer_name: customer.customer_name || customerDisplay,
+    customer_name: customerName,
     plan_tier: planTier,
     commission_total: commissionTotal,
     sales_commission: salesCommission,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import PageHeader from '../components/PageHeader.jsx';
+import NotificationBell from '../components/NotificationBell.jsx';
 import { useSheetData } from '../hooks/useSheetData.jsx';
 
 const NAV_SECTIONS = [
@@ -121,6 +122,7 @@ export default function AppLayout() {
               <span className="text-sm font-medium text-slate-300 hidden sm:block">{current.label}</span>
             </div>
           )}
+          <NotificationBell />
         </div>
       </div>
 
