@@ -257,6 +257,7 @@ async function handleInvoicePaid(invoice) {
     if (customer.months_active <= 6) {
       salesRepRate = salesTeamMember.commission_rate || 0.20;
       salesCommission = commissionBase * salesRepRate;
+      commissionTotal = commissionBase * salesRepRate;
     }
     // emma/wyatt always 0 on SALES deals
   }

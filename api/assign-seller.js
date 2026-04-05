@@ -135,6 +135,7 @@ export default async function handler(req, res) {
           if (paidMonth <= 6) {
             rowUpdate.sales_rep_rate = rate;
             rowUpdate.sales_commission = base * rate;
+            rowUpdate.commission_total = base * rate;
           }
         }
         // FOUNDER: all commission fields stay 0
