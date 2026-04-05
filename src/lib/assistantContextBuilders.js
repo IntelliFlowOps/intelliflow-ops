@@ -37,6 +37,14 @@ function toNumber(value) {
   return Number.isFinite(num) ? num : 0;
 }
 
+function fmt$(n) {
+  return '$' + round2(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtPct(n) {
+  return round2(n) + '%';
+}
+
 function summarizeCampaigns(rows = []) {
   const totals = {
     spend: 0,
@@ -67,17 +75,17 @@ function summarizeCampaigns(rows = []) {
     totals.leads > 0 ? (totals.customersWon / totals.leads) * 100 : 0;
 
   return {
-    spend: round2(totals.spend),
+    spend: fmt$(totals.spend),
     leads: totals.leads,
     qualifiedLeads: totals.qualifiedLeads,
     impressions: totals.impressions,
     clicks: totals.clicks,
     customersWon: totals.customersWon,
-    revenueWon: round2(totals.revenueWon),
-    avgCtr: round2(avgCtr),
-    avgCpl: round2(avgCpl),
-    avgCac: round2(avgCac),
-    closeRate: round2(closeRate),
+    revenueWon: fmt$(totals.revenueWon),
+    avgCtr: fmtPct(avgCtr),
+    avgCpl: fmt$(avgCpl),
+    avgCac: fmt$(avgCac),
+    closeRate: fmtPct(closeRate),
   };
 }
 
@@ -110,16 +118,16 @@ function summarizeByKey(rows = [], keyName) {
   return Array.from(map.values())
     .map((item) => ({
       [keyName]: item.key,
-      Spend: round2(item.spend),
+      Spend: fmt$(item.spend),
       Leads: item.leads,
       CustomersWon: item.customersWon,
-      RevenueWon: round2(item.revenueWon),
-      CTR: item.impressions > 0 ? round2((item.clicks / item.impressions) * 100) : 0,
-      CPL: item.leads > 0 ? round2(item.spend / item.leads) : 0,
-      CAC: item.customersWon > 0 ? round2(item.spend / item.customersWon) : 0,
-      CloseRate: item.leads > 0 ? round2((item.customersWon / item.leads) * 100) : 0,
+      RevenueWon: fmt$(item.revenueWon),
+      CTR: item.impressions > 0 ? fmtPct((item.clicks / item.impressions) * 100) : "0%",
+      CPL: item.leads > 0 ? fmt$(item.spend / item.leads) : "$0",
+      CAC: item.customersWon > 0 ? fmt$(item.spend / item.customersWon) : "$0",
+      CloseRate: item.leads > 0 ? fmtPct((item.customersWon / item.leads) * 100) : "0%",
     }))
-    .sort((a, b) => b.CustomersWon - a.CustomersWon || a.CAC - b.CAC)
+    .sort((a, b) => b.CustomersWon - a.CustomersWon || toNumber(a.CAC) - toNumber(b.CAC))
     .slice(0, 10);
 }
 
@@ -127,68 +135,197 @@ function round2(value) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+function emptyNote(label) {
+  return `No ${label} data available yet.`;
+}
+
+function nowTimestamp() {
+  return new Date().toLocaleString("en-US", { timeZone: "America/Indiana/Indianapolis", dateStyle: "medium", timeStyle: "short" });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FOUNDER ASSISTANT CONTEXT
+// ═══════════════════════════════════════════════════════════════════════════
+
 export function buildFounderAssistantContext(data = {}, extra = {}) {
   const dashboardRows = getTab(data, ["DASHBOARD", "Dashboard"]);
   const campaignRows = getTab(data, ["CAMPAIGNS", "Campaigns"]);
   const customerRows = getTab(data, ["CUSTOMERS", "Customers"]);
   const analyticsRows = getTab(data, ["ALL_ANALYTICS", "All Analytics", "Analytics"]);
   const ledgerRows = getTab(data, ["COMMISSION_LEDGER", "Commission_Ledger"]);
+  const retainerRows = getTab(data, ["RETAINER_LEDGER", "Retainer_Ledger"]);
+  const teamRows = getTab(data, ["PAYROLL_PEOPLE", "Payroll People", "team_members"]);
+  const payoutRows = getTab(data, ["PAYOUT_BATCHES", "Payout Batches"]);
 
-  // Commission totals from ledger
-  const commissionTotals = { Emma: 0, Wyatt: 0, sales: 0, total: 0 };
-  const unpaidCommissions = { Emma: 0, Wyatt: 0, sales: 0 };
+  // ── Customers breakdown ──
+  const activeCustomers = customerRows.filter(r => String(r["Status"] || "").trim() === "Active");
+  const atRiskCustomers = customerRows.filter(r => String(r["Status"] || "").trim() === "At Risk");
+  const churnedCustomers = customerRows.filter(r => String(r["Status"] || "").trim() === "Churned");
+  const mrr = activeCustomers.reduce((sum, r) => sum + toNumber(r["MRR / Revenue"]), 0);
+
+  const customerList = customerRows.length > 0
+    ? sliceRows(customerRows, 50).map(r => ({
+        name: r["Customer Name"] || "Unknown",
+        status: r["Status"] || "Unknown",
+        mrr: r["MRR / Revenue"] || "0",
+        attribution: r["Attribution Type"] || "FOUNDER",
+        assignedTo: r["Direct Marketer"] || r["Sales Rep"] || "Founder",
+        monthsActive: r["Months Active"] || 0,
+        lastPayment: r["Last Payment Date"] || "N/A",
+      }))
+    : emptyNote("customer");
+
+  const atRiskList = atRiskCustomers.length > 0
+    ? atRiskCustomers.map(r => ({
+        name: r["Customer Name"] || "Unknown",
+        lastPayment: r["Last Payment Date"] || "N/A",
+        mrr: r["MRR / Revenue"] || "0",
+      }))
+    : "No at-risk customers.";
+
+  // ── Revenue ──
+  const now = new Date();
+  const thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  const lastMonth = now.getMonth() === 0
+    ? (now.getFullYear() - 1) + '-12'
+    : now.getFullYear() + '-' + String(now.getMonth()).padStart(2, '0');
+
+  let revenueMTD = 0;
+  let revenueLastMonth = 0;
+  ledgerRows.forEach(row => {
+    const date = String(row["Date"] || "").slice(0, 7);
+    const rev = toNumber(row["Revenue Collected"]);
+    if (date === thisMonth) revenueMTD += rev;
+    if (date === lastMonth) revenueLastMonth += rev;
+  });
+
+  // ── Commission breakdown by person ──
+  const unpaidByPerson = {};
+  const totalByPerson = {};
   ledgerRows.forEach(row => {
     const paid = ["yes","paid","y","1","true"].includes(String(row["Paid Out?"] || "").toLowerCase().trim());
     const emma = toNumber(row["Emma Commission"]);
     const wyatt = toNumber(row["Wyatt Commission"]);
-    const sales = toNumber(row["Sales Commission"]);
-    commissionTotals.Emma += emma;
-    commissionTotals.Wyatt += wyatt;
-    commissionTotals.sales += sales;
-    commissionTotals.total += emma + wyatt + sales;
-    if (!paid) {
-      unpaidCommissions.Emma += emma;
-      unpaidCommissions.Wyatt += wyatt;
-      unpaidCommissions.sales += sales;
+    const salesAmt = toNumber(row["Sales Commission"]);
+    const salesRep = String(row["Sales Rep"] || row["Direct Marketer"] || "").trim();
+
+    if (emma > 0) {
+      totalByPerson["Emma"] = (totalByPerson["Emma"] || 0) + emma;
+      if (!paid) unpaidByPerson["Emma"] = (unpaidByPerson["Emma"] || 0) + emma;
+    }
+    if (wyatt > 0) {
+      totalByPerson["Wyatt"] = (totalByPerson["Wyatt"] || 0) + wyatt;
+      if (!paid) unpaidByPerson["Wyatt"] = (unpaidByPerson["Wyatt"] || 0) + wyatt;
+    }
+    if (salesAmt > 0 && salesRep) {
+      totalByPerson[salesRep] = (totalByPerson[salesRep] || 0) + salesAmt;
+      if (!paid) unpaidByPerson[salesRep] = (unpaidByPerson[salesRep] || 0) + salesAmt;
     }
   });
 
-  // MRR and active customers
-  const activeCustomers = customerRows.filter(r =>
-    String(r["Status"] || "").toLowerCase() === "active"
-  );
-  const mrr = activeCustomers.reduce((sum, r) => sum + toNumber(r["MRR / Revenue"]), 0);
+  const unpaidFormatted = Object.keys(unpaidByPerson).length > 0
+    ? Object.fromEntries(Object.entries(unpaidByPerson).map(([k, v]) => [k, fmt$(v)]))
+    : "No unpaid commissions.";
+
+  const totalUnpaid = Object.values(unpaidByPerson).reduce((a, b) => a + b, 0);
+
+  // ── Team ──
+  const team = teamRows.length > 0
+    ? teamRows.map(r => ({
+        name: r["Person"] || r["name"] || "Unknown",
+        role: r["Role"] || r["role"] || "Unknown",
+        commissionPath: r["Commission Path"] || r["commission_path"] || "N/A",
+        commissionRate: r["commission_rate"] ? fmtPct(toNumber(r["commission_rate"]) * 100) : "N/A",
+        retainer: r["Retainer Amount"] || r["retainer_amount"] || "0",
+        totalEarned: fmt$(totalByPerson[r["Person"] || r["name"] || ""] || 0),
+        unpaidOwed: fmt$(unpaidByPerson[r["Person"] || r["name"] || ""] || 0),
+      }))
+    : emptyNote("team");
+
+  // ── Payout history ──
+  let payoutThisMonth = 0;
+  let payoutThisYear = 0;
+  let payoutTotal = 0;
+  const thisYear = String(now.getFullYear());
+  payoutRows.forEach(row => {
+    const amt = toNumber(row["Total Paid"]);
+    const date = String(row["Date"] || "");
+    payoutTotal += amt;
+    if (date.slice(0, 4) === thisYear) payoutThisYear += amt;
+    if (date.slice(0, 7) === thisMonth) payoutThisMonth += amt;
+  });
+
+  const recentPayouts = payoutRows.length > 0
+    ? sliceRows(payoutRows, 10).map(r => ({
+        date: r["Date"] || "N/A",
+        person: r["Person"] || "Unknown",
+        type: r["Type"] || "N/A",
+        amount: fmt$(toNumber(r["Total Paid"])),
+      }))
+    : emptyNote("payout");
+
+  // ── Retainer summary ──
+  let retainersPaidThisMonth = 0;
+  retainerRows.forEach(row => {
+    const paid = ["yes","paid","y","1","true"].includes(String(row["Paid Out?"] || "").toLowerCase().trim());
+    if (paid) retainersPaidThisMonth += toNumber(row["Amount"]);
+  });
 
   return {
     assistant: "founder",
+    dataAsOf: nowTimestamp(),
     northStarGoal: 2000,
     opsDeskProduct: "OpsDesk (second product): AI-powered command center for service businesses. $449/month. Separate app and database. Commission structure uses the same plans table with product = 'OpsDesk'.",
-    liveMetrics: {
-      activeCustomers: activeCustomers.length,
-      mrr: round2(mrr),
-      totalCommissionsPaid: round2(commissionTotals.total),
-      unpaidCommissions: {
-        Emma: round2(unpaidCommissions.Emma),
-        Wyatt: round2(unpaidCommissions.Wyatt),
-        sales: round2(unpaidCommissions.sales),
-      },
+    customerOverview: {
+      totalCustomers: customerRows.length,
+      active: activeCustomers.length,
+      atRisk: atRiskCustomers.length,
+      churned: churnedCustomers.length,
+      mrr: fmt$(mrr),
     },
-    campaignSummary: summarizeCampaigns(campaignRows),
-    topPlatforms: summarizeByKey(campaignRows, "Platform"),
-    topNiches: summarizeByKey(campaignRows, "Niche"),
-    dashboard: sliceRows(dashboardRows, 15),
-    campaigns: sliceRows(campaignRows, 20).map((row) =>
-      compactRow(row, ["Platform","Campaign Name","Spend","Leads","Customers Won","Revenue Won","CPL","CAC","Close Rate","Status","Niche","Hook","CTA"])
-    ),
-    customers: sliceRows(customerRows, 15),
+    customerList,
+    atRiskCustomers: atRiskList,
+    revenue: {
+      mrr: fmt$(mrr),
+      revenueMTD: fmt$(revenueMTD),
+      revenueLastMonth: fmt$(revenueLastMonth),
+    },
+    commissions: {
+      totalUnpaid: fmt$(totalUnpaid),
+      unpaidByPerson: unpaidFormatted,
+      allTimeTotalByPerson: Object.keys(totalByPerson).length > 0
+        ? Object.fromEntries(Object.entries(totalByPerson).map(([k, v]) => [k, fmt$(v)]))
+        : "No commission data.",
+    },
+    team,
+    payouts: {
+      totalAllTime: fmt$(payoutTotal),
+      thisYear: fmt$(payoutThisYear),
+      thisMonth: fmt$(payoutThisMonth),
+      retainersPaid: fmt$(retainersPaidThisMonth),
+      recentPayouts,
+    },
+    campaignSummary: campaignRows.length > 0 ? summarizeCampaigns(campaignRows) : emptyNote("campaign"),
+    topPlatforms: campaignRows.length > 0 ? summarizeByKey(campaignRows, "Platform") : emptyNote("platform"),
+    topNiches: campaignRows.length > 0 ? summarizeByKey(campaignRows, "Niche") : emptyNote("niche"),
+    campaigns: campaignRows.length > 0
+      ? sliceRows(campaignRows, 20).map((row) =>
+          compactRow(row, ["Platform","Campaign Name","Spend","Leads","Customers Won","Revenue Won","CPL","CAC","Close Rate","Status","Niche","Hook","CTA"])
+        )
+      : emptyNote("campaign"),
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MARKETER ASSISTANT CONTEXT
+// ═══════════════════════════════════════════════════════════════════════════
 
 export function buildMarketerAssistantContext(data = {}, extra = {}) {
   const dashboardRows = getTab(data, ["DASHBOARD", "Dashboard"]);
   const campaignRows = getTab(data, ["CAMPAIGNS", "Campaigns"]);
   const analyticsRows = getTab(data, ["ALL_ANALYTICS", "All Analytics", "Analytics"]);
   const customerRows = getTab(data, ["CUSTOMERS", "Customers"]);
+  const creativeRows = getTab(data, ["CREATIVE_INSIGHTS", "Creative Insights"]);
 
   const selectedPlatform = extra.platform || null;
   const selectedNiche = extra.niche || null;
@@ -204,14 +341,14 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
   });
 
   const filteredCustomers = customerRows.filter((row) => {
-    const rowNiche = String(firstDefined(row?.Niche, row?.Industry, row?.Vertical) || "").trim();
+    const rowNiche = String(firstDefined(row?.Niche, row?.["Industry / Niche"], row?.Industry, row?.Vertical) || "").trim();
     return selectedNiche ? rowNiche === selectedNiche : true;
   });
 
   const effectiveCampaigns = filteredCampaigns.length ? filteredCampaigns : campaignRows;
   const effectiveAnalytics = filteredAnalytics.length ? filteredAnalytics : analyticsRows;
 
-  // Surface winning hooks and CTAs from campaign data
+  // ── Winning hooks and CTAs from campaign data ──
   const winningHooks = campaignRows
     .filter(r => toNumber(r["Customers Won"]) > 0 && r["Hook"])
     .sort((a, b) => toNumber(b["Customers Won"]) - toNumber(a["Customers Won"]))
@@ -228,13 +365,55 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
     .filter(n => n.CustomersWon > 0)
     .slice(0, 5);
 
+  // ── Creative insights ──
+  const creativeInsights = creativeRows.length > 0
+    ? sliceRows(creativeRows, 15).map(r => compactRow(r, [
+        "Date", "Platform", "Niche", "Winning Hook", "Winning CTA",
+        "Best Creative Type", "What Is Not Working", "Next Test Idea", "Notes",
+      ]))
+    : emptyNote("creative insights");
+
+  // ── Customer count by industry ──
+  const industryMap = {};
+  customerRows.forEach(r => {
+    const industry = String(r["Industry / Niche"] || r["Industry"] || "").trim();
+    if (industry) industryMap[industry] = (industryMap[industry] || 0) + 1;
+  });
+  const customersByIndustry = Object.keys(industryMap).length > 0
+    ? Object.fromEntries(Object.entries(industryMap).sort((a, b) => b[1] - a[1]))
+    : emptyNote("industry");
+
+  // ── Ad spend by platform ──
+  const platformSpend = {};
+  let totalSpendMTD = 0;
+  const now = new Date();
+  const thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  campaignRows.forEach(r => {
+    const date = String(r["Date"] || "").slice(0, 7);
+    const spend = toNumber(r["Spend"]);
+    const platform = String(r["Platform"] || "").trim() || "Unknown";
+    if (date === thisMonth) {
+      totalSpendMTD += spend;
+      platformSpend[platform] = (platformSpend[platform] || 0) + spend;
+    }
+  });
+
   return {
     assistant: "marketer",
+    dataAsOf: nowTimestamp(),
     marketerMode: extra.marketerMode || "chat",
     opsDeskProduct: "OpsDesk (second product): AI-powered command center for service businesses. $449/month. Separate app and database. Commission structure uses the same plans table with product = 'OpsDesk'.",
-    winningHooks,
-    winningCTAs,
-    topConvertingNiches,
+    winningHooks: winningHooks.length > 0 ? winningHooks : emptyNote("winning hooks"),
+    winningCTAs: winningCTAs.length > 0 ? winningCTAs : emptyNote("winning CTAs"),
+    topConvertingNiches: topConvertingNiches.length > 0 ? topConvertingNiches : emptyNote("niche conversion"),
+    creativeInsights,
+    customersByIndustry,
+    adSpend: {
+      totalMTD: fmt$(totalSpendMTD),
+      byPlatformMTD: Object.keys(platformSpend).length > 0
+        ? Object.fromEntries(Object.entries(platformSpend).map(([k, v]) => [k, fmt$(v)]))
+        : emptyNote("platform spend"),
+    },
     company: {
       name: "IntelliFlow Communications",
       positioning: "AI communications automation for service businesses that turns missed demand into booked revenue",
@@ -260,6 +439,7 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
       campaignRows: campaignRows.length,
       analyticsRows: analyticsRows.length,
       customerRows: customerRows.length,
+      creativeInsightsRows: creativeRows.length,
       filteredCampaignRows: filteredCampaigns.length,
       filteredAnalyticsRows: filteredAnalytics.length,
     },
@@ -269,56 +449,66 @@ export function buildMarketerAssistantContext(data = {}, extra = {}) {
       "CAC",
       "CPL",
     ],
-    campaignSummary: summarizeCampaigns(effectiveCampaigns),
-    topPlatforms: summarizeByKey(campaignRows, "Platform"),
-    topNiches: summarizeByKey(campaignRows, "Niche"),
+    campaignSummary: campaignRows.length > 0 ? summarizeCampaigns(effectiveCampaigns) : emptyNote("campaign"),
+    topPlatforms: campaignRows.length > 0 ? summarizeByKey(campaignRows, "Platform") : emptyNote("platform"),
+    topNiches: campaignRows.length > 0 ? summarizeByKey(campaignRows, "Niche") : emptyNote("niche"),
     selectedPlatformSummary: selectedPlatform
       ? summarizeCampaigns(campaignRows.filter((row) => String(row?.Platform || "").trim() === selectedPlatform))
       : null,
     selectedNicheSummary: selectedNiche
       ? summarizeCampaigns(campaignRows.filter((row) => String(row?.Niche || "").trim() === selectedNiche))
       : null,
-    dashboard: sliceRows(dashboardRows, 15),
-    campaigns: sliceRows(effectiveCampaigns, 25).map((row) =>
-      compactRow(row, [
-        "Platform",
-        "Campaign Name",
-        "Spend",
-        "Leads",
-        "Qualified Leads",
-        "Impressions",
-        "Clicks",
-        "CTR",
-        "CPC",
-        "Customers Won",
-        "Revenue Won",
-        "CPL",
-        "CAC",
-        "Close Rate",
-        "Status",
-        "Niche",
-        "Hook",
-        "CTA",
-        "Creative Type",
-        "Offer",
-        "Managed By",
-        "Campaign ID / Link",
-      ])
-    ),
-    analytics: sliceRows(effectiveAnalytics, 25).map((row) =>
-      compactRow(row, [
-        "Platform",
-        "Campaign Name",
-        "Spend",
-        "Impressions",
-        "Clicks",
-        "CTR",
-        "CPC",
-        "Status",
-        "Notes",
-      ])
-    ),
-    customers: sliceRows(filteredCustomers, 15),
+    dashboard: dashboardRows.length > 0 ? sliceRows(dashboardRows, 15) : emptyNote("dashboard"),
+    campaigns: campaignRows.length > 0
+      ? sliceRows(effectiveCampaigns, 25).map((row) =>
+          compactRow(row, [
+            "Platform",
+            "Campaign Name",
+            "Spend",
+            "Leads",
+            "Qualified Leads",
+            "Impressions",
+            "Clicks",
+            "CTR",
+            "CPC",
+            "Customers Won",
+            "Revenue Won",
+            "CPL",
+            "CAC",
+            "Close Rate",
+            "Status",
+            "Niche",
+            "Hook",
+            "CTA",
+            "Creative Type",
+            "Offer",
+            "Managed By",
+            "Campaign ID / Link",
+          ])
+        )
+      : emptyNote("campaign"),
+    analytics: analyticsRows.length > 0
+      ? sliceRows(effectiveAnalytics, 25).map((row) =>
+          compactRow(row, [
+            "Platform",
+            "Campaign Name",
+            "Spend",
+            "Impressions",
+            "Clicks",
+            "CTR",
+            "CPC",
+            "Leads",
+            "CPL",
+            "CAC",
+            "Close Rate",
+            "Customers Won",
+            "Revenue Won",
+            "Status",
+            "Notes",
+          ])
+        )
+      : emptyNote("analytics"),
+    customers: customerRows.length > 0 ? sliceRows(filteredCustomers, 15) : emptyNote("customer"),
   };
 }
 
@@ -470,6 +660,7 @@ export function buildTaxAssistantContext(data = {}) {
 
   return {
     assistant: "tax",
+    dataAsOf: nowTimestamp(),
     taxYear: currentYear,
     today: today.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
     totalExpenses: round2(totalExpenses),
