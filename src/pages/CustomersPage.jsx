@@ -118,6 +118,11 @@ export default function CustomersPage() {
   const [notesValue, setNotesValue] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
   const [statusFilter, setStatusFilter] = useState('All');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ customerName: '', email: '', phone: '', industry: '', planId: '', assignedTo: '', notes: '' });
+  const [createSaving, setCreateSaving] = useState(false);
+  const [createError, setCreateError] = useState('');
+  const [plans, setPlans] = useState([]);
 
   // Build seller options from team_members data
   const sellerOptions = useMemo(() => {
@@ -232,22 +237,43 @@ export default function CustomersPage() {
     <div className="space-y-6 px-6 py-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-zinc-500">Customer records. Click any row to open the full customer drawer.</p>
-        <button
-          type="button"
-          onClick={async () => {
-            const r = await fetch('/api/export?table=customers&format=csv', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
-            const blob = await r.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `intelliflow-customers-${new Date().toISOString().slice(0,10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-          className="shrink-0 rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
-        >
-          Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              setCreateForm({ customerName: '', email: '', phone: '', industry: '', planId: '', assignedTo: '', notes: '' });
+              setCreateError('');
+              setCreateOpen(true);
+              if (!plans.length) {
+                try {
+                  const r = await fetch('/api/supabase-read?table=plans', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
+                  const j = await r.json();
+                  if (j.data) setPlans(j.data);
+                } catch (_) {}
+              }
+            }}
+            className="shrink-0 rounded-xl px-3 py-1.5 text-xs font-medium transition"
+            style={{ background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
+          >
+            + Add Customer
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              const r = await fetch('/api/export?table=customers&format=csv', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
+              const blob = await r.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `intelliflow-customers-${new Date().toISOString().slice(0,10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="shrink-0 rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {loading && !rows.length && <SkeletonTable rows={6} cards={4} />}
@@ -497,6 +523,166 @@ export default function CustomersPage() {
             </section>
           </div>
         )}
+      </DrawerPanel>
+
+      {/* Create Customer Drawer */}
+      <DrawerPanel
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Add Customer"
+      >
+        <div className="space-y-4">
+          {createError && (
+            <div className="rounded-xl px-3 py-2 text-sm text-red-400"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)' }}>
+              {createError}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-500">Customer Name *</label>
+            <input
+              type="text"
+              value={createForm.customerName}
+              onChange={e => setCreateForm(f => ({ ...f, customerName: e.target.value }))}
+              placeholder="Acme HVAC"
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-500">Email</label>
+              <input
+                type="email"
+                value={createForm.email}
+                onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="owner@acme.com"
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none"
+                style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs text-zinc-500">Phone</label>
+              <input
+                type="tel"
+                value={createForm.phone}
+                onChange={e => setCreateForm(f => ({ ...f, phone: e.target.value }))}
+                placeholder="(555) 123-4567"
+                className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none"
+                style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-500">Industry</label>
+            <select
+              value={createForm.industry}
+              onChange={e => setCreateForm(f => ({ ...f, industry: e.target.value }))}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none appearance-none"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <option value="">Select industry...</option>
+              {['HVAC', 'Plumbing', 'Electrical', 'Cleaning', 'Landscaping', 'Roofing', 'Pest Control', 'Auto Repair', 'Chiropractic', 'Other'].map(v => (
+                <option key={v} value={v}>{v}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-500">Plan</label>
+            <select
+              value={createForm.planId}
+              onChange={e => {
+                const p = plans.find(pl => pl.id === e.target.value);
+                setCreateForm(f => ({ ...f, planId: e.target.value, mrr: p?.monthly_price || '' }));
+              }}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none appearance-none"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <option value="">No plan selected</option>
+              {plans.map(p => (
+                <option key={p.id} value={p.id}>{p.name} — ${p.monthly_price}/mo</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-500">Assign Seller</label>
+            <select
+              value={createForm.assignedTo}
+              onChange={e => setCreateForm(f => ({ ...f, assignedTo: e.target.value }))}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white outline-none appearance-none"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <option value="">Founder (default)</option>
+              {sellerOptions.filter(s => s.id !== 'founder').map(s => (
+                <option key={s.id} value={s.id}>{s.name} — {s.commission_path}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs text-zinc-500">Notes</label>
+            <textarea
+              rows={3}
+              value={createForm.notes}
+              onChange={e => setCreateForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="Referral from..., check payment, etc."
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none resize-none"
+              style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="button"
+              disabled={createSaving || !createForm.customerName.trim()}
+              onClick={async () => {
+                setCreateSaving(true);
+                setCreateError('');
+                try {
+                  const res = await fetch('/api/create-customer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
+                    body: JSON.stringify({
+                      customerName: createForm.customerName,
+                      email: createForm.email || undefined,
+                      phone: createForm.phone || undefined,
+                      industry: createForm.industry || undefined,
+                      planId: createForm.planId || undefined,
+                      mrr: createForm.mrr || undefined,
+                      assignedTo: createForm.assignedTo || undefined,
+                      notes: createForm.notes || undefined,
+                    }),
+                  });
+                  if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+                  setCreateOpen(false);
+                  showToast(`${createForm.customerName} created`, 'success');
+                  refresh();
+                } catch (err) {
+                  setCreateError(err.message);
+                } finally {
+                  setCreateSaving(false);
+                }
+              }}
+              className="flex-1 rounded-xl py-2.5 text-sm font-medium transition-all disabled:opacity-40"
+              style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
+            >
+              {createSaving ? 'Creating...' : 'Create Customer'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateOpen(false)}
+              className="rounded-xl px-4 py-2.5 text-sm text-zinc-500 transition hover:text-zinc-300"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </DrawerPanel>
     </div>
   );
