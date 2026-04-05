@@ -350,7 +350,7 @@ export default async function handler(req, res) {
     // Route by event type
     let result;
 
-    if (event.type === 'invoice.payment_succeeded') {
+    if (event.type === 'invoice.payment_succeeded' || event.type === 'invoice.paid') {
       result = await handleInvoicePaid(event.data.object);
     } else if (event.type === 'customer.subscription.deleted') {
       result = await handleSubscriptionDeleted(event.data.object);
