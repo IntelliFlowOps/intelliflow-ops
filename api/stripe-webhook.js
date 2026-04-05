@@ -150,6 +150,11 @@ async function handleInvoicePaid(invoice) {
     .eq('stripe_customer_id', stripeCustomerId)
     .maybeSingle();
 
+  const isAnnual = plan && priceId === plan.stripe_annual_price_id;
+  const nextRenewal = new Date();
+  nextRenewal.setDate(nextRenewal.getDate() + (isAnnual ? 365 : 30));
+  const nextRenewalDate = nextRenewal.toISOString().split('T')[0];
+
   if (existingCustomer) {
     const newMonthsActive = (existingCustomer.months_active || 0) + 1;
     await supabase
@@ -157,6 +162,7 @@ async function handleInvoicePaid(invoice) {
       .update({
         months_active: newMonthsActive,
         last_payment_date: today(),
+        next_renewal_date: nextRenewalDate,
         status: 'Active',
         plan_id: plan?.id ?? existingCustomer.plan_id,
         mrr: plan ? plan.monthly_price : existingCustomer.mrr,
@@ -175,6 +181,7 @@ async function handleInvoicePaid(invoice) {
       attribution_type: 'FOUNDER',
       onboard_date: today(),
       last_payment_date: today(),
+      next_renewal_date: nextRenewalDate,
     };
     const { data: inserted, error: insertErr } = await supabase
       .from('customers')

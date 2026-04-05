@@ -117,6 +117,7 @@ export default function CustomersPage() {
   const [editingNotes, setEditingNotes] = useState(false);
   const [notesValue, setNotesValue] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('All');
 
   // Build seller options from team_members data
   const sellerOptions = useMemo(() => {
@@ -185,6 +186,28 @@ export default function CustomersPage() {
     }
   }
 
+  const filteredRows = useMemo(() => {
+    let filtered = rows;
+    if (statusFilter !== 'All') {
+      filtered = rows.filter(r => (r['Status'] || '').trim() === statusFilter);
+    }
+    // Sort At Risk customers to the top
+    return [...filtered].sort((a, b) => {
+      const aRisk = (a['Status'] || '').trim() === 'At Risk' ? 0 : 1;
+      const bRisk = (b['Status'] || '').trim() === 'At Risk' ? 0 : 1;
+      return aRisk - bRisk;
+    });
+  }, [rows, statusFilter]);
+
+  const statusCounts = useMemo(() => {
+    const counts = { All: rows.length, Active: 0, 'At Risk': 0, Churned: 0 };
+    rows.forEach(r => {
+      const s = (r['Status'] || '').trim();
+      if (s in counts) counts[s]++;
+    });
+    return counts;
+  }, [rows]);
+
   const stats = useMemo(() => {
     const active = rows.filter(r => (r['Status'] || '').trim() === 'Active');
     const totalMRR = active.reduce((sum, r) => {
@@ -252,8 +275,27 @@ export default function CustomersPage() {
       )}
 
       {!loading && !error && (
+        <div className="flex items-center gap-2 mb-3">
+          {['All', 'Active', 'At Risk', 'Churned'].map(status => (
+            <button
+              key={status}
+              type="button"
+              onClick={() => setStatusFilter(status)}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                statusFilter === status
+                  ? 'bg-cyan-400/15 text-cyan-100 border border-cyan-400/30'
+                  : 'bg-white/[0.04] text-zinc-500 border border-white/[0.04] hover:text-zinc-300'
+              }`}
+            >
+              {status}{statusCounts[status] > 0 ? ` (${statusCounts[status]})` : ''}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && (
         <DataTable
-          rows={rows}
+          rows={filteredRows}
           columns={columns}
           onRowClick={setSelected}
           searchPlaceholder="Search customers..."

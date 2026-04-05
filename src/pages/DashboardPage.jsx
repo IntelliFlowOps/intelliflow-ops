@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTabData, useSheetData } from '../hooks/useSheetData.jsx';
 import KpiCard from '../components/KpiCard.jsx';
 import DataTable from '../components/DataTable.jsx';
@@ -33,6 +34,7 @@ function useCountUp(target, duration = 1200) {
 
 export default function DashboardPage() {
   const { rows: dashboard, loading, error } = useTabData('DASHBOARD');
+  const navigate = useNavigate();
   const [showGoalActions, setShowGoalActions] = useState(false);
   const [goalDismissed, setGoalDismissed] = useState(false);
 
@@ -150,6 +152,10 @@ export default function DashboardPage() {
     blendedCloseRate,
     watchlist,
   ]);
+
+  const atRiskCustomers = useMemo(() => {
+    return customerRows.filter(r => (r['Status'] || '').trim() === 'At Risk');
+  }, [customerRows]);
 
   const founderKpis = [
     {
@@ -383,6 +389,25 @@ export default function DashboardPage() {
           ))}
         </div>
       </section>
+
+      {atRiskCustomers.length > 0 && (
+        <button
+          type="button"
+          onClick={() => navigate('/customers')}
+          className="w-full text-left rounded-[18px] px-4 py-3 transition hover:brightness-110"
+          style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.25)' }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-orange-400">⚠</span>
+            <span className="text-sm font-semibold text-orange-300">
+              {atRiskCustomers.length} customer{atRiskCustomers.length === 1 ? '' : 's'} at risk
+            </span>
+          </div>
+          <p className="text-xs text-orange-400/70">
+            {atRiskCustomers.map(c => c['Customer Name'] || 'Unknown').join(', ')}
+          </p>
+        </button>
+      )}
 
       <section>
         <h2 className="section-title mb-3">Marketing Snapshot</h2>
