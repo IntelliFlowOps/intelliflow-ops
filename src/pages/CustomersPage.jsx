@@ -204,8 +204,24 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6 px-6 py-6">
-      <div className="space-y-1">
+      <div className="flex items-center justify-between">
         <p className="text-sm text-zinc-500">Customer records. Click any row to open the full customer drawer.</p>
+        <button
+          type="button"
+          onClick={async () => {
+            const r = await fetch('/api/export?table=customers&format=csv', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
+            const blob = await r.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `intelliflow-customers-${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="shrink-0 rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+        >
+          Export CSV
+        </button>
       </div>
 
       {loading && !rows.length && <SkeletonTable rows={6} cards={4} />}

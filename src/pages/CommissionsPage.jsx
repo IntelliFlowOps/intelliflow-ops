@@ -216,7 +216,25 @@ export default function CommissionsPage() {
   return (
     <div className="space-y-6 px-6 py-6">
       <section>
-        <h2 className="section-title mb-3">Ledger</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="section-title">Ledger</h2>
+          <button
+            type="button"
+            onClick={async () => {
+              const r = await fetch('/api/export?table=commission_ledger&format=csv', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
+              const blob = await r.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `intelliflow-commission_ledger-${new Date().toISOString().slice(0,10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+          >
+            Export CSV
+          </button>
+        </div>
         <p className="mb-4 text-sm text-zinc-400">
           Internal operational ledger only. Personal commission numbers are hidden from this page.
         </p>

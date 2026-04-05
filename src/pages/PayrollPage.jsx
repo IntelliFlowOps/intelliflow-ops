@@ -330,13 +330,31 @@ export default function PayrollPage() {
           <h1 className="text-2xl font-semibold text-white">Founder Payroll</h1>
           <p className="mt-1 text-sm text-slate-400">All payout data. Founder access only.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setUnlocked(false)}
-          className="rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
-        >
-          Lock
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={async () => {
+              const r = await fetch('/api/export?table=payout_batches&format=csv', { headers: { 'x-api-secret': 'INTELLIFLOW_OPS_2026' } });
+              const blob = await r.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `intelliflow-payout_batches-${new Date().toISOString().slice(0,10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => setUnlocked(false)}
+            className="rounded-xl bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 hover:text-white transition"
+          >
+            Lock
+          </button>
+        </div>
       </div>
 
       <div>
