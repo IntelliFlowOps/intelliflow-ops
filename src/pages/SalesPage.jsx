@@ -226,12 +226,17 @@ export default function SalesPage() {
           <div className="overflow-y-auto overflow-x-hidden px-3 sm:px-5 py-4 sm:py-6" style={{ minHeight: '55vh', maxHeight: '60vh' }}>
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center space-y-4 prompts-slide-up">
+                <div className="flex justify-center mb-4" style={{ transform: 'scale(1.5)' }}>
+                  <div className={"quantum-icon" + (isOpsDesk ? " amber" : "")}>
+                    <div className="q-ring" />
+                    <div className="q-ring2" />
+                    <div className="q-dot q-d1" />
+                    <div className="q-dot q-d2" />
+                    <div className="q-dot q-d3" />
+                  </div>
+                </div>
                 <div className={"text-2xl sm:text-3xl font-light tracking-wide " + (isOpsDesk ? 'gradient-text-amber' : 'gradient-text-cyan')}>
                   {isOpsDesk ? 'OpsDesk Partner' : 'Sales Partner'}
-                </div>
-                <div className="relative w-48 h-[1px] bg-white/[0.06]">
-                  <div className={"travel-dot absolute top-1/2 -translate-y-1/2 w-[6px] h-[6px] rounded-full " + (isOpsDesk ? '' : '')}
-                    style={{ background: isOpsDesk ? '#d97706' : '#06b6d4', boxShadow: isOpsDesk ? '0 0 12px rgba(217,119,6,0.6)' : '0 0 12px rgba(6,182,212,0.6)' }} />
                 </div>
                 <div className="text-[13px] italic text-zinc-500 max-w-xs">
                   {isOpsDesk
@@ -276,6 +281,17 @@ export default function SalesPage() {
                     </div>
                   );
                 })}
+                {!loading && messages.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2 ml-1">
+                    <div className={"quantum-icon" + (isOpsDesk ? " amber" : "")}>
+                      <div className="q-ring" />
+                      <div className="q-ring2" />
+                      <div className="q-dot q-d1" />
+                      <div className="q-dot q-d2" />
+                      <div className="q-dot q-d3" />
+                    </div>
+                  </div>
+                )}
                 {loading && (
                   <div className="flex items-center gap-3 px-4 py-3 ai-fade-in">
                     <div className="relative w-full h-[2px] bg-white/[0.04] rounded-full overflow-hidden">

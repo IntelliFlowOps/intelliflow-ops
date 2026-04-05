@@ -433,6 +433,17 @@ export default function MarketerAssistantPage() {
                       badge={message.badge}
                     />
                   ))}
+                  {builderMessages.length > 0 && !loadingBuild && (
+                    <div className="flex items-center gap-2 mt-2 ml-1">
+                      <div className="quantum-icon">
+                        <div className="q-ring" />
+                        <div className="q-ring2" />
+                        <div className="q-dot q-d1" />
+                        <div className="q-dot q-d2" />
+                        <div className="q-dot q-d3" />
+                      </div>
+                    </div>
+                  )}
 
                   {loadingBuild && (
                     <div className="flex justify-start">
@@ -556,14 +567,31 @@ export default function MarketerAssistantPage() {
                     onAnimComplete={function () { setChatAnimIdx(-1); }}
                   />
                 ))}
+                {chatMessages.length > 0 && !loadingChat && (
+                  <div className="flex items-center gap-2 mt-2 ml-1">
+                    <div className="quantum-icon">
+                      <div className="q-ring" />
+                      <div className="q-ring2" />
+                      <div className="q-dot q-d1" />
+                      <div className="q-dot q-d2" />
+                      <div className="q-dot q-d3" />
+                    </div>
+                  </div>
+                )}
 
                 {chatMessages.length === 0 && !loadingChat && (
                   <div className="flex flex-col items-center justify-center h-full py-16 px-4 text-center space-y-4 prompts-slide-up">
+                    <div className="flex justify-center mb-4" style={{ transform: 'scale(1.5)' }}>
+                      <div className="quantum-icon">
+                        <div className="q-ring" />
+                        <div className="q-ring2" />
+                        <div className="q-dot q-d1" />
+                        <div className="q-dot q-d2" />
+                        <div className="q-dot q-d3" />
+                      </div>
+                    </div>
                     <div className="text-2xl sm:text-3xl font-light tracking-wide gradient-text-cyan">
                       Creative Partner
-                    </div>
-                    <div className="relative w-48 h-[1px] bg-white/[0.06]">
-                      <div className="travel-dot absolute top-1/2 -translate-y-1/2 w-[6px] h-[6px] rounded-full bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
                     </div>
                     <div className="text-[13px] italic text-zinc-500 max-w-xs">
                       Campaigns, hooks, ad builds, budget strategy, and creative direction.
