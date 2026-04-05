@@ -42,6 +42,7 @@ export default function Sidebar() {
           { label: "Founder Assistant",      path: "/founder-assistant" },
           { label: "Marketer Assistant",     path: "/marketer-assistant" },
           { label: "Ledger",                 path: "/ledger" },
+          { label: "Payout History",          path: "/payout-history" },
           { label: "Activity",               path: "/activity" },
           { label: "Analytics",              path: "/analytics" },
         ].map((item) => (

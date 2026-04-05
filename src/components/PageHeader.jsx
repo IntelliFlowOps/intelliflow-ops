@@ -14,6 +14,7 @@ const PAGE_META = {
   '/activity': { title: 'Client Activity', subtitle: 'Customer interaction timeline' },
   '/analytics': { title: 'Performance', subtitle: 'Campaign and ad performance data' },
   '/payroll': { title: 'Payroll', subtitle: 'Founder access only — contractor payments and tax tracking' },
+  '/payout-history': { title: 'Payout History', subtitle: 'Every payout made to the team' },
   '/health': { title: 'Business Health', subtitle: 'Long-term metrics and retention indicators' },
   '/tax': { title: 'Tax Center', subtitle: 'Expenses, distributions, and tax reports — PIN required' },
   '/sales': { title: 'Sales Intelligence', subtitle: 'Your IntelliFlow sales expert — scripts, objections, pitches, strategy' },

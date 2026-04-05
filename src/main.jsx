@@ -17,6 +17,7 @@ import SalesPage from './pages/SalesPage.jsx';
 import AdAssistantPage from './pages/AdAssistantPage.jsx';
 import MarketerAssistantPage from './pages/MarketerAssistantPage.jsx';
 import PayrollPage from './pages/PayrollPage.jsx';
+import PayoutHistoryPage from './pages/PayoutHistoryPage.jsx';
 import CursorTrail from './components/CursorTrail.jsx';
 import { ToastProvider } from './components/Toast.jsx';
 import './index.css';
@@ -38,6 +39,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="marketer-assistant" element={<MarketerAssistantPage />} />
             <Route path="ledger" element={<CommissionsPage />} />
             <Route path="payroll" element={<PayrollPage />} />
+            <Route path="payout-history" element={<PayoutHistoryPage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="health" element={<BusinessHealthPage />} />

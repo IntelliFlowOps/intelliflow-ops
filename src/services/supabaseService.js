@@ -11,6 +11,7 @@ const SUPABASE_TABLES = {
   ALL_ANALYTICS:     'all_analytics',
   CREATIVE_INSIGHTS: 'creative_insights',
   CUSTOMER_ACTIVITY: 'customer_activity',
+  PAYOUT_BATCHES:    'payout_batches',
 };
 
 // Special view/table routes (not standard tab keys)
@@ -174,6 +175,16 @@ const CREATIVE_INSIGHTS_MAP = {
   notes: 'Notes',
 };
 
+const PAYOUT_BATCHES_MAP = {
+  batch_id: 'Batch ID',
+  person_name: 'Person',
+  payout_type: 'Type',
+  payout_date: 'Date',
+  total_paid: 'Total Paid',
+  rows_processed: 'Rows Processed',
+  notes: 'Notes',
+};
+
 const FIELD_MAPS = {
   customers:          CUSTOMER_MAP,
   commission_ledger:  COMMISSION_LEDGER_MAP,
@@ -183,6 +194,7 @@ const FIELD_MAPS = {
   campaigns:          CAMPAIGNS_MAP,
   all_analytics:      ALL_ANALYTICS_MAP,
   creative_insights:  CREATIVE_INSIGHTS_MAP,
+  payout_batches:     PAYOUT_BATCHES_MAP,
 };
 
 // ── Row transformation ───────────────────────────────────────────────────────

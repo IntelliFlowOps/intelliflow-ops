@@ -12,6 +12,7 @@ const navItems = [
   { to: '/ledger', label: 'Ledger' },
   { to: '/activity', label: 'Activity' },
   { to: '/analytics', label: 'Analytics' },
+  { to: '/payout-history', label: 'Payout History' },
   { to: '/payroll', label: 'Payroll' },
 ];
 

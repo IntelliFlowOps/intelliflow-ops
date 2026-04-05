@@ -11,6 +11,7 @@ const ALLOWED_TABLES = {
   creative_insights: { orderBy: 'date',       ascending: false },
   customer_activity: { orderBy: 'date',       ascending: false },
   plans:             { orderBy: 'created_at', ascending: true },
+  payout_batches:    { orderBy: 'created_at', ascending: false },
 };
 
 const VIEWS = {
