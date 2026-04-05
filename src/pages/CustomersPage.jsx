@@ -114,6 +114,9 @@ export default function CustomersPage() {
   const [assignOpen, setAssignOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
+  const [notesSaving, setNotesSaving] = useState(false);
 
   // Build seller options from team_members data
   const sellerOptions = useMemo(() => {
@@ -260,7 +263,7 @@ export default function CustomersPage() {
 
       <DrawerPanel
         open={!!selected}
-        onClose={() => { setSelected(null); setAssignOpen(false); setSelectedSeller(''); setSaveStatus(''); }}
+        onClose={() => { setSelected(null); setAssignOpen(false); setSelectedSeller(''); setSaveStatus(''); setEditingNotes(false); }}
         title={selected?.['Customer Name'] || 'Customer Detail'}
       >
         {selected && (
@@ -377,6 +380,79 @@ export default function CustomersPage() {
                 </div>
               </section>
             ))}
+
+            {/* Editable Notes */}
+            <section className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-400">Notes</h3>
+                {!editingNotes && (
+                  <button
+                    type="button"
+                    onClick={() => { setEditingNotes(true); setNotesValue(selected['Notes'] || ''); }}
+                    className="rounded-lg px-2 py-1 text-[11px] text-zinc-500 hover:text-cyan-300 transition"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                {editingNotes ? (
+                  <div className="space-y-3">
+                    <textarea
+                      rows={4}
+                      value={notesValue}
+                      onChange={e => setNotesValue(e.target.value)}
+                      placeholder="Add a note..."
+                      className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-zinc-600 outline-none resize-none"
+                      style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={notesSaving}
+                        onClick={async () => {
+                          setNotesSaving(true);
+                          try {
+                            const res = await fetch('/api/update-customer', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json', 'x-api-secret': 'INTELLIFLOW_OPS_2026' },
+                              body: JSON.stringify({ customerId: selected.id, field: 'notes', value: notesValue }),
+                            });
+                            if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+                            selected['Notes'] = notesValue;
+                            setEditingNotes(false);
+                            showToast('Notes saved', 'success');
+                            refresh();
+                          } catch (err) {
+                            showToast('Failed to save notes — ' + err.message, 'error');
+                          } finally {
+                            setNotesSaving(false);
+                          }
+                        }}
+                        className="flex-1 rounded-xl py-2 text-sm font-medium transition-all disabled:opacity-40"
+                        style={{ background: 'rgba(6,182,212,0.15)', border: '1px solid rgba(6,182,212,0.3)', color: '#67e8f9' }}
+                      >
+                        {notesSaving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingNotes(false)}
+                        className="rounded-xl px-4 py-2 text-sm text-zinc-500 transition hover:text-zinc-300"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-300 whitespace-pre-wrap">
+                    {selected['Notes'] || <span className="text-zinc-600">Add a note...</span>}
+                  </p>
+                )}
+              </div>
+            </section>
           </div>
         )}
       </DrawerPanel>
